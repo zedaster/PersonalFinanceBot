@@ -17,11 +17,11 @@ public class Category {
     private int id;
 
     /**
-     * ID пользователя
-     * <p>Если != null, то относиться к конкретному пользователю, который её добавил</p>
+     * Отношение: Пользователь, который добавил каатегорию.
      */
-    @Column(name = "user_id")
-    private long userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
 
     /**
      * Название категории
@@ -35,16 +35,9 @@ public class Category {
     @Column(name = "type", nullable = false)
     private String type;
 
-    /**
-     * Отношение: Пользователь, который добавил каатегорию.
-     */
-    @ManyToOne
-    @JoinColumn(name = "users", referencedColumnName = "id")
-    private User user;
-
-    public Category(int id, long userId, String categoryName, String type) {
+    public Category(int id, User user, String categoryName, String type) {
         this.id = id;
-        this.userId = userId;
+        this.user = user;
         this.categoryName = categoryName;
         this.type = type;
     }
@@ -61,24 +54,17 @@ public class Category {
     }
 
     /**
-     * @param id ID категории
-     */
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    /**
      * @return ID пользователя
      */
-    public long getUserId() {
-        return userId;
+    public User getUser() {
+        return user;
     }
 
     /**
-     * @param userId ID пользователя
+     * @param user ID пользователя
      */
-    public void setUserId(long userId) {
-        this.userId = userId;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     /**

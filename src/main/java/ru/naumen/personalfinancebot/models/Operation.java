@@ -18,16 +18,18 @@ public class Operation {
     private long id;
 
     /**
-     * ID пользователя
+     * Отношение: Пользователь, который произвел операцию
      */
-    @Column(name = "user_id", nullable = false)
-    private long userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
 
     /**
      * ID категории расхода/дохода
      */
-    @Column(name = "category_id", nullable = false)
-    private int categoryId;
+    @ManyToOne
+    @JoinColumn(name = "category_id", referencedColumnName = "id")
+    private Category category;
 
     /**
      * Сумма расхода/дохода
@@ -41,17 +43,10 @@ public class Operation {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    /**
-     * Отношение: Пользователь, который произвел операцию
-     */
-    @ManyToOne
-    @JoinColumn(name = "users", referencedColumnName = "id")
-    private User user;
-
-    public Operation(long id, long userId, int categoryId, long payment, LocalDateTime createdAt) {
+    public Operation(long id, User userId, Category categoryId, long payment, LocalDateTime createdAt) {
         this.id = id;
-        this.userId = userId;
-        this.categoryId = categoryId;
+        this.user = userId;
+        this.category = categoryId;
         this.payment = payment;
         this.createdAt = createdAt;
     }
@@ -68,38 +63,24 @@ public class Operation {
     }
 
     /**
-     * @param id ID операции
-     */
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    /**
      * @return ID пользователя
      */
     public long getUserId() {
-        return userId;
-    }
-
-    /**
-     * @param userId ID пользователя
-     */
-    public void setUserId(long userId) {
-        this.userId = userId;
+        return user.getId();
     }
 
     /**
      * @return ID категории расхода/дохода
      */
-    public int getCategoryId() {
-        return categoryId;
+    public Category getCategory() {
+        return category;
     }
 
     /**
-     * @param categoryId ID категории расхода/дохода
+     * @param category ID категории расхода/дохода
      */
-    public void setCategoryId(int categoryId) {
-        this.categoryId = categoryId;
+    public void setCategory(Category category) {
+        this.category = category;
     }
 
     /**
@@ -121,12 +102,5 @@ public class Operation {
      */
     public LocalDateTime getCreatedAt() {
         return createdAt;
-    }
-
-    /**
-     * @param createdAt Время записи операции
-     */
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 }

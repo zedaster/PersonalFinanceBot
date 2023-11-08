@@ -51,26 +51,10 @@ public class User {
     public User() {}
 
     /**
-     * Устанавливает ID для пользователя
-     * @param id Идентификатор пользователя
-     */
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    /**
      * @return ID пользователя
      */
     public long getId() {
         return id;
-    }
-
-    /**
-     * Устанавливает ID чата
-     * @param chatId ID чата
-     */
-    public void setChatId(long chatId) {
-        this.chatId = chatId;
     }
 
     /**
