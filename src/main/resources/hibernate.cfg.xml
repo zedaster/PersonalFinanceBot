@@ -12,5 +12,10 @@
         <property name="show_sql">true</property>
         <property name="dialect">org.hibernate.dialect.PostgreSQLDialect</property>
         <property name="hbm2ddl.auto">update</property>
+
+        <!-- Hibernate mappings -->
+        <mapping class="ru.naumen.personalfinancebot.models.User" />
+        <mapping class="ru.naumen.personalfinancebot.models.Operation" />
+        <mapping class="ru.naumen.personalfinancebot.models.Category" />
     </session-factory>
 </hibernate-configuration>
