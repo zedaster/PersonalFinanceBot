@@ -13,6 +13,7 @@ import ru.naumen.personalfinancebot.models.User;
 import ru.naumen.personalfinancebot.repository.UserRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Телеграм бот
@@ -34,11 +35,15 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText() && update.getMessage().getText().startsWith("/")) {
-            User user = this.userRepository.getUserByTelegramChatId(update.getMessage().getChatId());
+            Optional<User> user = this.userRepository.getUserByTelegramChatId(update.getMessage().getChatId());
+            if (user.isEmpty()) {
+                user = Optional.of(new User(update.getMessage().getChatId(), 0));
+                this.userRepository.saveUser(user.get());
+            }
             List<String> msgWords = List.of(update.getMessage().getText().split(" "));
             String cmdName = msgWords.get(0).substring(1);
             List<String> args = msgWords.subList(1, msgWords.size() - 1);
-            HandleCommandEvent event = new HandleCommandEvent(this, user, cmdName, args);
+            HandleCommandEvent event = new HandleCommandEvent(this, user.get(), cmdName, args);
             this.botHandler.handleCommand(event);
         }
     }

@@ -35,8 +35,7 @@ public class Category {
     @Column(name = "type", nullable = false)
     private String type;
 
-    public Category(int id, User user, String categoryName, String type) {
-        this.id = id;
+    public Category(User user, String categoryName, String type) {
         this.user = user;
         this.categoryName = categoryName;
         this.type = type;

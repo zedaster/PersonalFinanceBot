@@ -16,7 +16,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", unique = true, nullable = false)
-    private long id;
+    private Long id;
 
     /**
      * Идентификатор чата
@@ -42,8 +42,7 @@ public class User {
     @OneToMany(mappedBy = "user")
     private List<Category> categories;
 
-    public User(long id, long chatId, double balance) {
-        this.id = id;
+    public User(long chatId, double balance) {
         this.chatId = chatId;
         this.balance = balance;
     }
@@ -53,7 +52,7 @@ public class User {
     /**
      * @return ID пользователя
      */
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
