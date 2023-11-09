@@ -1,34 +1,50 @@
 package ru.naumen.personalfinancebot.configuration;
 
 /**
- * Конфигурация для телеграм бота
+ * Класс для настроек бота
  */
 public class TelegramBotConfiguration {
     /**
      * Токен бота
      */
     private final String botToken;
+    /**
+     * Имя бота
+     */
+    private final String botName;
+
 
     /**
-     * Юзернейм бота
+     * Конструктор с настройками из переменных окружения
      */
-    private final String botUsername;
-
     public TelegramBotConfiguration() {
-        // TODO
+        this(
+                System.getenv("BOT_TOKEN"),
+                System.getenv("BOT_NAME")
+        );
     }
 
     /**
-     * Выдает токен бота
+     *
+     * @param botToken токен бота
+     * @param botName имя бота
+     */
+    public TelegramBotConfiguration(String botToken, String botName) {
+        this.botToken = botToken;
+        this.botName = botName;
+    }
+
+    /**
+     * @return Токен бота
      */
     public String getBotToken() {
-        return botToken;
+        return this.botToken;
     }
 
     /**
-     * Выдает юзернейм бота
+     * @return Имя бота
      */
-    public String getBotUsername() {
-        return botUsername;
+    public String getBotName() {
+        return this.botName;
     }
 }

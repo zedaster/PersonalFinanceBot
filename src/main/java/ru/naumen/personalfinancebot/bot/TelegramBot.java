@@ -49,7 +49,7 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
      */
     @Override
     public String getBotUsername() {
-        return this.configuration.getBotUsername();
+        return this.configuration.getBotName();
     }
 
     /**
@@ -80,7 +80,7 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
     @Override
     public void sendMessage(User user, String text) {
         SendMessage message = new SendMessage(); // Create a SendMessage object with mandatory fields
-        message.setChatId(user.getTelegramChatId());
+        message.setChatId(user.getChatId());
         message.setText(text);
 
         try {
