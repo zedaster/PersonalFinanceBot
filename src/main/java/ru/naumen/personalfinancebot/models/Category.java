@@ -14,12 +14,12 @@ public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", unique = true, nullable = false)
-    private int id;
+    private long id;
 
     /**
      * Отношение: Пользователь, который добавил каатегорию.
      */
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
@@ -48,7 +48,7 @@ public class Category {
     /**
      * @return ID категории
      */
-    public int getId() {
+    public long getId() {
         return id;
     }
 
