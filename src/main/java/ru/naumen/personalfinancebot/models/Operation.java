@@ -102,4 +102,15 @@ public class Operation {
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+
+    @Override
+    public String toString() {
+        return "Operation{" +
+                "id=" + id +
+                ", user=" + user +
+                ", category=" + category +
+                ", payment=" + payment +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }

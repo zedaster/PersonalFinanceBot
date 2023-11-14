@@ -7,9 +7,10 @@ import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.Operation;
 import ru.naumen.personalfinancebot.models.User;
-import ru.naumen.personalfinancebot.repositories.user.UserRepository;
 import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
+import ru.naumen.personalfinancebot.repositories.user.UserRepository;
+import ru.naumen.personalfinancebot.services.ReportService;
 
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +43,7 @@ public class FinanceBotHandler implements BotHandler {
         this.handlers.put("category_add", this::handleCategoryAdd);
         this.handlers.put("category_remove", this::handleCategoryRemove);
         this.handlers.put("category_list", this::handleCategoryList);
+        this.handlers.put("report_expense", this::handleReportExpense);
         // TODO Добавить больше обработчиков
 
         this.operationRepository = operationRepository;
@@ -152,7 +154,7 @@ public class FinanceBotHandler implements BotHandler {
      */
     private void addOperation(HandleCommandEvent event, CategoryType type) {
         if (event.getArgs().size() != 2) {
-            event.getBot().sendMessage(event.getUser(),StaticMessages.INCORRECT_ARGS_AMOUNT);
+            event.getBot().sendMessage(event.getUser(), StaticMessages.INCORRECT_OPERATION_ARGS_AMOUNT);
             return;
         }
         Operation operation = createOperationRecord(event.getUser(), event.getArgs(), type);
@@ -197,5 +199,38 @@ public class FinanceBotHandler implements BotHandler {
             return null;
         }
         return this.operationRepository.addOperation(user, category.get(), payment);
+    }
+
+    /**
+     * Обработчик для команда "/report_expense"
+     *
+     * @param commandEvent Event
+     */
+    private void handleReportExpense(HandleCommandEvent commandEvent) {
+        if (commandEvent.getArgs().size() != 1) {
+            commandEvent.getBot().sendMessage(commandEvent.getUser(), StaticMessages.INCORRECT_SELF_REPORT_ARGS);
+        }
+        List<String> parsedArgs = List.of(commandEvent.getArgs().get(0).split("\\."));
+        if (!isCorrectReportArgs(parsedArgs.get(0), parsedArgs.get(1))) {
+            commandEvent.getBot().sendMessage(commandEvent.getUser(), StaticMessages.INCORRECT_SELF_REPORT_VALUES);
+        }
+        ReportService service = new ReportService(this.operationRepository);
+        Map<String, Double> categoryPaymentMap = service.getExpenseReport(commandEvent.getUser(), parsedArgs);
+        String message = "";
+        for (Map.Entry<String, Double> entry : categoryPaymentMap.entrySet()) {
+            message += entry.getKey() + ": " + entry.getValue();
+        }
+        commandEvent.getBot().sendMessage(commandEvent.getUser(), message);
+    }
+
+    private boolean isCorrectReportArgs(String month, String year) {
+        int _month = Integer.parseInt(month);
+        if (_month < 1 || _month > 12) {
+            return false;
+        }
+        if (year.length() != 4 || Integer.parseInt(year) < 0) {
+            return false;
+        }
+        return true;
     }
 }
