@@ -216,9 +216,9 @@ public class FinanceBotHandler implements BotHandler {
         }
         ReportService service = new ReportService(this.operationRepository);
         Map<String, Double> categoryPaymentMap = service.getExpenseReport(commandEvent.getUser(), parsedArgs);
-        String message = "";
+        String message = StaticMessages.SELF_REPORT_MESSAGE;
         for (Map.Entry<String, Double> entry : categoryPaymentMap.entrySet()) {
-            message += entry.getKey() + ": " + entry.getValue();
+            message += entry.getKey() + ": " + entry.getValue() + "руб.\n";
         }
         commandEvent.getBot().sendMessage(commandEvent.getUser(), message);
     }
