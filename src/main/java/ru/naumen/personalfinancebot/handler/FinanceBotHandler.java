@@ -2,6 +2,7 @@ package ru.naumen.personalfinancebot.handler;
 
 import com.sun.istack.Nullable;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import ru.naumen.personalfinancebot.messages.StaticMessages;
 import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.Operation;
@@ -56,8 +57,7 @@ public class FinanceBotHandler implements BotHandler {
         Consumer<HandleCommandEvent> handler = this.handlers.get(event.getCommandName().toLowerCase());
         if (handler != null) {
             handler.accept(event);
-        }
-        else {
+        } else {
             event.getBot().sendMessage(event.getUser(), "Команда не распознана...");
         }
         // TODO Действия при handler == null
@@ -133,7 +133,7 @@ public class FinanceBotHandler implements BotHandler {
      * {@link HandleCommandEvent}
      */
     private void handleAddExpense(HandleCommandEvent event) {
-        commonOperationHandle(event, "Добавлен расход по категории: ", CategoryType.EXPENSE);
+        addOperation(event, CategoryType.EXPENSE);
     }
 
     /**
@@ -141,41 +141,54 @@ public class FinanceBotHandler implements BotHandler {
      * {@link HandleCommandEvent}
      */
     private void handleAddIncome(HandleCommandEvent event) {
-        commonOperationHandle(event, "Вы успешно добавили доход по источнику: ", CategoryType.INCOME);
+        addOperation(event, CategoryType.INCOME);
     }
 
-    private void commonOperationHandle(HandleCommandEvent event, String message, CategoryType type) {
+    /**
+     * Добавляет Операцию и отправляет пользователю сообщение
+     *
+     * @param event Event
+     * @param type  Тип категории: Расход/доход
+     */
+    private void addOperation(HandleCommandEvent event, CategoryType type) {
         if (event.getArgs().size() != 2) {
-            event.getBot().sendMessage(
-                    event.getUser(),
-                    "Данная команда принимает 2 аргумента: [payment - сумма] [категория расхода/дохода]"
-            );
+            event.getBot().sendMessage(event.getUser(),StaticMessages.INCORRECT_ARGS_AMOUNT);
+            return;
         }
-        Operation operation = addOperation(event.getUser(), event.getArgs(), type);
+        Operation operation = createOperationRecord(event.getUser(), event.getArgs(), type);
         if (operation == null) {
-            event.getBot().sendMessage(event.getUser(), getMessageOfUnknownCategory());
+            event.getBot().sendMessage(event.getUser(), StaticMessages.CATEGORY_DOES_NOT_EXISTS);
             return;
         }
         double currentBalance = event.getUser().getBalance() + operation.getPayment();
         User user = event.getUser();
         user.setBalance(currentBalance);
         userRepository.saveUser(user);
+        String message = type == CategoryType.INCOME
+                ? StaticMessages.ADD_INCOME_MESSAGE
+                : StaticMessages.ADD_EXPENSE_MESSAGE;
         event.getBot().sendMessage(user,
                 message + operation.getCategory().getCategoryName());
     }
 
     /**
      * Команда для записи в базу операции;
+     *
      * @param user Пользователь
      * @param args Аргументы, переданные с командой
      * @param type Расход/Бюджет.
      * @return Совершенная операция
      */
-    private Operation addOperation(User user, List<String> args, CategoryType type) {
-        double payment = Double.parseDouble(args.get(0));
+    private Operation createOperationRecord(User user, List<String> args, CategoryType type) {
+        double payment;
+        try {
+            payment = Double.parseDouble(args.get(0));
+        } catch (NumberFormatException exception) {
+            return null;
+        }
         String categoryName = args.get(1);
-        if (type == CategoryType.EXPENSE){
-            payment = - Math.abs(payment);
+        if (type == CategoryType.EXPENSE) {
+            payment = -Math.abs(payment);
         } else if (type == CategoryType.INCOME) {
             payment = Math.abs(payment);
         }
@@ -184,9 +197,5 @@ public class FinanceBotHandler implements BotHandler {
             return null;
         }
         return this.operationRepository.addOperation(user, category.get(), payment);
-    }
-
-    private String getMessageOfUnknownCategory() {
-        return "Указанная категория не числится. Используйте команду /add_category чтобы добавить её";
     }
 }

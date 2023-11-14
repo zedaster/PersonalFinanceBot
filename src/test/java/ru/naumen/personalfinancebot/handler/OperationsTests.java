@@ -20,11 +20,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OperationsTests {
+    /**
+     * Статическое поле для начального баланса
+     */
     private static final double BALANCE = 100_000;
 
+    /**
+     * Репозиторий для работы с пользователем
+     */
     private final UserRepository userRepository;
+
+    /**
+     * Репозиторий для работы с операциями
+     * ! Нужен для FinanceBotHandler;
+     */
     private final OperationRepository operationRepository;
+
+    /**
+     * Репозиторий для работы с категориями
+     */
     private final CategoryRepository categoryRepository;
+
+    /**
+     * Обработчик операций в боте
+     */
     private final BotHandler botHandler;
 
     public OperationsTests() {
@@ -35,6 +54,9 @@ public class OperationsTests {
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
     }
 
+    /**
+     * Тест для команды "/add_expense@
+     */
     @Test
     public void addExpenseCommand() {
         String categoryName = "Такси";
@@ -42,12 +64,15 @@ public class OperationsTests {
         String command = "add_expense";
 
         List<List<String>> argumentsList = getMockArgumentsList(categoryName);
-        for (List<String> args: argumentsList){
+        for (List<String> args : argumentsList) {
             Category category = createCategory(categoryName, categoryType);
             assertCorrectOperation(category, command, args, CategoryType.EXPENSE);
         }
     }
 
+    /**
+     * Тест для команда "/add_income"
+     */
     @Test
     public void addIncomeCommand() {
         String categoryName = "Зарплата";
@@ -55,24 +80,38 @@ public class OperationsTests {
         String command = "add_income";
 
         List<List<String>> argumentsList = getMockArgumentsList(categoryName);
-        for (List<String> args: argumentsList){
+        for (List<String> args : argumentsList) {
             Category category = createCategory(categoryName, categoryType);
             assertCorrectOperation(category, command, args, CategoryType.INCOME);
         }
     }
 
+    /**
+     * Возвращает моковый лист аргументов для теста
+     *
+     * @param categoryName Имя категории
+     * @return Лист аргументов
+     */
     private List<List<String>> getMockArgumentsList(String categoryName) {
-        return new ArrayList<>(){
+        return new ArrayList<>() {
             {
-                add(List.of("25000", categoryName));
-                add(List.of("100",   categoryName));
-                add(List.of("32525", categoryName));
-                add(List.of("23423", categoryName));
-                add(List.of("12345", categoryName));
+                add(List.of("0", categoryName));
+                add(List.of("1", categoryName));
+                add(List.of(String.valueOf(Double.MAX_VALUE), categoryName));
+                add(List.of("Число", categoryName));
+                add(List.of("-10", categoryName));
             }
         };
     }
 
+    /**
+     * Проверяет корректность баланса и пользователя, которому должно быть отправлено сообщение.
+     *
+     * @param category Категори
+     * @param command  Команда
+     * @param args     Лист аргументов
+     * @param type     Тип категории
+     */
     private void assertCorrectOperation(Category category, String command, List<String> args, CategoryType type) {
         User user = new User(1, BALANCE);
         this.userRepository.saveUser(user);
@@ -83,19 +122,38 @@ public class OperationsTests {
         this.botHandler.handleCommand(commandEvent);
         MockMessage message = bot.poolMessageQueue();
         Assert.assertEquals(user.getId(), message.sender().getId());
-        assert BALANCE + payment == user.getBalance();
+        Assert.assertEquals(BALANCE + payment, user.getBalance(), 1e-3);
         this.userRepository.removeUserById(user.getId());
         this.categoryRepository.deleteCategoryById(category.getId());
     }
 
+    /**
+     * Создает и возвращает категорию
+     *
+     * @param categoryName Имя категории
+     * @param type Тип категории
+     * @return Категория
+     */
     private Category createCategory(String categoryName, String type) {
         return this.categoryRepository.createStandartCategory(categoryName, type);
     }
 
+    /**
+     * Парсит переданное число к типу double, в случае исключения возвращает 0
+     *
+     * @param payment Число в виде строки
+     * @param type    Тип категории
+     * @return Число
+     */
     private double getBeautifyPayment(String payment, CategoryType type) {
-        double result = Double.parseDouble(payment);
+        double result;
+        try {
+            result = Double.parseDouble(payment);
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
         if (type == CategoryType.EXPENSE) {
-            return - Math.abs(result);
+            return -Math.abs(result);
         }
         return Math.abs(result);
     }
