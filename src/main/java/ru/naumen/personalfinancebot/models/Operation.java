@@ -20,14 +20,14 @@ public class Operation {
     /**
      * Отношение: Пользователь, который произвел операцию
      */
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
     /**
      * ID категории расхода/дохода
      */
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "category_id", referencedColumnName = "id")
     private Category category;
 
@@ -35,7 +35,7 @@ public class Operation {
      * Сумма расхода/дохода
      */
     @Column(name = "payment", nullable = false)
-    private long payment;
+    private double payment;
 
     /**
      * Время записи операции
@@ -43,12 +43,11 @@ public class Operation {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    public Operation(long id, User userId, Category categoryId, long payment, LocalDateTime createdAt) {
-        this.id = id;
-        this.user = userId;
-        this.category = categoryId;
+    public Operation(User user, Category category, double payment) {
+        this.user = user;
+        this.category = category;
         this.payment = payment;
-        this.createdAt = createdAt;
+        this.createdAt = LocalDateTime.now();
     }
 
     public Operation() {
@@ -86,14 +85,14 @@ public class Operation {
     /**
      * @return Сумма дохода/расхода
      */
-    public long getPayment() {
+    public double getPayment() {
         return payment;
     }
 
     /**
      * @param payment Сумма дохода/расхода
      */
-    public void setPayment(long payment) {
+    public void setPayment(double payment) {
         this.payment = payment;
     }
 
@@ -102,5 +101,16 @@ public class Operation {
      */
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    @Override
+    public String toString() {
+        return "Operation{" +
+                "id=" + id +
+                ", user=" + user +
+                ", category=" + category +
+                ", payment=" + payment +
+                ", createdAt=" + createdAt +
+                '}';
     }
 }

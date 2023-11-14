@@ -7,8 +7,12 @@ import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.models.User;
-import ru.naumen.personalfinancebot.repository.HibernateUserRepository;
-import ru.naumen.personalfinancebot.repository.UserRepository;
+import ru.naumen.personalfinancebot.repositories.operation.HibernateOperationRepository;
+import ru.naumen.personalfinancebot.repositories.user.HibernateUserRepository;
+import ru.naumen.personalfinancebot.repositories.user.UserRepository;
+import ru.naumen.personalfinancebot.repositories.category.HibernateCategoryRepository;
+import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
+import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,11 +23,16 @@ import java.util.stream.IntStream;
  */
 public class SetBalanceTests {
     private final UserRepository userRepository;
+    private final OperationRepository operationRepository;
+    private final CategoryRepository categoryRepository;
     private final BotHandler botHandler;
 
     public SetBalanceTests() {
-        this.userRepository = new HibernateUserRepository(new HibernateConfiguration().getSessionFactory());
-        this.botHandler = new FinanceBotHandler(userRepository);
+        HibernateConfiguration hibernateUserRepository = new HibernateConfiguration();
+        this.userRepository = new HibernateUserRepository(hibernateUserRepository.getSessionFactory());
+        this.operationRepository = new HibernateOperationRepository(hibernateUserRepository.getSessionFactory());
+        this.categoryRepository = new HibernateCategoryRepository(hibernateUserRepository.getSessionFactory());
+        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
     }
 
     /**

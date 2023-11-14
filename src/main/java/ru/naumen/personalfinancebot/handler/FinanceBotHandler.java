@@ -2,10 +2,20 @@ package ru.naumen.personalfinancebot.handler;
 
 import com.sun.istack.Nullable;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.repository.UserRepository;
+import ru.naumen.personalfinancebot.messages.StaticMessages;
+import ru.naumen.personalfinancebot.models.Category;
+import ru.naumen.personalfinancebot.models.CategoryType;
+import ru.naumen.personalfinancebot.models.Operation;
+import ru.naumen.personalfinancebot.models.User;
+import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
+import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
+import ru.naumen.personalfinancebot.repositories.user.UserRepository;
+import ru.naumen.personalfinancebot.services.ReportService;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -18,17 +28,27 @@ public class FinanceBotHandler implements BotHandler {
     private final Map<String, Consumer<HandleCommandEvent>> handlers;
 
     private final UserRepository userRepository;
+    private final OperationRepository operationRepository;
+    private final CategoryRepository categoryRepository;
 
-    public FinanceBotHandler(UserRepository userRepository) {
+    public FinanceBotHandler(
+            UserRepository userRepository,
+            OperationRepository operationRepository,
+            CategoryRepository categoryRepository
+    ) {
         this.handlers = new HashMap<>();
         this.handlers.put("set_balance", this::handleSetBalance);
         this.handlers.put("add_expense", this::handleAddExpense);
+        this.handlers.put("add_income", this::handleAddIncome);
         this.handlers.put("category_add", this::handleCategoryAdd);
         this.handlers.put("category_remove", this::handleCategoryRemove);
         this.handlers.put("category_list", this::handleCategoryList);
+        this.handlers.put("report_expense", this::handleReportExpense);
         // TODO Добавить больше обработчиков
 
+        this.operationRepository = operationRepository;
         this.userRepository = userRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     /**
@@ -39,6 +59,8 @@ public class FinanceBotHandler implements BotHandler {
         Consumer<HandleCommandEvent> handler = this.handlers.get(event.getCommandName().toLowerCase());
         if (handler != null) {
             handler.accept(event);
+        } else {
+            event.getBot().sendMessage(event.getUser(), "Команда не распознана...");
         }
         // TODO Действия при handler == null
     }
@@ -62,16 +84,6 @@ public class FinanceBotHandler implements BotHandler {
         event.getBot().sendMessage(event.getUser(), "Ваш баланс изменен. Теперь он составляет " +
                 beautifyDouble(amount));
     }
-
-
-    /**
-     * Команда для добавления трат
-     */
-    private void handleAddExpense(HandleCommandEvent event) {
-        // TODO
-    }
-
-    // TODO Писать обработчики дальше и тесты для них
 
     /**
      * Команда для добавления пользовательской категории
@@ -118,4 +130,107 @@ public class FinanceBotHandler implements BotHandler {
         return String.valueOf(d);
     }
 
+    /**
+     * Команда для добавления трат
+     * {@link HandleCommandEvent}
+     */
+    private void handleAddExpense(HandleCommandEvent event) {
+        addOperation(event, CategoryType.EXPENSE);
+    }
+
+    /**
+     * Обработчик для добавления доходов (команда /add_income)
+     * {@link HandleCommandEvent}
+     */
+    private void handleAddIncome(HandleCommandEvent event) {
+        addOperation(event, CategoryType.INCOME);
+    }
+
+    /**
+     * Добавляет Операцию и отправляет пользователю сообщение
+     *
+     * @param event Event
+     * @param type  Тип категории: Расход/доход
+     */
+    private void addOperation(HandleCommandEvent event, CategoryType type) {
+        if (event.getArgs().size() != 2) {
+            event.getBot().sendMessage(event.getUser(), StaticMessages.INCORRECT_OPERATION_ARGS_AMOUNT);
+            return;
+        }
+        Operation operation = createOperationRecord(event.getUser(), event.getArgs(), type);
+        if (operation == null) {
+            event.getBot().sendMessage(event.getUser(), StaticMessages.CATEGORY_DOES_NOT_EXISTS);
+            return;
+        }
+        double currentBalance = event.getUser().getBalance() + operation.getPayment();
+        User user = event.getUser();
+        user.setBalance(currentBalance);
+        userRepository.saveUser(user);
+        String message = type == CategoryType.INCOME
+                ? StaticMessages.ADD_INCOME_MESSAGE
+                : StaticMessages.ADD_EXPENSE_MESSAGE;
+        event.getBot().sendMessage(user,
+                message + operation.getCategory().getCategoryName());
+    }
+
+    /**
+     * Команда для записи в базу операции;
+     *
+     * @param user Пользователь
+     * @param args Аргументы, переданные с командой
+     * @param type Расход/Бюджет.
+     * @return Совершенная операция
+     */
+    private Operation createOperationRecord(User user, List<String> args, CategoryType type) {
+        double payment;
+        try {
+            payment = Double.parseDouble(args.get(0));
+        } catch (NumberFormatException exception) {
+            return null;
+        }
+        String categoryName = args.get(1);
+        if (type == CategoryType.EXPENSE) {
+            payment = -Math.abs(payment);
+        } else if (type == CategoryType.INCOME) {
+            payment = Math.abs(payment);
+        }
+        Optional<Category> category = this.categoryRepository.getCategoryByName(categoryName);
+        if (category.isEmpty()) {
+            return null;
+        }
+        return this.operationRepository.addOperation(user, category.get(), payment);
+    }
+
+    /**
+     * Обработчик для команда "/report_expense"
+     *
+     * @param commandEvent Event
+     */
+    private void handleReportExpense(HandleCommandEvent commandEvent) {
+        if (commandEvent.getArgs().size() != 1) {
+            commandEvent.getBot().sendMessage(commandEvent.getUser(), StaticMessages.INCORRECT_SELF_REPORT_ARGS);
+        }
+        List<String> parsedArgs = List.of(commandEvent.getArgs().get(0).split("\\."));
+        if (!isCorrectReportArgs(parsedArgs.get(0), parsedArgs.get(1))) {
+            commandEvent.getBot().sendMessage(commandEvent.getUser(), StaticMessages.INCORRECT_SELF_REPORT_VALUES);
+        }
+        ReportService service = new ReportService(this.operationRepository);
+        Map<String, Double> categoryPaymentMap = service.getExpenseReport(commandEvent.getUser(), parsedArgs);
+        String message = StaticMessages.SELF_REPORT_MESSAGE;
+        for (Map.Entry<String, Double> entry : categoryPaymentMap.entrySet()) {
+            message += entry.getKey() + ": " + entry.getValue() + "руб.\n";
+        }
+        commandEvent.getBot().sendMessage(commandEvent.getUser(), message);
+    }
+
+    private boolean isCorrectReportArgs(String month, String year) {
+        int _month = Integer.parseInt(month);
+        if (_month < 1 || _month > 12) {
+            return false;
+        }
+        if (year.length() != 4 || Integer.parseInt(year) < 0) {
+            return false;
+        }
+        return true;
+    }
 }

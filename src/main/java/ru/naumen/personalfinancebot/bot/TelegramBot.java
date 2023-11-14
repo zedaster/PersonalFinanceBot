@@ -10,7 +10,9 @@ import ru.naumen.personalfinancebot.configuration.TelegramBotConfiguration;
 import ru.naumen.personalfinancebot.handler.BotHandler;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.models.User;
-import ru.naumen.personalfinancebot.repository.UserRepository;
+import ru.naumen.personalfinancebot.repositories.user.UserRepository;
+import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
+import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +25,11 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
     private final BotHandler botHandler;
     private final UserRepository userRepository;
 
-    public TelegramBot(TelegramBotConfiguration configuration, BotHandler botHandler, UserRepository userRepository) {
+    public TelegramBot(
+            TelegramBotConfiguration configuration,
+            BotHandler botHandler,
+            UserRepository userRepository
+    ) {
         this.configuration = configuration;
         this.botHandler = botHandler;
         this.userRepository = userRepository;

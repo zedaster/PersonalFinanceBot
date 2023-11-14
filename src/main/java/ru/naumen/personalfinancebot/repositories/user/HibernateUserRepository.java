@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.repository;
+package ru.naumen.personalfinancebot.repositories.user;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -59,6 +59,7 @@ public class HibernateUserRepository implements UserRepository {
                 session.merge(user);
             }
             session.getTransaction().commit();
+            session.close();
         }
     }
 
@@ -74,6 +75,7 @@ public class HibernateUserRepository implements UserRepository {
                 session.delete(user);
             }
             session.getTransaction().commit();
+            session.close();
         }
     }
 }

@@ -33,7 +33,7 @@ public class User {
     /**
      * Отношение: Операции пользователя
      */
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<Operation> operations;
 
     /**

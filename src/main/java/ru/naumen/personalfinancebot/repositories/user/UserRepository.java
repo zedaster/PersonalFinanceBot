@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.repository;
+package ru.naumen.personalfinancebot.repositories.user;
 
 import ru.naumen.personalfinancebot.models.User;
 
