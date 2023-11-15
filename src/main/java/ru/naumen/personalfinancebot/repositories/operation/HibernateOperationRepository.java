@@ -1,6 +1,5 @@
 package ru.naumen.personalfinancebot.repositories.operation;
 
-import net.bytebuddy.asm.Advice;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import ru.naumen.personalfinancebot.models.Category;
@@ -11,8 +10,6 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import java.time.LocalDateTime;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -40,7 +37,6 @@ public class HibernateOperationRepository implements OperationRepository {
             session.beginTransaction();
             session.save(operation);
             session.getTransaction().commit();
-            session.close();
             return operation;
         }
     }

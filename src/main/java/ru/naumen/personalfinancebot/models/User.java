@@ -2,6 +2,7 @@ package ru.naumen.personalfinancebot.models;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Модель пользователя
@@ -39,7 +40,7 @@ public class User {
     /**
      * Отношение: Категории, который добавил пользователь
      */
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<Category> categories;
 
     public User(long chatId, double balance) {
@@ -76,5 +77,18 @@ public class User {
      */
     public double getBalance() {
         return this.balance;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(id, user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

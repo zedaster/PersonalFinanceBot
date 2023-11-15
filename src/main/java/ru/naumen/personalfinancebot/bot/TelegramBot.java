@@ -11,8 +11,6 @@ import ru.naumen.personalfinancebot.handler.BotHandler;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.models.User;
 import ru.naumen.personalfinancebot.repositories.user.UserRepository;
-import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
-import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +28,7 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
             BotHandler botHandler,
             UserRepository userRepository
     ) {
+        super(configuration.getBotToken());
         this.configuration = configuration;
         this.botHandler = botHandler;
         this.userRepository = userRepository;
@@ -41,14 +40,15 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText() && update.getMessage().getText().startsWith("/")) {
-            Optional<User> user = this.userRepository.getUserByTelegramChatId(update.getMessage().getChatId());
+            Long chatId = update.getMessage().getChatId();
+            Optional<User> user = this.userRepository.getUserByTelegramChatId(chatId);
             if (user.isEmpty()) {
-                user = Optional.of(new User(update.getMessage().getChatId(), 0));
+                user = Optional.of(new User(chatId, 0));
                 this.userRepository.saveUser(user.get());
             }
             List<String> msgWords = List.of(update.getMessage().getText().split(" "));
             String cmdName = msgWords.get(0).substring(1);
-            List<String> args = msgWords.subList(1, msgWords.size() - 1);
+            List<String> args = msgWords.subList(1, msgWords.size());
             HandleCommandEvent event = new HandleCommandEvent(this, user.get(), cmdName, args);
             this.botHandler.handleCommand(event);
         }
@@ -80,6 +80,7 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
         try {
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
             botsApi.registerBot(this);
+            System.out.println("Telegram bot is pooling now...");
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
