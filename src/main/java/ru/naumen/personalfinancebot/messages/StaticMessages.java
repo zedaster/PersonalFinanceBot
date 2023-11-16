@@ -1,6 +1,7 @@
 package ru.naumen.personalfinancebot.messages;
 
 public class StaticMessages {
+    public static final String WELCOME_MESSAGE = "Добро пожаловать в бота для управления финансами!";
     public static final String ADD_INCOME_MESSAGE = "Вы успешно добавили доход по источнику: ";
     public static final String ADD_EXPENSE_MESSAGE = "Добавлен расход по категории: ";
 

@@ -45,7 +45,7 @@ public class OperationsTests {
      */
     private final BotHandler botHandler;
 
-    // TODO: Леше как-то протестировать двух юзеров
+    // TODO: Саше как-то протестировать двух юзеров
 
     public OperationsTests() {
         HibernateConfiguration hibernateUserRepository = new HibernateConfiguration();
@@ -58,7 +58,7 @@ public class OperationsTests {
     /**
      * Тест для команды "/add_expense@
      */
-    // TODO: Исправить Леше
+    // TODO: Исправить Саше
 //    @Test
 //    public void addExpenseCommand() {
 //        String categoryName = "Такси";
@@ -75,7 +75,7 @@ public class OperationsTests {
     /**
      * Тест для команда "/add_income"
      */
-    // TODO: Исправить Леше
+    // TODO: Исправить Саше
 //    @Test
 //    public void addIncomeCommand() {
 //        String categoryName = "Зарплата";
@@ -139,7 +139,7 @@ public class OperationsTests {
      * @return Категория
      */
 //    private Category createCategory(String categoryName, String type) {
-//        // TODO: Тесты Лёше исправить
+//        // TODO: Тесты Саше исправить
 ////        return this.categoryRepository.createStandartCategory(type, categoryName);
 //    }
 
@@ -151,7 +151,7 @@ public class OperationsTests {
      * @return Число
      */
     private double getBeautifyPayment(String payment, CategoryType type) {
-        // TODO: Лёшё исправить. Баланс просили указывать явно
+        // TODO: Саше исправить. Баланс просили указывать явно
         double result;
         try {
             result = Double.parseDouble(payment);

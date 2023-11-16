@@ -88,7 +88,7 @@ public class ReportExpenseTests {
         return operations;
     }
 
-    // TODO: Леше переделать тест
+    // TODO: Саше переделать тест
 //    @Test
 //    public void checkReportMap() throws CategoryRepository.CreatingExistingCategoryException {
 //        User user = new User(1, 100_000);

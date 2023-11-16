@@ -14,7 +14,6 @@ import java.util.Optional;
 /**
  * Реализация хранилища пользователей в БД с помощью библиотеки Hibernate
  */
-// TODO
 public class HibernateUserRepository implements UserRepository {
     /**
      * Для открытия новых сессий

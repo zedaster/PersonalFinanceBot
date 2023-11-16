@@ -366,7 +366,7 @@ public class FinanceBotHandler implements BotHandler {
         } else if (type == CategoryType.INCOME) {
             payment = Math.abs(payment);
         }
-        // TODO: Здесь исправить Лёше, надо что-то делать со стандартными категориями
+        // TODO: Здесь исправить Саше, надо что-то делать со стандартными категориями
         Optional<Category> category = this.categoryRepository.getUserCategoryByName(user, type, categoryName);
         if (category.isEmpty()) {
             return null;
@@ -391,7 +391,7 @@ public class FinanceBotHandler implements BotHandler {
         Map<String, Double> categoryPaymentMap = service.getExpenseReport(commandEvent.getUser(), parsedArgs);
         String message = StaticMessages.SELF_REPORT_MESSAGE;
         for (Map.Entry<String, Double> entry : categoryPaymentMap.entrySet()) {
-            // TODO: Леш, за это же на Си Шарпе били. StringBuilder в студию
+            // TODO: Саша, за это же на Си Шарпе били. StringBuilder в студию
             message += entry.getKey() + ": " + entry.getValue() + "руб.\n";
         }
         commandEvent.getBot().sendMessage(commandEvent.getUser(), message);
