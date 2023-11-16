@@ -1,6 +1,7 @@
 package ru.naumen.personalfinancebot.models;
 
 import javax.persistence.*;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -23,6 +24,12 @@ public class Category {
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
+
+    /**
+     * Отношение: Операции, связанные с этой категорией
+     */
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+    private List<Operation> operations;
 
     /**
      * Название категории.

@@ -6,6 +6,7 @@ import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import ru.naumen.personalfinancebot.messages.StaticMessages;
 import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.User;
@@ -32,9 +33,25 @@ public class RemoveCategoryTests {
     private static final String TEST_USER_EXPENSE_CATEGORY_NAME = "Personal expense 1";
 
     // Static необходим для инициализации данных перед тестами и очистки после всех тестов
+    /**
+     * Session factory для работы с сессиями в хранилищах
+     */
     private static final SessionFactory sessionFactory;
+
+    /**
+     * Хранилище пользователей
+     */
     private static final UserRepository userRepository;
+
+    /**
+     * Хранилище категорий
+     * Данная реализация позволяет сделать полную очистку категорий после тестов
+     */
     private static final TestHibernateCategoryRepository categoryRepository;
+
+    /**
+     * Хранилище операций
+     */
     private static final OperationRepository operationRepository;
 
     /**
@@ -108,7 +125,7 @@ public class RemoveCategoryTests {
      */
     @Before
     public void beforeEachTest() throws CategoryRepository.CreatingExistingCategoryException {
-        this.mockUser = createFirstTestUser();
+        this.mockUser = createTestUser(1);
         this.testIncomeCategory = categoryRepository
                 .createUserCategory(this.mockUser, CategoryType.INCOME, TEST_USER_INCOME_CATEGORY_NAME);
         this.testExpenseCategory = categoryRepository
@@ -181,7 +198,10 @@ public class RemoveCategoryTests {
         Assert.assertEquals(this.mockBot.getMessageQueueSize(), 1);
         MockMessage lastMessage = this.mockBot.poolMessageQueue();
         Assert.assertEquals(this.mockUser, lastMessage.receiver());
-        Assert.assertEquals("Категории расходов '" + noNameCategory + "' не существует!", lastMessage.text());
+        Assert.assertEquals(StaticMessages.USER_CATEGORY_ALREADY_NOT_EXISTS
+                        .replace("{type}", CategoryType.EXPENSE.getPluralShowLabel())
+                        .replace("{name}", noNameCategory),
+                lastMessage.text());
     }
 
     /**
@@ -230,7 +250,7 @@ public class RemoveCategoryTests {
             CategoryRepository.CreatingExistingCategoryException {
         final String testSameIncomeCategoryName = "Same category";
 
-        User secondUser = createSecondTestUser();
+        User secondUser = createTestUser(2);
         Category firstUserCategory = categoryRepository.createUserCategory(this.mockUser, CategoryType.INCOME,
                 testSameIncomeCategoryName);
         Category secondUserCategory = categoryRepository.createUserCategory(secondUser, CategoryType.INCOME,
@@ -245,9 +265,9 @@ public class RemoveCategoryTests {
         assertUserCategoryNotExists(secondUser, CategoryType.INCOME, TEST_USER_INCOME_CATEGORY_NAME);
         assertUserCategoryExists(secondUser, CategoryType.INCOME, testSameIncomeCategoryName);
 
-        userRepository.removeUserById(secondUser.getId());
         categoryRepository.removeCategoryById(firstUserCategory.getId());
         categoryRepository.removeCategoryById(secondUserCategory.getId());
+        userRepository.removeUserById(secondUser.getId());
     }
 
     /**
@@ -265,7 +285,9 @@ public class RemoveCategoryTests {
         Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
         MockMessage lastMessage = this.mockBot.poolMessageQueue();
         Assert.assertEquals(this.mockUser, lastMessage.receiver());
-        String expectedMessage = "Категории доходов '%s' не существует!".formatted(someStandardCategory.getCategoryName());
+        String expectedMessage = StaticMessages.USER_CATEGORY_ALREADY_NOT_EXISTS
+                .replace("{type}", CategoryType.INCOME.getPluralShowLabel())
+                .replace("{name}", someStandardCategory.getCategoryName());
         Assert.assertEquals(expectedMessage, lastMessage.text());
     }
 
@@ -303,7 +325,7 @@ public class RemoveCategoryTests {
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
             MockMessage lastMessage = this.mockBot.poolMessageQueue();
             Assert.assertEquals(this.mockUser, lastMessage.receiver());
-            Assert.assertEquals("Данная команда принимает 1 аргумент: [название категории]", lastMessage.text());
+            Assert.assertEquals(StaticMessages.INCORRECT_CATEGORY_ARGUMENT_COUNT, lastMessage.text());
         }
     }
 
@@ -362,21 +384,12 @@ public class RemoveCategoryTests {
     }
 
     /**
-     * Создает первого пользователя для тестов
-     * У него chatId = 1L, А баланс = 100.0
+     * Создает пользователя для тестов
+     * У него chatId = number, А баланс = 100 * number
      */
-    private static User createFirstTestUser() {
-        User user = new User(1L, 100.0);
-        userRepository.saveUser(user);
-        return user;
-    }
-
-    /**
-     * Создает второго пользователя для тестов
-     * У него chatId = 2L, А баланс = 200.0
-     */
-    private static User createSecondTestUser() {
-        User user = new User(2L, 200.0);
+    private static User createTestUser(int number) {
+        assert number > 0;
+        User user = new User(number, 100 * number);
         userRepository.saveUser(user);
         return user;
     }

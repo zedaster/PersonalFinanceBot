@@ -1,20 +1,22 @@
 package ru.naumen.personalfinancebot.handler;
 
 import org.hibernate.SessionFactory;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import ru.naumen.personalfinancebot.messages.StaticMessages;
 import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.User;
 import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
-import ru.naumen.personalfinancebot.repositories.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repositories.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
-import ru.naumen.personalfinancebot.repositories.user.HibernateUserRepository;
-import ru.naumen.personalfinancebot.repositories.user.UserRepository;
+import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
+import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,17 +26,51 @@ import java.util.Optional;
  */
 public class AddCategoryTests {
 
-    private final UserRepository userRepository;
-    private final CategoryRepository categoryRepository;
-    private final OperationRepository operationRepository;
+    /**
+     * Session factory для работы с сессиями в хранилищах
+     */
+    private static final SessionFactory sessionFactory;
+
+    /**
+     * Хранилище пользователей
+     */
+    private static final TestHibernateUserRepository userRepository;
+
+    /**
+     * Хранилище категорий
+     * Данная реализация позволяет сделать полную очистку категорий после тестов
+     */
+    private static final TestHibernateCategoryRepository categoryRepository;
+
+    /**
+     * Хранилище операций
+     */
+    private static final OperationRepository operationRepository;
     private final BotHandler botHandler;
 
+    static {
+        sessionFactory = new HibernateConfiguration().getSessionFactory();
+        userRepository = new TestHibernateUserRepository(sessionFactory);
+        categoryRepository = new TestHibernateCategoryRepository(sessionFactory);
+        operationRepository = new HibernateOperationRepository(sessionFactory);
+    }
+
     public AddCategoryTests() {
-        SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
-        this.userRepository = new HibernateUserRepository(sessionFactory);
-        this.categoryRepository = new HibernateCategoryRepository(sessionFactory);
-        this.operationRepository = new HibernateOperationRepository(sessionFactory);
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
+    }
+
+    /**
+     * Очистка стандартных значений и закрытие sessionFactory после выполнения всех тестов в этом классе
+     */
+    @AfterClass
+    public static void finishTests() {
+        categoryRepository.removeAll();
+        sessionFactory.close();
+    }
+
+    @After
+    public void afterEachTest() {
+        userRepository.removeAll();
     }
 
     /**
@@ -99,12 +135,11 @@ public class AddCategoryTests {
 
         for (List<String> args : cases) {
             for (CategoryType type : CategoryType.values()) {
-                User user = createFirstTestUser();
+                User user = createTestUser(1);
                 MockBot bot = executeAddCategoryCommand(user, type, args);
                 Assert.assertEquals(1, bot.getMessageQueueSize());
-                Assert.assertEquals("Данная команда принимает 1 аргумент: [название категории]",
-                        bot.poolMessageQueue().text());
-                this.userRepository.removeUserById(user.getId());
+                Assert.assertEquals(StaticMessages.INCORRECT_CATEGORY_ARGUMENT_COUNT, bot.poolMessageQueue().text());
+                userRepository.removeUserById(user.getId());
             }
         }
     }
@@ -113,19 +148,18 @@ public class AddCategoryTests {
      * Тестирует, что категория добавиться только одному пользователю, а не двум
      */
     @Test
-    public void twoUsers() throws CategoryRepository.RemovingStandardCategoryException {
+    public void twoUsers() {
         final String categoryName = "Зарплата";
         final CategoryType categoryType = CategoryType.INCOME;
-        User user1 = createFirstTestUser();
-        User user2 = createSecondTestUser();
+        User user1 = createTestUser(1);
+        User user2 = createTestUser(2);
         executeAddCategoryCommand(user1, categoryType, List.of(categoryName));
-        Optional<Category> addedFirstCategory = this.categoryRepository.getUserCategoryByName(user1, categoryType, categoryName);
+        Optional<Category> addedFirstCategory = categoryRepository.getUserCategoryByName(user1, categoryType, categoryName);
         Assert.assertTrue(addedFirstCategory.isPresent());
-        Optional<Category> addedCategory = this.categoryRepository.getUserCategoryByName(user2, categoryType, categoryName);
+        Optional<Category> addedCategory = categoryRepository.getUserCategoryByName(user2, categoryType, categoryName);
         Assert.assertTrue(addedCategory.isEmpty());
-        this.categoryRepository.removeCategoryById(addedFirstCategory.get().getId());
-        this.userRepository.removeUserById(user1.getId());
-        this.userRepository.removeUserById(user2.getId());
+        userRepository.removeUserById(user1.getId());
+        userRepository.removeUserById(user2.getId());
     }
 
     /**
@@ -135,8 +169,9 @@ public class AddCategoryTests {
     public void userAndStandardCategorySuppression() throws CategoryRepository.CreatingExistingCategoryException {
         final CategoryType categoryType = CategoryType.INCOME;
         final String categoryName = "Зарплата";
-        this.categoryRepository.createStandardCategory(categoryType, categoryName);
+        categoryRepository.createStandardCategory(categoryType, categoryName);
         assertAddIncorrectCategoryName(categoryType, categoryName);
+        categoryRepository.removeAll();
     }
 
     /**
@@ -144,15 +179,15 @@ public class AddCategoryTests {
      */
     private void assertAddCorrectCategory(CategoryType type, String categoryName, String expectedCategoryName)
             throws CategoryRepository.RemovingStandardCategoryException {
-        User user = createFirstTestUser();
-        Assert.assertTrue(this.categoryRepository.getUserCategoryByName(user, type, categoryName).isEmpty());
+        User user = createTestUser(1);
+        Assert.assertTrue(categoryRepository.getUserCategoryByName(user, type, categoryName).isEmpty());
         executeAddCategoryCommand(user, type, List.of(categoryName));
-        Optional<Category> addedCategory = this.categoryRepository.getUserCategoryByName(user, type, categoryName);
+        Optional<Category> addedCategory = categoryRepository.getUserCategoryByName(user, type, categoryName);
         Assert.assertTrue("Категория '%s' типа %s должна существовать".formatted(categoryName, type.name()),
                 addedCategory.isPresent());
         Assert.assertEquals(addedCategory.get().getCategoryName(), expectedCategoryName);
-        this.categoryRepository.removeCategoryById(addedCategory.get().getId());
-        this.userRepository.removeUserById(user.getId());
+        categoryRepository.removeCategoryById(addedCategory.get().getId());
+        userRepository.removeUserById(user.getId());
     }
 
 
@@ -160,13 +195,13 @@ public class AddCategoryTests {
      * Проводит тест для отрицательного кейса команды добавления категории
      */
     private void assertAddIncorrectCategoryName(CategoryType type, String categoryName) {
-        User user = createFirstTestUser();
-        Assert.assertTrue(this.categoryRepository.getUserCategoryByName(user, type, categoryName).isEmpty());
+        User user = createTestUser(1);
+        Assert.assertTrue(categoryRepository.getUserCategoryByName(user, type, categoryName).isEmpty());
         executeAddCategoryCommand(user, type, List.of(categoryName));
-        Optional<Category> addedCategory = this.categoryRepository.getUserCategoryByName(user, type, categoryName);
+        Optional<Category> addedCategory = categoryRepository.getUserCategoryByName(user, type, categoryName);
         Assert.assertTrue("Категория '%s' не должна быть добавлена".formatted(categoryName),
                 addedCategory.isEmpty());
-        this.userRepository.removeUserById(user.getId());
+        userRepository.removeUserById(user.getId());
     }
 
     /**
@@ -182,23 +217,12 @@ public class AddCategoryTests {
     }
 
     /**
-     * Создает первого пользователя для тестов
-     * У него chatId = 1L, А баланс = 100.0
+     * Создает пользователя для тестов
+     * У него chatId = number, А баланс = number * 100
      */
-    private User createFirstTestUser() {
-        User user = new User(1L, 100.0);
-        this.userRepository.saveUser(user);
+    private User createTestUser(int number) {
+        User user = new User(number, number * 100);
+        userRepository.saveUser(user);
         return user;
     }
-
-    /**
-     * Создает второго пользователя для тестов
-     * У него chatId = 2L, А баланс = 200.0
-     */
-    private User createSecondTestUser() {
-        User user = new User(2L, 200.0);
-        this.userRepository.saveUser(user);
-        return user;
-    }
-
 }

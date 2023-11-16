@@ -64,7 +64,7 @@ public class FinanceBotHandler implements BotHandler {
         if (handler != null) {
             handler.accept(event);
         } else {
-            event.getBot().sendMessage(event.getUser(), "Команда не распознана...");
+            event.getBot().sendMessage(event.getUser(), StaticMessages.COMMAND_NOT_FOUND);
         }
     }
 
@@ -72,7 +72,7 @@ public class FinanceBotHandler implements BotHandler {
      * Исполняется при вызове команды /start
      */
     private void handleStartCommand(HandleCommandEvent event) {
-        event.getBot().sendMessage(event.getUser(), "Добро пожаловать в бота для управления финансами!");
+        event.getBot().sendMessage(event.getUser(), StaticMessages.WELCOME_MESSAGE);
     }
 
     /**
@@ -91,8 +91,8 @@ public class FinanceBotHandler implements BotHandler {
 
         event.getUser().setBalance(amount);
         userRepository.saveUser(event.getUser());
-        event.getBot().sendMessage(event.getUser(), "Ваш баланс изменен. Теперь он составляет " +
-                beautifyDouble(amount));
+        event.getBot().sendMessage(event.getUser(), StaticMessages.SET_BALANCE_SUCCESSFULLY
+                .replace("{balance}", beautifyDouble(amount)));
     }
 
     /**
@@ -126,17 +126,22 @@ public class FinanceBotHandler implements BotHandler {
         try {
             categoryRepository.createUserCategory(event.getUser(), type, categoryName);
         } catch (CategoryRepository.CreatingExistingUserCategoryException e) {
-            String responseText = "Персональная категория %s '%s' уже существует."
-                    .formatted(typeLabel, categoryName);
+            String responseText = StaticMessages.USER_CATEGORY_ALREADY_EXISTS
+                    .replace("{type}", typeLabel)
+                    .replace("{name}", categoryName);
             event.getBot().sendMessage(event.getUser(), responseText);
             return;
         } catch (CategoryRepository.CreatingExistingStandardCategoryException e) {
-            String responseText = "Стандартная категория %s '%s' уже существует."
-                    .formatted(typeLabel, categoryName);
+            String responseText = StaticMessages.STANDARD_CATEGORY_ALREADY_EXISTS
+                    .replace("{type}", typeLabel)
+                    .replace("{name}", categoryName);
             event.getBot().sendMessage(event.getUser(), responseText);
             return;
         }
-        String responseText = "Категория %s '%s' успешно добавлена".formatted(typeLabel, categoryName);
+
+        String responseText = StaticMessages.USER_CATEGORY_ADDED
+                .replace("{type}", typeLabel)
+                .replace("{name}", categoryName);
         event.getBot().sendMessage(event.getUser(), responseText);
     }
 
@@ -170,26 +175,34 @@ public class FinanceBotHandler implements BotHandler {
         try {
             categoryRepository.removeUserCategoryByName(event.getUser(), type, categoryName);
         } catch (CategoryRepository.RemovingNonExistentCategoryException e) {
-            String responseText = "Категории %s '%s' не существует!".formatted(typeLabel, categoryName);
+            String responseText = StaticMessages.USER_CATEGORY_ALREADY_NOT_EXISTS
+                    .replace("{type}", typeLabel)
+                    .replace("{name}", categoryName);
             event.getBot().sendMessage(event.getUser(), responseText);
             return;
         }
-        String responseText = "Категория %s '%s' успешно удалена".formatted(typeLabel, categoryName);
+
+        String responseText = StaticMessages.USER_CATEGORY_REMOVED
+                .replace("{type}", typeLabel)
+                .replace("{name}", categoryName);
         event.getBot().sendMessage(event.getUser(), responseText);
     }
 
     /**
      * Проверяет, что в аргументах одно единственное название категории, которое введено верно
+     *
+     * @throws IllegalArgumentException если введено несколько аргументов или название категории неверное. В исключении
+     *                                  содержится сообщение {@link StaticMessages#INCORRECT_CATEGORY_ARGUMENT_COUNT} или
+     *                                  {@link StaticMessages#INCORRECT_CATEGORY_ARGUMENT_FORMAT}
      */
     private String checkAndReturnSingleCategoryArgument(List<String> args) throws IllegalArgumentException {
         if (args.size() != 1) {
-            throw new IllegalArgumentException("Данная команда принимает 1 аргумент: [название категории]");
+            throw new IllegalArgumentException(StaticMessages.INCORRECT_CATEGORY_ARGUMENT_COUNT);
         }
 
         String categoryName = beautifyCategoryName(args.get(0));
         if (!isValidCategory(categoryName)) {
-            throw new IllegalArgumentException("Название категории введено неверно. Оно может содержать от 1 " +
-                    "до 64 символов латиницы, кириллицы, цифр и пробелов");
+            throw new IllegalArgumentException(StaticMessages.INCORRECT_CATEGORY_ARGUMENT_FORMAT);
         }
         return categoryName;
     }
@@ -198,6 +211,7 @@ public class FinanceBotHandler implements BotHandler {
      * Делает красивым и корректным имя категории.
      * Убирает пробелы в начале и заменяет множественные пробелы посередине на одиночные.
      * Первую букву делает заглавной, остальные - маленькими.
+     *
      * @param text Строка для обработки
      * @return Новая строка
      */
@@ -255,29 +269,33 @@ public class FinanceBotHandler implements BotHandler {
      * Получает текст сообщения, которое ожидается для вывода категорий доходов/расходов.
      */
     private String getListResponse(User user, CategoryType type) {
-        String firstLine = "Все доступные вам категории %s: \n".formatted(type.getPluralShowLabel());
-        StringBuilder responseBuilder = new StringBuilder(firstLine);
-
-        responseBuilder.append("Стандартные: \n");
         List<Category> typedStandardCategories = categoryRepository.getStandardCategoriesByType(type);
-        for (int i = 0; i < typedStandardCategories.size(); i++) {
-            responseBuilder
-                    .append(i + 1)
-                    .append(". ")
-                    .append(typedStandardCategories.get(i).getCategoryName())
-                    .append("\n");
+        List<Category> personalCategories = categoryRepository.getUserCategoriesByType(user, type);
+
+        return StaticMessages.LIST_TYPED_CATEGORIES
+                .replace("{type}", type.getPluralShowLabel())
+                .replace("{standard_list}", formatCategoryList(typedStandardCategories))
+                .replace("{personal_list}", formatCategoryList(personalCategories));
+    }
+
+    /**
+     * Форматирует список категорий в строку, содержащую нумерованный список из названия этих категорий или
+     * {@link StaticMessages#EMPTY_LIST_CONTENT}, если список пуст.
+     */
+    private String formatCategoryList(List<Category> categories) {
+        if (categories.isEmpty()) {
+            return StaticMessages.EMPTY_LIST_CONTENT + "\n";
         }
 
-        responseBuilder.append("Персональные: \n");
-        List<Category> personalCategories = categoryRepository.getUserCategoriesByType(user, type);
-        for (int i = 0; i < personalCategories.size(); i++) {
-            responseBuilder
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < categories.size(); i++) {
+            stringBuilder
                     .append(i + 1)
                     .append(". ")
-                    .append(personalCategories.get(i).getCategoryName())
+                    .append(categories.get(i).getCategoryName())
                     .append("\n");
         }
-        return responseBuilder.toString();
+        return stringBuilder.toString();
     }
 
     /**
@@ -292,10 +310,10 @@ public class FinanceBotHandler implements BotHandler {
     }
 
     /**
-     * Форматирует double в красивую строку
+     * Форматирует double в красивую строку.
      * Если число целое, то вернет его без дробной части.
-     * Т.е. 1000.0 будет выведено как 1000
-     * А 1000.99 будет выведено как 1000.99
+     * Т.е. 1000.0 будет выведено как 1000,
+     * а 1000.99 будет выведено как 1000.99
      */
     private String beautifyDouble(double d) {
         if ((int) d == d) return String.valueOf((int) d);

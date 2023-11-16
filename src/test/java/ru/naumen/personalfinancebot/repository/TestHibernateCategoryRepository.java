@@ -1,24 +1,27 @@
 package ru.naumen.personalfinancebot.repository;
 
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.repositories.category.HibernateCategoryRepository;
 
-import javax.persistence.Query;
-
+/**
+ * Хранилище категорий для тестов
+ */
 public class TestHibernateCategoryRepository extends HibernateCategoryRepository {
+    /**
+     * Объект, позволяющий совершать транзакции для тестовых хранилищ
+     */
+    private final TestHibernateTransactions testHibernateTransactions;
+
     public TestHibernateCategoryRepository(SessionFactory sessionFactory) {
         super(sessionFactory);
+        testHibernateTransactions = new TestHibernateTransactions(Category.class, sessionFactory);
     }
 
+    /**
+     * Очистка всех данных в таблице с категориями
+     */
     public void removeAll() {
-        try (Session session = sessionFactory.openSession()) {
-            String hql = "delete from " + Category.class.getName();
-            session.beginTransaction();
-            Query query = session.createQuery(hql);
-            query.executeUpdate();
-            session.getTransaction().commit();
-        }
+        testHibernateTransactions.removeAll();
     }
 }
