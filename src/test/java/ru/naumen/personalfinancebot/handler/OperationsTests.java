@@ -219,7 +219,9 @@ public class OperationsTests {
         clear(user.getId(), null);
     }
 
-
+    /**
+     * Тест для команды /add_income с неположительным аргументом {payment}
+     */
     @Test
     public void negativePaymentWithIncomeOperation() {
         String command = "add_income";
@@ -230,6 +232,9 @@ public class OperationsTests {
         }
     }
 
+    /**
+     * Тест для команды /add_expense с неотрицательным аргументом {payment}
+     */
     @Test
     public void positivePaymentWithExpenseOperation() {
         String command = "add_expense";
@@ -240,6 +245,13 @@ public class OperationsTests {
         }
     }
 
+    /**
+     * Общий тест для методов с аргументами не тех знаков.
+     * @param command Команда
+     * @param categoryName Название категории
+     * @param payment Плата
+     * @param type Тип операции
+     */
     public void testIllegalArgument(String command, String categoryName, String payment, CategoryType type) {
         User user = new User(1, BALANCE);
         this.userRepository.saveUser(user);
@@ -257,6 +269,11 @@ public class OperationsTests {
         clear(user.getId(), category.getId());
     }
 
+    /**
+     * Метод очищает таблицы пользователей,
+     * @param userId ID пользователя
+     * @param categoryId ID категории
+     */
     public void clear(Long userId, @Nullable Long categoryId) {
         this.userRepository.removeUserById(userId);
         if (categoryId != null) {

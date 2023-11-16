@@ -9,6 +9,7 @@ import ru.naumen.personalfinancebot.models.User;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +43,7 @@ public class HibernateOperationRepository implements OperationRepository {
     }
 
     /**
-     * Возвращает список расходов пользователя за указанный год и месяц
+     * Возвращает словарь с названием категории и суммой расходов этой категории за указанный год и месяц
      *
      * @param user  Пользователь
      * @param month Месяц
@@ -68,7 +69,7 @@ public class HibernateOperationRepository implements OperationRepository {
                     .setParameter("startDate", startDate)
                     .setParameter("endDate", endDate)
                     .getResultList();
-            Map<String, Double> result = new HashMap<>();
+            Map<String, Double> result = new LinkedHashMap<>();
             for (Object operation : operations) {
                 Object[] row = (Object[]) operation;
                 Category category = (Category) row[1];

@@ -42,7 +42,7 @@ public class StaticMessages {
     public static final String INCORRECT_SELF_REPORT_ARGS =
             "Команда /report_expense принимает 1 аргумент [mm.yyyy], например /set_expense 11.2023";
 
-    public static final String INCORRECT_SELF_REPORT_VALUES = "Переданы неверные данные";
+    public static final String INCORRECT_SELF_REPORT_VALUES = "Переданы неверные данные месяца и года";
 
     public static final String SELF_REPORT_MESSAGE = "Подготовил отчёт по вашим расходам за указанный месяц:\n";
 
