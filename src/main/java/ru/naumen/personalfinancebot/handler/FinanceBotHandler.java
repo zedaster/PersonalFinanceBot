@@ -343,13 +343,18 @@ public class FinanceBotHandler implements BotHandler {
      * @param type  Тип категории: Расход/доход
      */
     private void addOperation(HandleCommandEvent event, CategoryType type) {
-        if (event.getArgs().size() != 2) {
+            if (event.getArgs().size() != 2) {
             event.getBot().sendMessage(event.getUser(), StaticMessages.INCORRECT_OPERATION_ARGS_AMOUNT);
             return;
         }
-        Operation operation = createOperationRecord(event.getUser(), event.getArgs(), type);
-        if (operation == null) {
+        Operation operation;
+        try {
+            operation = createOperationRecord(event.getUser(), event.getArgs(), type);
+        } catch (CategoryRepository.CategoryNotExistsException e) {
             event.getBot().sendMessage(event.getUser(), StaticMessages.CATEGORY_DOES_NOT_EXISTS);
+            return;
+        } catch (NumberFormatException e){
+            event.getBot().sendMessage(event.getUser(), StaticMessages.INCORRECT_PAYMENT_ARG);
             return;
         }
         double currentBalance = event.getUser().getBalance() + operation.getPayment();
@@ -364,36 +369,28 @@ public class FinanceBotHandler implements BotHandler {
     }
 
     /**
-     * Команда для записи в базу операции;
+     * Метод для записи в базу операции;
      *
      * @param user Пользователь
      * @param args Аргументы, переданные с командой
      * @param type Расход/Бюджет.
      * @return Совершенная операция
      */
-    private Operation createOperationRecord(User user, List<String> args, CategoryType type) {
-        double payment;
-        try {
-            payment = Double.parseDouble(args.get(0));
-        } catch (NumberFormatException exception) {
-            return null;
-        }
+    private Operation createOperationRecord(User user, List<String> args, CategoryType type)
+            throws CategoryRepository.CategoryNotExistsException {
+        double payment = Double.parseDouble(args.get(0));
         String categoryName = args.get(1);
         if (type == CategoryType.EXPENSE) {
             payment = -Math.abs(payment);
         } else if (type == CategoryType.INCOME) {
             payment = Math.abs(payment);
         }
-        // TODO: Здесь исправить Саше, надо что-то делать со стандартными категориями
-        Optional<Category> category = this.categoryRepository.getUserCategoryByName(user, type, categoryName);
-        if (category.isEmpty()) {
-            return null;
-        }
-        return this.operationRepository.addOperation(user, category.get(), payment);
+        Category category = this.categoryRepository.getCategoryByName(user, categoryName, type);
+        return this.operationRepository.addOperation(user, category, payment);
     }
 
     /**
-     * Обработчик для команда "/report_expense"
+     * Обработчик для команды "/report_expense"
      *
      * @param commandEvent Event
      */
@@ -407,12 +404,15 @@ public class FinanceBotHandler implements BotHandler {
         }
         ReportService service = new ReportService(this.operationRepository);
         Map<String, Double> categoryPaymentMap = service.getExpenseReport(commandEvent.getUser(), parsedArgs);
-        String message = StaticMessages.SELF_REPORT_MESSAGE;
+        StringBuilder message = new StringBuilder();
+        message.append(StaticMessages.SELF_REPORT_MESSAGE);
         for (Map.Entry<String, Double> entry : categoryPaymentMap.entrySet()) {
-            // TODO: Саша, за это же на Си Шарпе били. StringBuilder в студию
-            message += entry.getKey() + ": " + entry.getValue() + "руб.\n";
+            message.append(entry.getKey())
+                    .append(": ")
+                    .append(entry.getValue())
+                    .append("руб.\n");
         }
-        commandEvent.getBot().sendMessage(commandEvent.getUser(), message);
+        commandEvent.getBot().sendMessage(commandEvent.getUser(), message.toString());
     }
 
     private boolean isCorrectReportArgs(String month, String year) {

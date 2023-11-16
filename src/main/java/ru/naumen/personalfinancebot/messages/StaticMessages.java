@@ -45,4 +45,6 @@ public class StaticMessages {
     public static final String INCORRECT_SELF_REPORT_VALUES = "Переданы неверные данные";
 
     public static final String SELF_REPORT_MESSAGE = "Подготовил отчёт по вашим расходам за указанный месяц:\n";
+
+    public static final String INCORRECT_PAYMENT_ARG = "Сумма операции указана в неверном формате.";
 }
