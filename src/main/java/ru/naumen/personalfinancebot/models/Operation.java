@@ -2,6 +2,7 @@ package ru.naumen.personalfinancebot.models;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * Модель данных "операция по расходам/доходам"
@@ -20,14 +21,14 @@ public class Operation {
     /**
      * Отношение: Пользователь, который произвел операцию
      */
-    @ManyToOne(cascade = CascadeType.REMOVE)
+    @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
     /**
      * ID категории расхода/дохода
      */
-    @ManyToOne(cascade = CascadeType.REMOVE)
+    @ManyToOne
     @JoinColumn(name = "category_id", referencedColumnName = "id")
     private Category category;
 
@@ -104,13 +105,15 @@ public class Operation {
     }
 
     @Override
-    public String toString() {
-        return "Operation{" +
-                "id=" + id +
-                ", user=" + user +
-                ", category=" + category +
-                ", payment=" + payment +
-                ", createdAt=" + createdAt +
-                '}';
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Operation operation = (Operation) o;
+        return id == operation.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

@@ -14,7 +14,6 @@ import java.util.Optional;
 /**
  * Реализация хранилища пользователей в БД с помощью библиотеки Hibernate
  */
-// TODO
 public class HibernateUserRepository implements UserRepository {
     /**
      * Для открытия новых сессий
@@ -34,7 +33,7 @@ public class HibernateUserRepository implements UserRepository {
             CriteriaBuilder cb = session.getCriteriaBuilder();
             CriteriaQuery<User> cq = cb.createQuery(User.class);
             Root<User> root = cq.from(User.class);
-            cq.select(root).where(cb.equal(root.get("chat_id"), chatId));
+            cq.select(root).where(cb.equal(root.get("chatId"), chatId));
 
             Query<User> query = session.createQuery(cq);
             List<User> users = query.getResultList();
@@ -59,7 +58,6 @@ public class HibernateUserRepository implements UserRepository {
                 session.merge(user);
             }
             session.getTransaction().commit();
-            session.close();
         }
     }
 
@@ -75,7 +73,6 @@ public class HibernateUserRepository implements UserRepository {
                 session.delete(user);
             }
             session.getTransaction().commit();
-            session.close();
         }
     }
 }

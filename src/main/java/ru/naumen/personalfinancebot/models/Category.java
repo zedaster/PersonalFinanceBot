@@ -1,6 +1,8 @@
 package ru.naumen.personalfinancebot.models;
 
 import javax.persistence.*;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Модель данных "Категория расхода/дохода"
@@ -17,29 +19,31 @@ public class Category {
     private long id;
 
     /**
-     * Отношение: Пользователь, который добавил каатегорию.
+     * Отношение: Пользователь, который добавил категорию.
      */
-    @ManyToOne(cascade = CascadeType.REMOVE)
+    @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
     /**
-     * Название категории
+     * Отношение: Операции, связанные с этой категорией
+     */
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+    private List<Operation> operations;
+
+    /**
+     * Название категории.
      */
     @Column(name = "category_name", nullable = false)
     private String categoryName;
 
     /**
-     * Тип категории: Расход / Доход
+     * Тип категории: Расход / Доход.
+     * Enum-значение преобразовывается в число для хранения в БД
      */
+    @Enumerated(EnumType.ORDINAL)
     @Column(name = "type", nullable = false)
-    private String type;
-
-    public Category(User user, String categoryName, String type) {
-        this.user = user;
-        this.categoryName = categoryName;
-        this.type = type;
-    }
+    private CategoryType type;
 
     public Category() {
 
@@ -83,14 +87,34 @@ public class Category {
     /**
      * @return Тип категории
      */
-    public String getType() {
+    public CategoryType getType() {
         return type;
     }
 
     /**
      * @param type Тип категории
      */
-    public void setType(String type) {
+    public void setType(CategoryType type) {
         this.type = type;
+    }
+
+    /**
+     * Является ли категория стандартной или нет
+     */
+    public boolean isStandard() {
+        return this.getUser() == null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Category category = (Category) o;
+        return id == category.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

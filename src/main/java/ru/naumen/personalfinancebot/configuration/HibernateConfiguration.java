@@ -11,18 +11,35 @@ public class HibernateConfiguration {
      * SessionFactory в Hibernate
      * Он необходим для открытия сессий в Hibernate
      */
-    private final SessionFactory sessionFactory = buildSessionFactory();
+    private final SessionFactory sessionFactory;
 
     /**
-     * Создает SessionFactory в Hibernate на основе файла hibernate.cfg.xml
+     * Конфигурирует Hibernate на основе файла hibernate.cfg.xml
+     */
+    public HibernateConfiguration() {
+        Configuration configuration = new Configuration().configure();
+        sessionFactory = buildSessionFactory(configuration);
+    }
+
+    /**
+     * Конфигурирует Hibernate с использованием указанных параметров, затем параметров из hibernate.cfg.xml
+     */
+    public HibernateConfiguration(String dbUrl, String dbUsername, String dbPassword) {
+        Configuration configuration = new Configuration()
+                .setProperty("hibernate.connection.url", dbUrl)
+                .setProperty("hibernate.connection.username", dbUsername)
+                .setProperty("hibernate.connection.password", dbPassword)
+                .configure();
+        sessionFactory = buildSessionFactory(configuration);
+    }
+
+    /**
+     * Создает SessionFactory в Hibernate
      * Он необходим для открытия сессий в Hibernate
      */
-    private SessionFactory buildSessionFactory() {
+    private SessionFactory buildSessionFactory(Configuration configuration) {
         try {
-            // Create the SessionFactory from hibernate.cfg.xml
-            return new Configuration()
-                    .configure()
-                    .buildSessionFactory();
+            return configuration.buildSessionFactory();
         } catch (Throwable ex) {
             // Make sure you log the exception, as it might be helpful for debugging
             System.err.println("Initial SessionFactory creation failed." + ex);

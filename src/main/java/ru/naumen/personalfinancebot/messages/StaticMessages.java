@@ -1,8 +1,37 @@
 package ru.naumen.personalfinancebot.messages;
 
 public class StaticMessages {
+    public static final String WELCOME_MESSAGE = "Добро пожаловать в бота для управления финансами!";
+
+    public static final String COMMAND_NOT_FOUND = "Команда не распознана...";
+
+    public static final String SET_BALANCE_SUCCESSFULLY = "Ваш баланс изменен. Теперь он составляет {balance}";
+
     public static final String ADD_INCOME_MESSAGE = "Вы успешно добавили доход по источнику: ";
     public static final String ADD_EXPENSE_MESSAGE = "Добавлен расход по категории: ";
+
+    public static final String INCORRECT_CATEGORY_ARGUMENT_COUNT =
+            "Данная команда принимает 1 аргумент: [название категории]";
+    public static final String INCORRECT_CATEGORY_ARGUMENT_FORMAT = "Название категории введено неверно. Оно может " +
+            "содержать от 1 до 64 символов латиницы, кириллицы, цифр и пробелов";
+
+    public static final String USER_CATEGORY_ALREADY_EXISTS = "Персональная категория {type} '{name}' уже существует.";
+    public static final String STANDARD_CATEGORY_ALREADY_EXISTS = "Стандартная категория {type} '{name}' уже " +
+            "существует.";
+    public static final String USER_CATEGORY_ADDED = "Категория {type} '{name}' успешно добавлена";
+
+    public static final String USER_CATEGORY_ALREADY_NOT_EXISTS = "Пользовательской категории {type} '{name}' не " +
+            "существует!";
+    public static final String USER_CATEGORY_REMOVED = "Категория {type} '{name}' успешно удалена";
+
+    public static final String LIST_TYPED_CATEGORIES = """
+            Все доступные вам категории {type}:
+            Стандартные:
+            {standard_list}
+            Персональные:
+            {personal_list}""";
+    public static final String EMPTY_LIST_CONTENT = "<отсутствуют>";
+
 
     public static final String INCORRECT_OPERATION_ARGS_AMOUNT =
             "Данная команда принимает 2 аргумента: [payment - сумма] [категория расхода/дохода]";

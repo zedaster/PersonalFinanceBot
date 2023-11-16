@@ -6,19 +6,22 @@ import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.configuration.TelegramBotConfiguration;
 import ru.naumen.personalfinancebot.handler.BotHandler;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
+import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
+import ru.naumen.personalfinancebot.repositories.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repositories.operation.HibernateOperationRepository;
+import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repositories.user.HibernateUserRepository;
 import ru.naumen.personalfinancebot.repositories.user.UserRepository;
-import ru.naumen.personalfinancebot.repositories.category.HibernateCategoryRepository;
-import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
-import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
 
 /**
  * Программа, запускающая Телеграм-бота
  */
 public class Main {
     public static void main(String[] args) {
-        HibernateConfiguration hibernateConfiguration = new HibernateConfiguration();
+        HibernateConfiguration hibernateConfiguration = new HibernateConfiguration(
+                System.getenv("DB_URL"),
+                System.getenv("DB_USERNAME"),
+                System.getenv("DB_PASSWORD"));
         UserRepository userRepository = new HibernateUserRepository(hibernateConfiguration.getSessionFactory());
         OperationRepository operationRepository = new HibernateOperationRepository(hibernateConfiguration.getSessionFactory());
         CategoryRepository categoryRepository = new HibernateCategoryRepository(hibernateConfiguration.getSessionFactory());

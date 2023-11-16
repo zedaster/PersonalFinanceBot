@@ -7,12 +7,12 @@ import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.models.User;
+import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
+import ru.naumen.personalfinancebot.repositories.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repositories.operation.HibernateOperationRepository;
+import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repositories.user.HibernateUserRepository;
 import ru.naumen.personalfinancebot.repositories.user.UserRepository;
-import ru.naumen.personalfinancebot.repositories.category.HibernateCategoryRepository;
-import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
-import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,7 +79,7 @@ public class SetBalanceTests {
     public void integerBalance() {
         List<String> args = List.of("100", String.valueOf(Integer.MAX_VALUE));
         for (String arg : args) {
-            assetCorrectBalanceCommand(arg);
+            assetCorrectBalanceCommand(arg, arg);
         }
     }
 
@@ -88,9 +88,12 @@ public class SetBalanceTests {
      */
     @Test
     public void doubleDotBalance() {
-        List<String> args = List.of("100.0", String.valueOf(Double.MAX_VALUE));
-        for (String arg : args) {
-            assetCorrectBalanceCommand(arg);
+        List<List<String>> listOfArgs = List.of(
+                List.of("100.0", "100"),
+                List.of(String.valueOf(Double.MAX_VALUE), String.valueOf(Double.MAX_VALUE))
+        );
+        for (List<String> args : listOfArgs) {
+            assetCorrectBalanceCommand(args.get(0), args.get(1));
         }
     }
 
@@ -99,9 +102,11 @@ public class SetBalanceTests {
      */
     @Test
     public void doubleCommaBalance() {
-        List<String> args = List.of("100,0", String.valueOf(Double.MAX_VALUE).replace(".", ","));
-        for (String arg : args) {
-            assetCorrectBalanceCommand(arg);
+        List<List<String>> listOfArgs = List.of(
+                List.of("100,0", "100"),
+                List.of(String.valueOf(Double.MAX_VALUE).replace(".", ","), String.valueOf(Double.MAX_VALUE)));
+        for (List<String> args : listOfArgs) {
+            assetCorrectBalanceCommand(args.get(0), args.get(1));
         }
     }
 
@@ -112,14 +117,14 @@ public class SetBalanceTests {
     public void zeroBalance() {
         List<String> args = List.of("0", "0.0", "00000.0", "0.000000", "0,0");
         for (String arg : args) {
-            assetCorrectBalanceCommand(arg);
+            assetCorrectBalanceCommand(arg, "0");
         }
     }
 
     /**
      * Проводит тест с позитивным исходом
      */
-    private void assetCorrectBalanceCommand(String argument) {
+    private void assetCorrectBalanceCommand(String argument, String expectedStrAmount) {
         MockBot mockBot = new MockBot();
         User user = new User(123, 12345);
         userRepository.saveUser(user);
@@ -129,10 +134,9 @@ public class SetBalanceTests {
 
         Assert.assertEquals(1, mockBot.getMessageQueueSize());
         MockMessage message = mockBot.poolMessageQueue();
-        Assert.assertEquals(user, message.sender());
+        Assert.assertEquals(user, message.receiver());
         double amountDouble = Double.parseDouble(argument.replace(",", "."));
-        String beautifulAmount = beautifyDouble(amountDouble);
-        Assert.assertEquals("Ваш баланс изменен. Теперь он составляет " + beautifulAmount, message.text());
+        Assert.assertEquals("Ваш баланс изменен. Теперь он составляет " + expectedStrAmount, message.text());
         Assert.assertEquals(user.getBalance(), amountDouble, 1e-15);
 
         userRepository.removeUserById(user.getId());
@@ -150,22 +154,11 @@ public class SetBalanceTests {
 
         Assert.assertEquals(1, mockBot.getMessageQueueSize());
         MockMessage message = mockBot.poolMessageQueue();
-        Assert.assertEquals(user, message.sender());
+        Assert.assertEquals(user, message.receiver());
         Assert.assertEquals("Команда введена неверно! Введите /set_balance <новый баланс>", message.text());
         Assert.assertEquals(user.getBalance(), 12345, 1e-15);
 
         userRepository.removeUserById(user.getId());
-    }
-
-    /**
-     * Форматирует double в красивую строку
-     * Если число целое, то вернет его без дробной части.
-     * Т.е. 1000.0 будет выведено как 1000
-     * А 1000.99 будет выведено как 1000.99
-     */
-    private String beautifyDouble(double d) {
-        if ((int) d == d) return String.valueOf((int) d);
-        return String.valueOf(d);
     }
 
 }
