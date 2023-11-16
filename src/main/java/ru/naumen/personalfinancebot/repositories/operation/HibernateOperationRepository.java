@@ -3,14 +3,14 @@ package ru.naumen.personalfinancebot.repositories.operation;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import ru.naumen.personalfinancebot.models.Category;
+import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.Operation;
 import ru.naumen.personalfinancebot.models.User;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Репозиторий модели данных "Операция"
@@ -42,7 +42,7 @@ public class HibernateOperationRepository implements OperationRepository {
     }
 
     /**
-     * Возвращает список операций пользователя за указанный год месяц
+     * Возвращает список расходов пользователя за указанный год и месяц
      *
      * @param user  Пользователь
      * @param month Месяц
@@ -50,24 +50,32 @@ public class HibernateOperationRepository implements OperationRepository {
      * @return Список операций
      */
     @Override
-    public List<Operation> getFilteredByDate(User user, int month, int year) {
+    public Map<String, Double> getOperationsSumByType(User user, int month, int year, CategoryType type) {
         LocalDateTime startDate = LocalDateTime.of(year, month, 1, 0, 0);
         LocalDateTime endDate = LocalDateTime.of(year, month + 1, 1, 0, 0);
         try (Session session = this.sessionFactory.openSession()) {
-            CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            CriteriaQuery<Operation> criteriaQuery = criteriaBuilder.createQuery(Operation.class);
-            Root<Operation> root = criteriaQuery.from(Operation.class);
-            criteriaQuery.multiselect(
-                            root.get("user"),
-                            root.get("category"),
-                            criteriaBuilder.sum(root.get("payment"))
-                    )
-                    .where(
-                            criteriaBuilder.equal(root.get("user"), user),
-                            criteriaBuilder.between(root.get("createdAt"), startDate, endDate)
-                    )
-                    .groupBy(root.get("category"));
-            return session.createQuery(criteriaQuery).getResultList();
+            String hql = "select operation.user, operation.category, sum (operation.payment) " +
+                    "from Operation operation " +
+                    "left join operation.category cat " +
+                    "where cat.type = :categoryType " +
+                    "and operation.user = :user " +
+                    "and operation.createdAt BETWEEN :startDate AND :endDate " +
+                    "group by operation.category";
+
+            List<?> operations = session.createQuery(hql)
+                    .setParameter("categoryType", type)
+                    .setParameter("user", user)
+                    .setParameter("startDate", startDate)
+                    .setParameter("endDate", endDate)
+                    .getResultList();
+            Map<String, Double> result = new HashMap<>();
+            for (Object operation : operations) {
+                Object[] row = (Object[]) operation;
+                Category category = (Category) row[1];
+                Double payment = (Double) row[2];
+                result.put(category.getCategoryName(), payment);
+            }
+            return result;
         }
     }
 }

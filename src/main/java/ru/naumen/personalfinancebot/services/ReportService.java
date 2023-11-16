@@ -1,5 +1,6 @@
 package ru.naumen.personalfinancebot.services;
 
+import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.Operation;
 import ru.naumen.personalfinancebot.models.User;
 import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
@@ -28,15 +29,6 @@ public class ReportService {
     public Map<String, Double> getExpenseReport(User user, List<String> args) {
         int month = Integer.parseInt(args.get(0));
         int year = Integer.parseInt(args.get(1));
-        List<Operation> operations = this.operationRepository.getFilteredByDate(user, month, year);
-        Map<String, Double> map = new HashMap<>();
-        for (Operation operation : operations) {
-            map.put(
-                    operation.getCategory().getCategoryName(),
-                    // Округление до 2-ух знаков
-                    Math.round(operation.getPayment() * 100.0) / 100.0
-            );
-        }
-        return map;
+        return this.operationRepository.getOperationsSumByType(user, month, year, CategoryType.EXPENSE);
     }
 }
