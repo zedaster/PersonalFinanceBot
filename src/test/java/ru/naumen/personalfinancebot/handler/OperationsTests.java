@@ -69,7 +69,7 @@ public class OperationsTests {
     public void runCorrectIncomeTest() {
         String command = "add_income";
         String categoryName = "Зарплата";
-        List<String> argumentsList = List.of("300", "-2343", "1000", "Не число", "Опять не число", "0.001");
+        List<String> argumentsList = List.of("0", "-2343", "1000", "Не число", "Опять не число", "0.001");
         for (String payment : argumentsList) {
             testCorrectOperationAdding(command, payment, categoryName, CategoryType.INCOME);
         }
@@ -82,7 +82,7 @@ public class OperationsTests {
     public void runCorrectExpenseTest() {
         String command = "add_expense";
         String categoryName = "Такси";
-        List<String> argumentsList = List.of("300", "-2343", "1000", "Не число", "Опять не число", "0.001");
+        List<String> argumentsList = List.of("0", "-2343", "1000", "Не число", "Опять не число", "0.001");
         for (String payment : argumentsList) {
             testCorrectOperationAdding(command, payment, categoryName, CategoryType.EXPENSE);
         }
@@ -126,7 +126,7 @@ public class OperationsTests {
     public void runIncorrectIncomeTest() {
         String command = "add_income";
         String categoryName = "Переводы";
-        List<String> argumentsList = List.of("300", "-2343", "1000", "0.001");
+        List<String> argumentsList = List.of("300", "2343", "1000", "0.001");
         for (String payment : argumentsList)
             testWithoutCategory(command, categoryName, payment);
     }
@@ -138,7 +138,7 @@ public class OperationsTests {
     public void runIncorrectExpenseTest() {
         String command = "add_expense";
         String categoryName = "Химчистка";
-        List<String> argumentsList = List.of("300", "-2343", "1000", "0.001");
+        List<String> argumentsList = List.of("-300", "-2343", "-1000", "-0.001");
         for (String payment : argumentsList)
             testWithoutCategory(command, categoryName, payment);
     }
@@ -219,6 +219,44 @@ public class OperationsTests {
         clear(user.getId(), null);
     }
 
+
+    @Test
+    public void negativePaymentWithIncomeOperation() {
+        String command = "add_income";
+        String categoryName = "Зарплата";
+        List<String> payments = List.of("-100", "-0.1", "-12435523");
+        for (String payment : payments) {
+            testIllegalArgument(command, categoryName, payment, CategoryType.INCOME);
+        }
+    }
+
+    @Test
+    public void positivePaymentWithExpenseOperation() {
+        String command = "add_expense";
+        String categoryName = "Зарплата";
+        List<String> payments = List.of("100", "0.1", "12435523");
+        for (String payment : payments) {
+            testIllegalArgument(command, categoryName, payment, CategoryType.EXPENSE);
+        }
+    }
+
+    public void testIllegalArgument(String command, String categoryName, String payment, CategoryType type) {
+        User user = new User(1, BALANCE);
+        this.userRepository.saveUser(user);
+
+        Category category = this.createUserCategory(user, type, categoryName);
+        Assert.assertEquals(category.getCategoryName(), categoryName);
+
+        MockBot bot = new MockBot();
+        HandleCommandEvent commandEvent = new HandleCommandEvent(bot, user, command, List.of(payment, categoryName));
+        this.botHandler.handleCommand(commandEvent);
+
+        MockMessage message = bot.poolMessageQueue();
+        Assert.assertEquals(StaticMessages.ILLEGAL_PAYMENT_ARGUMENT, message.text());
+        Assert.assertEquals(BALANCE, user.getBalance(), 0);
+        clear(user.getId(), category.getId());
+    }
+
     public void clear(Long userId, @Nullable Long categoryId) {
         this.userRepository.removeUserById(userId);
         if (categoryId != null) {
@@ -261,9 +299,9 @@ public class OperationsTests {
         } catch (NumberFormatException e) {
             return 0.0;
         }
-        if (type == CategoryType.EXPENSE) {
-            return -Math.abs(result);
+        if ((type == CategoryType.EXPENSE && result < 0) || (type == CategoryType.INCOME && result > 0)) {
+            return result;
         }
-        return Math.abs(result);
+        return 0.0;
     }
 }

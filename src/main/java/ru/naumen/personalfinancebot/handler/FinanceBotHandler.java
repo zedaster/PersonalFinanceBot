@@ -15,7 +15,6 @@ import ru.naumen.personalfinancebot.services.ReportService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -343,7 +342,7 @@ public class FinanceBotHandler implements BotHandler {
      * @param type  Тип категории: Расход/доход
      */
     private void addOperation(HandleCommandEvent event, CategoryType type) {
-            if (event.getArgs().size() != 2) {
+        if (event.getArgs().size() != 2) {
             event.getBot().sendMessage(event.getUser(), StaticMessages.INCORRECT_OPERATION_ARGS_AMOUNT);
             return;
         }
@@ -353,8 +352,11 @@ public class FinanceBotHandler implements BotHandler {
         } catch (CategoryRepository.CategoryNotExistsException e) {
             event.getBot().sendMessage(event.getUser(), StaticMessages.CATEGORY_DOES_NOT_EXISTS);
             return;
-        } catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             event.getBot().sendMessage(event.getUser(), StaticMessages.INCORRECT_PAYMENT_ARG);
+            return;
+        } catch (IllegalArgumentException e) {
+            event.getBot().sendMessage(event.getUser(), StaticMessages.ILLEGAL_PAYMENT_ARGUMENT);
             return;
         }
         double currentBalance = event.getUser().getBalance() + operation.getPayment();
@@ -379,6 +381,9 @@ public class FinanceBotHandler implements BotHandler {
     private Operation createOperationRecord(User user, List<String> args, CategoryType type)
             throws CategoryRepository.CategoryNotExistsException {
         double payment = Double.parseDouble(args.get(0));
+        if (!this.isValidInputPayment(payment, type)) {
+            throw new IllegalArgumentException();
+        }
         String categoryName = args.get(1);
         if (type == CategoryType.EXPENSE) {
             payment = -Math.abs(payment);
@@ -387,6 +392,15 @@ public class FinanceBotHandler implements BotHandler {
         }
         Category category = this.categoryRepository.getCategoryByName(user, categoryName, type);
         return this.operationRepository.addOperation(user, category, payment);
+    }
+
+    /**
+     * @param payment Плата
+     * @param type Тип операции
+     * @return boolean
+     */
+    private boolean isValidInputPayment(double payment, CategoryType type) {
+        return (type == CategoryType.INCOME && payment > 0) || (type == CategoryType.EXPENSE && payment < 0);
     }
 
     /**
