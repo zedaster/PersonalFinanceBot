@@ -15,6 +15,7 @@ import ru.naumen.personalfinancebot.services.ReportService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -349,7 +350,7 @@ public class FinanceBotHandler implements BotHandler {
         Operation operation;
         try {
             operation = createOperationRecord(event.getUser(), event.getArgs(), type);
-        } catch (CategoryRepository.CategoryNotExistsException e) {
+        } catch (OperationCategoryNotExistsException e) {
             event.getBot().sendMessage(event.getUser(), StaticMessages.CATEGORY_DOES_NOT_EXISTS);
             return;
         } catch (NumberFormatException e) {
@@ -379,7 +380,7 @@ public class FinanceBotHandler implements BotHandler {
      * @return Совершенная операция
      */
     private Operation createOperationRecord(User user, List<String> args, CategoryType type)
-            throws CategoryRepository.CategoryNotExistsException {
+            throws OperationCategoryNotExistsException {
         double payment = Double.parseDouble(args.get(0));
         if (payment <= 0) {
             throw new IllegalArgumentException();
@@ -390,8 +391,11 @@ public class FinanceBotHandler implements BotHandler {
         } else if (type == CategoryType.INCOME) {
             payment = Math.abs(payment);
         }
-        Category category = this.categoryRepository.getCategoryByName(user, categoryName, type);
-        return this.operationRepository.addOperation(user, category, payment);
+        Optional<Category> category = this.categoryRepository.getCategoryByName(user, type, categoryName);
+        if (category.isEmpty()) {
+            throw new OperationCategoryNotExistsException();
+        }
+        return this.operationRepository.addOperation(user, category.get(), payment);
     }
 
     /**
@@ -426,6 +430,13 @@ public class FinanceBotHandler implements BotHandler {
         commandEvent.getBot().sendMessage(commandEvent.getUser(), message.toString());
     }
 
+    /**
+     * Проверяет корректность аргументов для команды /report_expense
+     *
+     * @param month введенный месяц
+     * @param year  введенный год
+     * @return true при корректных данных, иначе - false
+     */
     private boolean isCorrectReportArgs(String month, String year) {
         int _month = Integer.parseInt(month);
         if (_month < 1 || _month > 12) {
@@ -433,5 +444,14 @@ public class FinanceBotHandler implements BotHandler {
         }
 
         return year.length() == 4 && Integer.parseInt(year) >= 0;
+    }
+
+    /**
+     * Исключение, генерируемое при попытке добавить операцию по несуществующей категории
+     */
+    private static class OperationCategoryNotExistsException extends Exception {
+        public OperationCategoryNotExistsException() {
+            super();
+        }
     }
 }

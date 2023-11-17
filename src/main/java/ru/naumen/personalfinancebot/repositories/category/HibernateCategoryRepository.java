@@ -25,18 +25,6 @@ public class HibernateCategoryRepository implements CategoryRepository {
     }
 
     /**
-     * Возвращает категорию по имени. Регистр названия категории игнорируется.
-     *
-     * @param categoryName Имя категории
-     * @return Категория
-     */
-    @Override
-    public Optional<Category> getUserCategoryByName(@NotNull User user, CategoryType type, String categoryName) {
-        if (user == null) throw new IllegalArgumentException();
-        return getCategory(user, type, categoryName);
-    }
-
-    /**
      * Возвращает все категории указанного типа для указанного пользователя.
      *
      * @param user Пользователь
@@ -47,18 +35,6 @@ public class HibernateCategoryRepository implements CategoryRepository {
     public List<Category> getUserCategoriesByType(@NotNull User user, CategoryType type) {
         if (user == null) throw new IllegalArgumentException();
         return getCategoriesByType(user, type);
-    }
-
-    /**
-     * Возвращает стандартную категорию по имени. Регистр названия категории игнорируется.
-     *
-     * @param type         Тип категории
-     * @param categoryName Имя категории
-     * @return Стандартная категория
-     */
-    @Override
-    public Optional<Category> getStandardCategoryByName(CategoryType type, String categoryName) {
-        return getCategory(null, type, categoryName);
     }
 
     /**
@@ -85,14 +61,14 @@ public class HibernateCategoryRepository implements CategoryRepository {
     @Override
     public Category createUserCategory(User user, CategoryType type, String categoryName) throws
             CreatingExistingStandardCategoryException, CreatingExistingUserCategoryException {
-        Optional<Category> existingUserCategory = this.getUserCategoryByName(user, type, categoryName);
-        if (existingUserCategory.isPresent()) {
-            throw new CreatingExistingUserCategoryException(categoryName);
-        }
+        Optional<Category> existingUserCategory = this.getCategoryByName(user, type, categoryName);
 
-        Optional<Category> existingStandardCategory = this.getStandardCategoryByName(type, categoryName);
-        if (existingStandardCategory.isPresent()) {
-            throw new CreatingExistingStandardCategoryException(categoryName);
+        if (existingUserCategory.isPresent()) {
+            if (existingUserCategory.get().isStandard()) {
+                throw new CreatingExistingStandardCategoryException(categoryName);
+            } else {
+                throw new CreatingExistingUserCategoryException(categoryName);
+            }
         }
 
         Category category = new Category();
@@ -113,8 +89,7 @@ public class HibernateCategoryRepository implements CategoryRepository {
     @Override
     public Category createStandardCategory(CategoryType type, String categoryName)
             throws CreatingExistingStandardCategoryException {
-        Optional<Category> existingCategory = this.getStandardCategoryByName(type, categoryName);
-        if (existingCategory.isPresent()) {
+        if (this.getStandardCategoryByName(type, categoryName).isPresent()) {
             throw new CreatingExistingStandardCategoryException(categoryName);
         }
 
@@ -147,16 +122,16 @@ public class HibernateCategoryRepository implements CategoryRepository {
     }
 
     /**
-     * Удаляет категорию по названию
+     * Удаляет пользовательскую категорию по названию
      *
      * @param categoryName - название категории
-     * @throws RemovingNonExistentCategoryException если такая категория не существует
+     * @throws RemovingNonExistentCategoryException если такая персональная категория не существует
      */
     public void removeUserCategoryByName(User user, CategoryType type, String categoryName)
             throws RemovingNonExistentCategoryException {
         try (Session session = sessionFactory.openSession()) {
-            Optional<Category> category = getUserCategoryByName(user, type, categoryName);
-            if (category.isEmpty()) {
+            Optional<Category> category = getCategoryByName(user, type, categoryName);
+            if (category.isEmpty() || category.get().isStandard()) {
                 throw new RemovingNonExistentCategoryException();
             }
 
@@ -167,34 +142,28 @@ public class HibernateCategoryRepository implements CategoryRepository {
     }
 
     /**
-     * Метод возвращает собственную категорию пользователя, либо стандартную.
+     * Метод возвращает либо собственную категорию пользователя, либо стандартную.
      *
-     * @param user         Пользователь
+     * @param user         Пользователь или null (при null доступны только стандартные категории)
      * @param categoryName Название категории
      * @param type         Тип категории
-     * @return Категория / null
+     * @return Опциональный объект категории (пуст, если категория не найдена)
      */
     @Override
-    public Category getCategoryByName(User user, String categoryName, CategoryType type)
-            throws CategoryNotExistsException {
-        Optional<Category> userCategory = this.getCategory(user, type, categoryName);
-        Optional<Category> standardCategory = this.getCategory(null, type, categoryName);
-        if (userCategory.isEmpty() && standardCategory.isEmpty()) {
-            throw new CategoryNotExistsException();
-        }
-        return userCategory.orElseGet(standardCategory::get);
-    }
-
-    /**
-     * Получает категорию либо пользовательскую, либо стандартную, если user = null.
-     * Регистр названия категории игнорируется.
-     */
-    private Optional<Category> getCategory(@Nullable User user, CategoryType type, String categoryName) {
+    public Optional<Category> getCategoryByName(@Nullable User user, CategoryType type, String categoryName) {
         try (Session session = sessionFactory.openSession()) {
-            return createSelectCategoriesQuery(session, type, user, categoryName)
+            Query<Category> resultQuery;
+            if (user == null) {
+                resultQuery = selectCategoriesSeparately(session, type, null, categoryName);
+            } else {
+                resultQuery = selectCategoriesTogether(session, type, user, categoryName);
+            }
+
+            return resultQuery
                     .getResultStream()
                     .findFirst();
         }
+
     }
 
     /**
@@ -203,16 +172,17 @@ public class HibernateCategoryRepository implements CategoryRepository {
      */
     private List<Category> getCategoriesByType(@Nullable User user, CategoryType type) {
         try (Session session = sessionFactory.openSession()) {
-            return createSelectCategoriesQuery(session, type, user, null).getResultList();
+            return selectCategoriesSeparately(session, type, user, null).getResultList();
         }
     }
 
     /**
-     * Делает запрос категорий в БД.
+     * Делает запрос категорий в БД. Возвращает запрос, содержащий <b>или</b> стандартные категории при user == null,
+     * <b>или</b> персональные категории в ином случае.
      * Регистр названия категории при выборке игнорируется.
      */
-    private Query<Category> createSelectCategoriesQuery(Session session, CategoryType type, @Nullable User user,
-                                                        @Nullable String categoryName) {
+    private Query<Category> selectCategoriesSeparately(Session session, CategoryType type, @Nullable User user,
+                                                       @Nullable String categoryName) {
         CriteriaBuilder cb = session.getCriteriaBuilder();
         CriteriaQuery<Category> cq = cb.createQuery(Category.class);
         Root<Category> root = cq.from(Category.class);
@@ -237,6 +207,28 @@ public class HibernateCategoryRepository implements CategoryRepository {
 
         Predicate[] selectPredicatesArray = selectPredicates.toArray(new Predicate[0]);
         cq.select(root).where(cb.and(selectPredicatesArray));
+        return session.createQuery(cq);
+    }
+
+    /**
+     * Делает запрос категорий в БД. Возвращает запрос, содержащий <b>и</b> стандартные категории,
+     * <b>и</b> персональные категории.
+     * Регистр названия категории при выборке игнорируется.
+     */
+    private Query<Category> selectCategoriesTogether(Session session, CategoryType type, User user, String categoryName) {
+        CriteriaBuilder cb = session.getCriteriaBuilder();
+        CriteriaQuery<Category> cq = cb.createQuery(Category.class);
+        Root<Category> root = cq.from(Category.class);
+
+        cq.select(root).where(cb.and(
+                cb.or(
+                        cb.equal(root.get("user"), user.getId()), // userId == userId
+                        cb.isNull(root.get("user")) // userId is null
+                ),
+                cb.equal(root.get("type"), type),
+                cb.equal(cb.lower(root.get("categoryName")), categoryName.toLowerCase())
+        ));
+
         return session.createQuery(cq);
     }
 

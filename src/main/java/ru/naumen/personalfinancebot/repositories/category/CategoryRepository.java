@@ -12,13 +12,6 @@ import java.util.Optional;
  */
 public interface CategoryRepository {
     /**
-     * Возвращает пользовательскую категорию по имени
-     * @param categoryName Имя категории
-     * @return Пользовательская категория
-     */
-    Optional<Category> getUserCategoryByName(User user, CategoryType type, String categoryName);
-
-    /**
      * Возвращает все категории указанного типа для указанного пользователя
      *
      * @param user Пользователь
@@ -33,7 +26,9 @@ public interface CategoryRepository {
      * @param categoryName Имя категории
      * @return Стандартная категория
      */
-    Optional<Category> getStandardCategoryByName(CategoryType type, String categoryName);
+    default Optional<Category> getStandardCategoryByName(CategoryType type, String categoryName) {
+        return getCategoryByName(null, type, categoryName);
+    }
 
     /**
      * Возвращает все стандартные категории указанного типа
@@ -126,13 +121,13 @@ public interface CategoryRepository {
     }
 
     /**
-     * Метод возвращает собственную категорию пользователя, либо стандартную.
+     * Метод возвращает либо собственную категорию пользователя, либо стандартную.
      * @param user Пользователь
      * @param categoryName Название категории
      * @param type Тип категории
-     * @return Категория / null
+     * @return Опциональный объект категории (пуст, если категория не найдена)
      */
-    Category getCategoryByName(User user, String categoryName, CategoryType type) throws CategoryNotExistsException;
+    Optional<Category> getCategoryByName(User user, CategoryType type, String categoryName);
 
     /**
      * Исключение, генерируемое при попытке удаления стандартной категории
@@ -146,16 +141,5 @@ public interface CategoryRepository {
      */
     class RemovingNonExistentCategoryException extends Exception {
 
-    }
-
-    /**
-     * Исключение, генерируемое при попытке добавить операцию по несуществеющей категории
-     */
-    class CategoryNotExistsException extends Exception {
-        public CategoryNotExistsException(String message) {
-            super(message);
-        }
-
-        public CategoryNotExistsException(){}
     }
 }

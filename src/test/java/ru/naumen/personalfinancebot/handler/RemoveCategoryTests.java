@@ -19,13 +19,14 @@ import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 public class RemoveCategoryTests {
     /**
      * Название моковой тестовой категории доходов, которая пересоздается перед каждым тестом.
      */
-    private static final String TEST_USER_INCOME_CATEGORY_NAME = "Personal income 1";
+    private static final String TEST_USER_INCOME_CATEGORY_NAME = "Personal income 1"; // TODO: Переименовать
 
     /**
      * Название моковой тестовой категории расходов, которая пересоздается перед каждым тестом.
@@ -344,7 +345,7 @@ public class RemoveCategoryTests {
      */
     private void assertUserCategoryExists(User user, CategoryType type, String categoryName) {
         Assert.assertTrue(categoryRepository
-                .getUserCategoryByName(user, type, categoryName)
+                .getCategoryByName(user, type, categoryName)
                 .isPresent());
     }
 
@@ -361,9 +362,8 @@ public class RemoveCategoryTests {
      * Тестирует, отсутствует ли такая пользовательская категория
      */
     private void assertUserCategoryNotExists(User user, CategoryType type, String categoryName) {
-        Assert.assertTrue(categoryRepository
-                .getUserCategoryByName(user, type, categoryName)
-                .isEmpty());
+        Optional<Category> category = categoryRepository.getCategoryByName(user, type, categoryName);
+        Assert.assertTrue(category.isEmpty() || category.get().isStandard());
     }
 
     /**
