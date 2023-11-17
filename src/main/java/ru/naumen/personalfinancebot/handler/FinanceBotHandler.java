@@ -381,7 +381,7 @@ public class FinanceBotHandler implements BotHandler {
     private Operation createOperationRecord(User user, List<String> args, CategoryType type)
             throws CategoryRepository.CategoryNotExistsException {
         double payment = Double.parseDouble(args.get(0));
-        if (!this.isValidInputPayment(payment, type)) {
+        if (payment <= 0) {
             throw new IllegalArgumentException();
         }
         String categoryName = args.get(1);
@@ -392,15 +392,6 @@ public class FinanceBotHandler implements BotHandler {
         }
         Category category = this.categoryRepository.getCategoryByName(user, categoryName, type);
         return this.operationRepository.addOperation(user, category, payment);
-    }
-
-    /**
-     * @param payment Плата
-     * @param type Тип операции
-     * @return boolean
-     */
-    private boolean isValidInputPayment(double payment, CategoryType type) {
-        return (type == CategoryType.INCOME && payment > 0) || (type == CategoryType.EXPENSE && payment < 0);
     }
 
     /**
@@ -418,6 +409,10 @@ public class FinanceBotHandler implements BotHandler {
         }
         ReportService service = new ReportService(this.operationRepository);
         Map<String, Double> categoryPaymentMap = service.getExpenseReport(commandEvent.getUser(), parsedArgs);
+        if (categoryPaymentMap == null) {
+            commandEvent.getBot().sendMessage(commandEvent.getUser(), "К сожалению, данные по затратам отсутсвуют");
+            return;
+        }
         StringBuilder message = new StringBuilder();
         message.append(StaticMessages.SELF_REPORT_MESSAGE);
         for (Map.Entry<String, Double> entry : categoryPaymentMap.entrySet()) {

@@ -53,15 +53,15 @@ public class HibernateOperationRepository implements OperationRepository {
     @Override
     public Map<String, Double> getOperationsSumByType(User user, int month, int year, CategoryType type) {
         LocalDateTime startDate = LocalDateTime.of(year, month, 1, 0, 0);
-        LocalDateTime endDate = LocalDateTime.of(year, month + 1, 1, 0, 0);
+        LocalDateTime endDate = startDate.plusMonths(1);
         try (Session session = this.sessionFactory.openSession()) {
-            String hql = "select operation.user, operation.category, sum (operation.payment) " +
-                    "from Operation operation " +
-                    "left join operation.category cat " +
-                    "where cat.type = :categoryType " +
-                    "and operation.user = :user " +
-                    "and operation.createdAt BETWEEN :startDate AND :endDate " +
-                    "group by operation.category";
+            String hql = "SELECT cat.categoryName, sum (operation.payment) " +
+                    "FROM Operation operation " +
+                    "LEFT JOIN operation.category cat on cat.id = operation.category.id " +
+                    "WHERE cat.type = :categoryType " +
+                    "AND (operation.user = :user OR operation.user = NULL) " +
+                    "AND operation.createdAt BETWEEN :startDate AND :endDate " +
+                    "GROUP BY operation.category.id, cat.id";
 
             List<?> operations = session.createQuery(hql)
                     .setParameter("categoryType", type)
@@ -69,12 +69,15 @@ public class HibernateOperationRepository implements OperationRepository {
                     .setParameter("startDate", startDate)
                     .setParameter("endDate", endDate)
                     .getResultList();
+            if (operations.isEmpty()){
+                return null;
+            }
             Map<String, Double> result = new LinkedHashMap<>();
             for (Object operation : operations) {
                 Object[] row = (Object[]) operation;
-                Category category = (Category) row[1];
-                Double payment = (Double) row[2];
-                result.put(category.getCategoryName(), payment);
+                String category = (String) row[0];
+                Double payment = (Double) row[1];
+                result.put(category, payment);
             }
             return result;
         }

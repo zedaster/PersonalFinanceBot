@@ -48,5 +48,5 @@ public class StaticMessages {
 
     public static final String INCORRECT_PAYMENT_ARG = "Сумма операции указана в неверном формате.";
 
-    public static final String ILLEGAL_PAYMENT_ARGUMENT = "Ошибка! Доход должен быть больше 0. Расход должен быть меньше 0";
+    public static final String ILLEGAL_PAYMENT_ARGUMENT = "Ошибка! Аргумент [payment] должен быть больше 0";
 }

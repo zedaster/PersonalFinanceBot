@@ -82,7 +82,7 @@ public class OperationsTests {
     public void runCorrectExpenseTest() {
         String command = "add_expense";
         String categoryName = "Такси";
-        List<String> argumentsList = List.of("0", "-2343", "1000", "Не число", "Опять не число", "0.001");
+        List<String> argumentsList = List.of("0", "1000", "Не число", "Опять не число", "0.001");
         for (String payment : argumentsList) {
             testCorrectOperationAdding(command, payment, categoryName, CategoryType.EXPENSE);
         }
@@ -138,7 +138,7 @@ public class OperationsTests {
     public void runIncorrectExpenseTest() {
         String command = "add_expense";
         String categoryName = "Химчистка";
-        List<String> argumentsList = List.of("-300", "-2343", "-1000", "-0.001");
+        List<String> argumentsList = List.of("300", "2343", "1000", "0.001");
         for (String payment : argumentsList)
             testWithoutCategory(command, categoryName, payment);
     }
@@ -226,22 +226,9 @@ public class OperationsTests {
     public void negativePaymentWithIncomeOperation() {
         String command = "add_income";
         String categoryName = "Зарплата";
-        List<String> payments = List.of("-100", "-0.1", "-12435523");
+        List<String> payments = List.of("-100", "-0.1", "-12435523", "0");
         for (String payment : payments) {
             testIllegalArgument(command, categoryName, payment, CategoryType.INCOME);
-        }
-    }
-
-    /**
-     * Тест для команды /add_expense с неотрицательным аргументом {payment}
-     */
-    @Test
-    public void positivePaymentWithExpenseOperation() {
-        String command = "add_expense";
-        String categoryName = "Зарплата";
-        List<String> payments = List.of("100", "0.1", "12435523");
-        for (String payment : payments) {
-            testIllegalArgument(command, categoryName, payment, CategoryType.EXPENSE);
         }
     }
 
@@ -316,8 +303,11 @@ public class OperationsTests {
         } catch (NumberFormatException e) {
             return 0.0;
         }
-        if ((type == CategoryType.EXPENSE && result < 0) || (type == CategoryType.INCOME && result > 0)) {
+        if (CategoryType.INCOME  == type && result > 0) {
             return result;
+        }
+        if (CategoryType.EXPENSE == type && result > 0) {
+            return - result;
         }
         return 0.0;
     }
