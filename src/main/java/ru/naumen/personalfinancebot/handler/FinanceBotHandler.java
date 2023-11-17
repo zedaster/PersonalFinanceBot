@@ -402,10 +402,12 @@ public class FinanceBotHandler implements BotHandler {
     private void handleReportExpense(HandleCommandEvent commandEvent) {
         if (commandEvent.getArgs().size() != 1) {
             commandEvent.getBot().sendMessage(commandEvent.getUser(), StaticMessages.INCORRECT_SELF_REPORT_ARGS);
+            return;
         }
         List<String> parsedArgs = List.of(commandEvent.getArgs().get(0).split("\\."));
         if (!isCorrectReportArgs(parsedArgs.get(0), parsedArgs.get(1))) {
             commandEvent.getBot().sendMessage(commandEvent.getUser(), StaticMessages.INCORRECT_SELF_REPORT_VALUES);
+            return;
         }
         ReportService service = new ReportService(this.operationRepository);
         Map<String, Double> categoryPaymentMap = service.getExpenseReport(commandEvent.getUser(), parsedArgs);
