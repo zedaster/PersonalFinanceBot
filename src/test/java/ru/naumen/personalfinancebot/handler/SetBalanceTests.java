@@ -25,7 +25,7 @@ public class SetBalanceTests {
     private final UserRepository userRepository;
     private final OperationRepository operationRepository;
     private final CategoryRepository categoryRepository;
-    private final BotHandler botHandler;
+    private final FinanceBotHandler botHandler;
 
     public SetBalanceTests() {
         HibernateConfiguration hibernateUserRepository = new HibernateConfiguration();

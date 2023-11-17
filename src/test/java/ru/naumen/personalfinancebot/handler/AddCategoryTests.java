@@ -46,7 +46,7 @@ public class AddCategoryTests {
      * Хранилище операций
      */
     private static final OperationRepository operationRepository;
-    private final BotHandler botHandler;
+    private final FinanceBotHandler botHandler;
 
     static {
         sessionFactory = new HibernateConfiguration().getSessionFactory();

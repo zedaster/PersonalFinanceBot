@@ -49,7 +49,7 @@ public class ReportExpenseTests {
     /**
      * Обработчик операций в боте
      */
-    private final BotHandler botHandler;
+    private final FinanceBotHandler botHandler;
 
     public ReportExpenseTests() {
         HibernateConfiguration hibernateUserRepository = new HibernateConfiguration();

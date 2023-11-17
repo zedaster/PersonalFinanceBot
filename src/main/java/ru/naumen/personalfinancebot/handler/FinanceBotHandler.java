@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * Обработчик операций для бота "Персональный финансовый трекер"
  */
-public class FinanceBotHandler implements BotHandler {
+public class FinanceBotHandler {
     /**
      * Коллекция, которая хранит обработчики для команд
      */
@@ -56,7 +56,6 @@ public class FinanceBotHandler implements BotHandler {
     /**
      * Вызывается при получении какой-либо команды от пользователя
      */
-    @Override
     public void handleCommand(HandleCommandEvent event) {
         CommandHandler handler = this.commandHandlers.get(event.getCommandName().toLowerCase());
         if (handler != null) {

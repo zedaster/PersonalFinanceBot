@@ -7,7 +7,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import ru.naumen.personalfinancebot.configuration.TelegramBotConfiguration;
-import ru.naumen.personalfinancebot.handler.BotHandler;
+import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.models.User;
 import ru.naumen.personalfinancebot.repositories.user.UserRepository;
@@ -20,12 +20,12 @@ import java.util.Optional;
  */
 public class TelegramBot extends TelegramLongPollingBot implements Bot {
     private final TelegramBotConfiguration configuration;
-    private final BotHandler botHandler;
+    private final FinanceBotHandler botHandler;
     private final UserRepository userRepository;
 
     public TelegramBot(
             TelegramBotConfiguration configuration,
-            BotHandler botHandler,
+            FinanceBotHandler botHandler,
             UserRepository userRepository
     ) {
         super(configuration.getBotToken());

@@ -46,7 +46,7 @@ public class OperationsTests {
     /**
      * Обработчик операций в боте
      */
-    private final BotHandler botHandler;
+    private final FinanceBotHandler botHandler;
 
     private final SessionFactory sessionFactory;
 

@@ -63,7 +63,7 @@ public class RemoveCategoryTests {
     /**
      * Обработчик команд
      */
-    private final BotHandler botHandler;
+    private final FinanceBotHandler botHandler;
 
     /**
      * Моковый пользователь. Пересоздается перед каждым тестом
