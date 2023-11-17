@@ -126,6 +126,15 @@ public interface CategoryRepository {
     }
 
     /**
+     * Метод возвращает собственную категорию пользователя, либо стандартную.
+     * @param user Пользователь
+     * @param categoryName Название категории
+     * @param type Тип категории
+     * @return Категория / null
+     */
+    Category getCategoryByName(User user, String categoryName, CategoryType type) throws CategoryNotExistsException;
+
+    /**
      * Исключение, генерируемое при попытке удаления стандартной категории
      */
     class RemovingStandardCategoryException extends Exception {
@@ -137,5 +146,16 @@ public interface CategoryRepository {
      */
     class RemovingNonExistentCategoryException extends Exception {
 
+    }
+
+    /**
+     * Исключение, генерируемое при попытке добавить операцию по несуществеющей категории
+     */
+    class CategoryNotExistsException extends Exception {
+        public CategoryNotExistsException(String message) {
+            super(message);
+        }
+
+        public CategoryNotExistsException(){}
     }
 }

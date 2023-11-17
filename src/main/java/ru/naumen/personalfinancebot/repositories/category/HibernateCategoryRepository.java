@@ -26,6 +26,7 @@ public class HibernateCategoryRepository implements CategoryRepository {
 
     /**
      * Возвращает категорию по имени. Регистр названия категории игнорируется.
+     *
      * @param categoryName Имя категории
      * @return Категория
      */
@@ -73,14 +74,13 @@ public class HibernateCategoryRepository implements CategoryRepository {
 
     /**
      * Создаёт категорию, которую добавил пользователь
-     * @param user Пользователь
+     *
+     * @param user         Пользователь
      * @param categoryName Имя категории
-     * @param type Тип категории: расход / доход
+     * @param type         Тип категории: расход / доход
      * @return Категория
-     * @throws CreatingExistingUserCategoryException
-     * если пользовательская категория с таким типом и именем для этого юзера уже существует
-     * @throws CreatingExistingStandardCategoryException
-     * если существует стандартная категория с таким же названием
+     * @throws CreatingExistingUserCategoryException     если пользовательская категория с таким типом и именем для этого юзера уже существует
+     * @throws CreatingExistingStandardCategoryException если существует стандартная категория с таким же названием
      */
     @Override
     public Category createUserCategory(User user, CategoryType type, String categoryName) throws
@@ -104,11 +104,11 @@ public class HibernateCategoryRepository implements CategoryRepository {
 
     /**
      * Создает стандартную категорию, не относящуюся к пользователю.
+     *
      * @param categoryName Имя категории
-     * @param type Тип категории
+     * @param type         Тип категории
      * @return Категория
-     * @throws CreatingExistingStandardCategoryException
-     * если стандартная категория с таким типом и именем уже существует
+     * @throws CreatingExistingStandardCategoryException если стандартная категория с таким типом и именем уже существует
      */
     @Override
     public Category createStandardCategory(CategoryType type, String categoryName)
@@ -134,7 +134,7 @@ public class HibernateCategoryRepository implements CategoryRepository {
     public void removeCategoryById(Long id) throws RemovingStandardCategoryException {
         try (Session session = sessionFactory.openSession()) {
             Category category = session.get(Category.class, id);
-            if (category == null){
+            if (category == null) {
                 return;
             }
             if (category.isStandard()) {
@@ -148,6 +148,7 @@ public class HibernateCategoryRepository implements CategoryRepository {
 
     /**
      * Удаляет категорию по названию
+     *
      * @param categoryName - название категории
      * @throws RemovingNonExistentCategoryException если такая категория не существует
      */
@@ -163,6 +164,25 @@ public class HibernateCategoryRepository implements CategoryRepository {
             session.delete(category.get());
             session.getTransaction().commit();
         }
+    }
+
+    /**
+     * Метод возвращает собственную категорию пользователя, либо стандартную.
+     *
+     * @param user         Пользователь
+     * @param categoryName Название категории
+     * @param type         Тип категории
+     * @return Категория / null
+     */
+    @Override
+    public Category getCategoryByName(User user, String categoryName, CategoryType type)
+            throws CategoryNotExistsException {
+        Optional<Category> userCategory = this.getCategory(user, type, categoryName);
+        Optional<Category> standardCategory = this.getCategory(null, type, categoryName);
+        if (userCategory.isEmpty() && standardCategory.isEmpty()) {
+            throw new CategoryNotExistsException();
+        }
+        return userCategory.orElseGet(standardCategory::get);
     }
 
     /**
@@ -222,10 +242,11 @@ public class HibernateCategoryRepository implements CategoryRepository {
 
     /**
      * Делегирующий метод для создания записи категории в базе данных
+     *
      * @param category Категория
      * @return Категория
      */
-    private Category createCategory(Category category){
+    private Category createCategory(Category category) {
         try (Session session = sessionFactory.openSession()) {
             session.beginTransaction();
             session.save(category);
