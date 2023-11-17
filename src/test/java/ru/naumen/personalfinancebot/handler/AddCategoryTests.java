@@ -46,6 +46,10 @@ public class AddCategoryTests {
      * Хранилище операций
      */
     private static final OperationRepository operationRepository;
+
+    /**
+     * Обработчик операций для бота
+     */
     private final FinanceBotHandler botHandler;
 
     static {
