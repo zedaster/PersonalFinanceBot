@@ -4,7 +4,6 @@ import ru.naumen.personalfinancebot.bot.Bot;
 import ru.naumen.personalfinancebot.bot.TelegramBot;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.configuration.TelegramBotConfiguration;
-import ru.naumen.personalfinancebot.handler.BotHandler;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
 import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repositories.category.HibernateCategoryRepository;
@@ -25,7 +24,7 @@ public class Main {
         UserRepository userRepository = new HibernateUserRepository(hibernateConfiguration.getSessionFactory());
         OperationRepository operationRepository = new HibernateOperationRepository(hibernateConfiguration.getSessionFactory());
         CategoryRepository categoryRepository = new HibernateCategoryRepository(hibernateConfiguration.getSessionFactory());
-        BotHandler handler = new FinanceBotHandler(
+        FinanceBotHandler handler = new FinanceBotHandler(
                 userRepository,
                 operationRepository,
                 categoryRepository

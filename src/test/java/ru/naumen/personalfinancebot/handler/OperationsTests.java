@@ -33,12 +33,6 @@ public class OperationsTests {
     private final UserRepository userRepository;
 
     /**
-     * Репозиторий для работы с операциями
-     * ! Нужен для FinanceBotHandler;
-     */
-    private final OperationRepository operationRepository;
-
-    /**
      * Репозиторий для работы с категориями
      */
     private final CategoryRepository categoryRepository;
@@ -46,17 +40,17 @@ public class OperationsTests {
     /**
      * Обработчик операций в боте
      */
-    private final BotHandler botHandler;
-
-    private final SessionFactory sessionFactory;
+    private final FinanceBotHandler botHandler;
 
 
     public OperationsTests() {
         HibernateConfiguration hibernateUserRepository = new HibernateConfiguration();
-        this.sessionFactory = hibernateUserRepository.getSessionFactory();
-        this.userRepository = new HibernateUserRepository(this.sessionFactory);
-        this.operationRepository = new HibernateOperationRepository(this.sessionFactory);
-        this.categoryRepository = new HibernateCategoryRepository(this.sessionFactory);
+        SessionFactory sessionFactory = hibernateUserRepository.getSessionFactory();
+
+        this.userRepository = new HibernateUserRepository(sessionFactory);
+        this.categoryRepository = new HibernateCategoryRepository(sessionFactory);
+        OperationRepository operationRepository = new HibernateOperationRepository(sessionFactory);
+
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
     }
 
@@ -266,8 +260,7 @@ public class OperationsTests {
         if (categoryId != null) {
             try {
                 this.categoryRepository.removeCategoryById(categoryId);
-            } catch (Exception exception) {
-                return;
+            } catch (Exception ignored) {
             }
         }
     }

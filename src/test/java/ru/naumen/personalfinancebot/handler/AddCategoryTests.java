@@ -46,7 +46,11 @@ public class AddCategoryTests {
      * Хранилище операций
      */
     private static final OperationRepository operationRepository;
-    private final BotHandler botHandler;
+
+    /**
+     * Обработчик операций для бота
+     */
+    private final FinanceBotHandler botHandler;
 
     static {
         sessionFactory = new HibernateConfiguration().getSessionFactory();
@@ -105,7 +109,7 @@ public class AddCategoryTests {
         final String[] testCases = new String[]{some65chars, "", " ", ".", "_", "так_неверно", "так,неправильно", "中文"};
         for (String value : testCases) {
             for (CategoryType type : CategoryType.values()) {
-                assertAddIncorrectCategoryName(type, value);
+                assertIncorrectAddUserCategory(type, value);
             }
         }
     }
@@ -154,10 +158,10 @@ public class AddCategoryTests {
         User user1 = createTestUser(1);
         User user2 = createTestUser(2);
         executeAddCategoryCommand(user1, categoryType, List.of(categoryName));
-        Optional<Category> addedFirstCategory = categoryRepository.getUserCategoryByName(user1, categoryType, categoryName);
-        Assert.assertTrue(addedFirstCategory.isPresent());
-        Optional<Category> addedCategory = categoryRepository.getUserCategoryByName(user2, categoryType, categoryName);
-        Assert.assertTrue(addedCategory.isEmpty());
+        categoryRepository.getCategoryByName(user1, categoryType, categoryName); // проверено ранее
+        Optional<Category> shouldBeEmptyCategory = categoryRepository
+                .getCategoryByName(user2, categoryType, categoryName);
+        Assert.assertTrue(shouldBeEmptyCategory.isEmpty());
         userRepository.removeUserById(user1.getId());
         userRepository.removeUserById(user2.getId());
     }
@@ -170,7 +174,7 @@ public class AddCategoryTests {
         final CategoryType categoryType = CategoryType.INCOME;
         final String categoryName = "Зарплата";
         categoryRepository.createStandardCategory(categoryType, categoryName);
-        assertAddIncorrectCategoryName(categoryType, categoryName);
+        assertIncorrectAddUserCategory(categoryType, categoryName);
         categoryRepository.removeAll();
     }
 
@@ -180,9 +184,9 @@ public class AddCategoryTests {
     private void assertAddCorrectCategory(CategoryType type, String categoryName, String expectedCategoryName)
             throws CategoryRepository.RemovingStandardCategoryException {
         User user = createTestUser(1);
-        Assert.assertTrue(categoryRepository.getUserCategoryByName(user, type, categoryName).isEmpty());
+        Assert.assertTrue(categoryRepository.getCategoryByName(user, type, categoryName).isEmpty());
         executeAddCategoryCommand(user, type, List.of(categoryName));
-        Optional<Category> addedCategory = categoryRepository.getUserCategoryByName(user, type, categoryName);
+        Optional<Category> addedCategory = categoryRepository.getCategoryByName(user, type, categoryName);
         Assert.assertTrue("Категория '%s' типа %s должна существовать".formatted(categoryName, type.name()),
                 addedCategory.isPresent());
         Assert.assertEquals(addedCategory.get().getCategoryName(), expectedCategoryName);
@@ -194,13 +198,12 @@ public class AddCategoryTests {
     /**
      * Проводит тест для отрицательного кейса команды добавления категории
      */
-    private void assertAddIncorrectCategoryName(CategoryType type, String categoryName) {
+    private void assertIncorrectAddUserCategory(CategoryType type, String categoryName) {
         User user = createTestUser(1);
-        Assert.assertTrue(categoryRepository.getUserCategoryByName(user, type, categoryName).isEmpty());
         executeAddCategoryCommand(user, type, List.of(categoryName));
-        Optional<Category> addedCategory = categoryRepository.getUserCategoryByName(user, type, categoryName);
-        Assert.assertTrue("Категория '%s' не должна быть добавлена".formatted(categoryName),
-                addedCategory.isEmpty());
+        Optional<Category> addedCategory = categoryRepository.getCategoryByName(user, type, categoryName);
+        Assert.assertTrue("Категория '%s' не должна быть добавлена как пользовательская".formatted(categoryName),
+                addedCategory.isEmpty() || addedCategory.get().isStandard());
         userRepository.removeUserById(user.getId());
     }
 

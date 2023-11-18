@@ -52,7 +52,7 @@ public class CategoryListTests {
     /**
      * Обработчик команд для бота
      */
-    private final BotHandler botHandler;
+    private final FinanceBotHandler botHandler;
 
     /**
      * Моковый пользователь. Пересоздается для каждого теста

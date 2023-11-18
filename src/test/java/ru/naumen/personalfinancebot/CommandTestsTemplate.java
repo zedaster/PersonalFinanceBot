@@ -6,7 +6,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
-import ru.naumen.personalfinancebot.handler.BotHandler;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
 import ru.naumen.personalfinancebot.models.User;
 import ru.naumen.personalfinancebot.repositories.operation.HibernateOperationRepository;
@@ -25,7 +24,7 @@ public class CommandTestsTemplate {
     private static final TestHibernateCategoryRepository categoryRepository;
     private static final OperationRepository operationRepository;
 
-    private final BotHandler botHandler;
+    private final FinanceBotHandler botHandler;
 
     private User mockUser;
     private MockBot mockBot;

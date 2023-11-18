@@ -22,16 +22,23 @@ import java.util.stream.IntStream;
  * Тесты для команды /set_balance в FinanceBotHandler
  */
 public class SetBalanceTests {
+    /**
+     * Хранилище пользователей
+     */
+
     private final UserRepository userRepository;
-    private final OperationRepository operationRepository;
-    private final CategoryRepository categoryRepository;
-    private final BotHandler botHandler;
+
+    /**
+     * Обработчик всех команд бота
+     */
+    private final FinanceBotHandler botHandler;
 
     public SetBalanceTests() {
         HibernateConfiguration hibernateUserRepository = new HibernateConfiguration();
         this.userRepository = new HibernateUserRepository(hibernateUserRepository.getSessionFactory());
-        this.operationRepository = new HibernateOperationRepository(hibernateUserRepository.getSessionFactory());
-        this.categoryRepository = new HibernateCategoryRepository(hibernateUserRepository.getSessionFactory());
+
+        OperationRepository operationRepository = new HibernateOperationRepository(hibernateUserRepository.getSessionFactory());
+        CategoryRepository categoryRepository = new HibernateCategoryRepository(hibernateUserRepository.getSessionFactory());
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
     }
 
