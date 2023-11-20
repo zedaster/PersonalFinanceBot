@@ -3,6 +3,7 @@ package ru.naumen.personalfinancebot.service;
 import com.sun.istack.Nullable;
 import ru.naumen.personalfinancebot.message.Message;
 
+import java.time.YearMonth;
 import java.util.List;
 
 /**
@@ -77,5 +78,25 @@ public class ArgumentParseService {
      */
     private boolean isValidCategory(String categoryName) {
         return categoryName.matches("^[A-Za-zА-Яа-я0-9\\- ]{1,64}$");
+    }
+
+    /**
+     * Парсит полученный аргумент и возвращает экземпляр класса YearMonth
+     *
+     * @param argument
+     * @return YearMonth
+     */
+    public YearMonth parseYearMonth(String argument) {
+        return null;
+    }
+
+    /**
+     * Парсит полученный аргумент и возвращает число с типом double
+     *
+     * @param argument
+     * @return Положительное число
+     */
+    public double parsePositiveDouble(String argument) {
+        return 0.0;
     }
 }

@@ -3,9 +3,11 @@ package ru.naumen.personalfinancebot.handler;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import ru.naumen.personalfinancebot.handler.command.*;
+import ru.naumen.personalfinancebot.handler.command.budget.*;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
+import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
@@ -36,7 +38,7 @@ public class FinanceBotHandler {
      * @param categoryRepository  Репозиторий для работы с категориями
      * @param sessionFactory      Фабрика сессий
      */
-    public FinanceBotHandler(UserRepository userRepository, OperationRepository operationRepository, CategoryRepository categoryRepository, SessionFactory sessionFactory) {
+    public FinanceBotHandler(UserRepository userRepository, OperationRepository operationRepository, CategoryRepository categoryRepository, BudgetRepository budgetRepository, SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
         ArgumentParseService argumentParseService = new ArgumentParseService();
         CategoryListService categoryListService = new CategoryListService(categoryRepository);
@@ -61,6 +63,13 @@ public class FinanceBotHandler {
         commandHandlers.put("list_expense_categories", new SingleListCategoriesHandler(CategoryType.EXPENSE,
                 categoryListService));
         commandHandlers.put("report_expense", new ReportExpensesHandler(reportService));
+
+        commandHandlers.put("budget", new SingleBudgetHandler(budgetRepository, operationRepository));
+        commandHandlers.put("budget_help", new HelpBudgetHandler());
+        commandHandlers.put("budget_create", new CreateBudgetHandler(budgetRepository, argumentParseService));
+        commandHandlers.put("budget_set_income", new EditBudgetHandler(budgetRepository, argumentParseService, CategoryType.INCOME));
+        commandHandlers.put("budget_set_expenses", new EditBudgetHandler(budgetRepository, argumentParseService, CategoryType.EXPENSE));
+        commandHandlers.put("budget_list", new ListBudgetHandler(budgetRepository, operationRepository));
     }
 
     /**
