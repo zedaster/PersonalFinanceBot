@@ -4,6 +4,7 @@ import ru.naumen.personalfinancebot.handler.commands.*;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.messages.StaticMessages;
 import ru.naumen.personalfinancebot.models.CategoryType;
+import ru.naumen.personalfinancebot.repositories.budget.BudgetRepository;
 import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repositories.user.UserRepository;
@@ -26,7 +27,8 @@ public class FinanceBotHandler {
     public FinanceBotHandler(
             UserRepository userRepository,
             OperationRepository operationRepository,
-            CategoryRepository categoryRepository
+            CategoryRepository categoryRepository,
+            BudgetRepository budgetRepository
     ) {
         ArgumentParseService argumentParseService = new ArgumentParseService();
         CategoryListService categoryListService = new CategoryListService(categoryRepository);
@@ -51,6 +53,13 @@ public class FinanceBotHandler {
         commandHandlers.put("list_expense_categories", new SingleListCategoriesHandler(CategoryType.EXPENSE,
                 categoryListService));
         commandHandlers.put("report_expense", new ReportExpensesHandler(reportService));
+
+        commandHandlers.put("budget", new SingleBudgetHandler(budgetRepository, operationRepository));
+        commandHandlers.put("budget_help", new HelpBudgetHandler());
+        commandHandlers.put("budget_create", new CreateBudgetHandler(budgetRepository, argumentParseService));
+        commandHandlers.put("budget_set_income", new EditBudgetHandler(budgetRepository, argumentParseService, CategoryType.INCOME));
+        commandHandlers.put("budget_set_expenses", new EditBudgetHandler(budgetRepository, argumentParseService, CategoryType.EXPENSE));
+        commandHandlers.put("budget_list", new ListBudgetHandler(budgetRepository, operationRepository));
     }
 
     /**

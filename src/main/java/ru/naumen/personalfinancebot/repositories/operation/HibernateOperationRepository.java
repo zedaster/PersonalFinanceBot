@@ -8,6 +8,7 @@ import ru.naumen.personalfinancebot.models.Operation;
 import ru.naumen.personalfinancebot.models.User;
 
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -81,5 +82,17 @@ public class HibernateOperationRepository implements OperationRepository {
             }
             return result;
         }
+    }
+
+    /**
+     * Метод возвращает сумму операций пользователя указанного типа (расход/доход) за определённый месяц
+     * @param user Пользователь
+     * @param type Тип операции
+     * @param yearMonth Месяц, год
+     * @return Сумма операций
+     */
+    @Override
+    public double getCurrentUserPaymentSummary(User user, CategoryType type, YearMonth yearMonth) {
+        return 0.0;
     }
 }
