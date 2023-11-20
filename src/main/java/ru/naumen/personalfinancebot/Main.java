@@ -6,12 +6,14 @@ import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.configuration.TelegramBotConfiguration;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
-import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
-import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
+import ru.naumen.personalfinancebot.repositories.budget.BudgetRepository;
+import ru.naumen.personalfinancebot.repositories.budget.HibernateBudgetRepository;
+import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
+import ru.naumen.personalfinancebot.repositories.category.HibernateCategoryRepository;
 
 /**
  * Программа, запускающая Телеграм-бота
@@ -25,10 +27,12 @@ public class Main {
         UserRepository userRepository = new HibernateUserRepository();
         OperationRepository operationRepository = new HibernateOperationRepository();
         CategoryRepository categoryRepository = new HibernateCategoryRepository();
+        BudgetRepository budgetRepository = new HibernateBudgetRepository();
         FinanceBotHandler handler = new FinanceBotHandler(
                 userRepository,
                 operationRepository,
                 categoryRepository,
+                budgetRepository,
                 hibernateConfiguration.getSessionFactory()
         );
         TelegramBotConfiguration configuration = new TelegramBotConfiguration();
