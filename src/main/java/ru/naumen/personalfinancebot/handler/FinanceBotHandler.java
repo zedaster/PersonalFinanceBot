@@ -33,7 +33,9 @@ public class FinanceBotHandler {
     public FinanceBotHandler(
             UserRepository userRepository,
             OperationRepository operationRepository,
-            CategoryRepository categoryRepository, SessionFactory sessionFactory
+            CategoryRepository categoryRepository,
+            BudgetRepository budgetRepository,
+            SessionFactory sessionFactory
     ) {
         this.sessionFactory = sessionFactory;
         ArgumentParseService argumentParseService = new ArgumentParseService();
@@ -59,6 +61,13 @@ public class FinanceBotHandler {
         commandHandlers.put("list_expense_categories", new SingleListCategoriesHandler(CategoryType.EXPENSE,
                 categoryListService));
         commandHandlers.put("report_expense", new ReportExpensesHandler(reportService));
+
+        commandHandlers.put("budget", new SingleBudgetHandler(budgetRepository, operationRepository));
+        commandHandlers.put("budget_help", new HelpBudgetHandler());
+        commandHandlers.put("budget_create", new CreateBudgetHandler(budgetRepository, argumentParseService));
+        commandHandlers.put("budget_set_income", new EditBudgetHandler(budgetRepository, argumentParseService, CategoryType.INCOME));
+        commandHandlers.put("budget_set_expenses", new EditBudgetHandler(budgetRepository, argumentParseService, CategoryType.EXPENSE));
+        commandHandlers.put("budget_list", new ListBudgetHandler(budgetRepository, operationRepository));
     }
 
     /**
