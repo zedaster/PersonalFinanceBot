@@ -16,5 +16,6 @@
         <mapping class="ru.naumen.personalfinancebot.models.User" />
         <mapping class="ru.naumen.personalfinancebot.models.Operation" />
         <mapping class="ru.naumen.personalfinancebot.models.Category" />
+        <mapping class="ru.naumen.personalfinancebot.models.Budget" />
     </session-factory>
 </hibernate-configuration>
