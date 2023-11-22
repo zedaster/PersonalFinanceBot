@@ -7,6 +7,8 @@ import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.models.User;
+import ru.naumen.personalfinancebot.repositories.budget.BudgetRepository;
+import ru.naumen.personalfinancebot.repositories.budget.HibernateBudgetRepository;
 import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repositories.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repositories.operation.HibernateOperationRepository;
@@ -39,7 +41,8 @@ public class SetBalanceTests {
 
         OperationRepository operationRepository = new HibernateOperationRepository(hibernateUserRepository.getSessionFactory());
         CategoryRepository categoryRepository = new HibernateCategoryRepository(hibernateUserRepository.getSessionFactory());
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
+        BudgetRepository budgetRepository = new HibernateBudgetRepository(hibernateUserRepository.getSessionFactory());
+        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, budgetRepository);
     }
 
     /**

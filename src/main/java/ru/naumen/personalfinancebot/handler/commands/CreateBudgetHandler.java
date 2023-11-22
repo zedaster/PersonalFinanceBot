@@ -51,7 +51,7 @@ public class CreateBudgetHandler implements CommandHandler {
         Budget budget = new Budget();
         budget.setExpectedSummary(CategoryType.INCOME, incomeSummary);
         budget.setExpectedSummary(CategoryType.EXPENSE, expenseSummary);
-        budget.setYearMonth(yearMonth);
+        budget.setTargetDate(yearMonth);
         budget.setUser(commandEvent.getUser());
 
         budgetRepository.saveBudget(budget);

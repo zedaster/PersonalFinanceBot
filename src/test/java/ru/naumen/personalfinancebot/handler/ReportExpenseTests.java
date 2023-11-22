@@ -7,6 +7,8 @@ import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.Operation;
 import ru.naumen.personalfinancebot.models.User;
+import ru.naumen.personalfinancebot.repositories.budget.BudgetRepository;
+import ru.naumen.personalfinancebot.repositories.budget.HibernateBudgetRepository;
 import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repositories.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repositories.operation.HibernateOperationRepository;
@@ -56,7 +58,8 @@ public class ReportExpenseTests {
         this.userRepository = new HibernateUserRepository(hibernateUserRepository.getSessionFactory());
         this.operationRepository = new HibernateOperationRepository(hibernateUserRepository.getSessionFactory());
         this.categoryRepository = new HibernateCategoryRepository(hibernateUserRepository.getSessionFactory());
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
+        BudgetRepository budgetRepository = new HibernateBudgetRepository(hibernateUserRepository.getSessionFactory());
+        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, budgetRepository);
         this.reportService = new ReportService(this.operationRepository);
     }
 
