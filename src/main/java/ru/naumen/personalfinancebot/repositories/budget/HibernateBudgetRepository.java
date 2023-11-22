@@ -61,7 +61,7 @@ public class HibernateBudgetRepository implements BudgetRepository {
                     .where(
                             criteriaBuilder.equal(
                                     criteriaBuilder.function("MONTH", Integer.class, root.get("targetDate")),
-                                    yearMonth.getMonth()
+                                    yearMonth.getMonth().getValue()
                             ));
 
 //            String hql = "SELECT Budget FROM Budget "
@@ -83,20 +83,20 @@ public class HibernateBudgetRepository implements BudgetRepository {
     @Override
     public List<Budget> selectBudgetRange(User user, YearMonth from, YearMonth to) {
         LocalDate startDate = LocalDate.of(from.getYear(), from.getMonth(), 1);
-        LocalDate endDate = LocalDate.of(to.getYear(), to.getMonth(), 1).plusMonths(1);
+        LocalDate endDate = LocalDate.of(to.getYear(), to.getMonth(), 1)
+                .plusMonths(1)
+                .minusDays(1);
+
         try (Session session = sessionFactory.openSession()) {
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
             CriteriaQuery<Budget> criteriaQuery = criteriaBuilder.createQuery(Budget.class);
             Root<Budget> root = criteriaQuery.from(Budget.class);
             criteriaQuery.select(root)
                     .where(criteriaBuilder.equal(root.get("user"), user))
-                    .where(criteriaBuilder.between(root.get("targetDate"), startDate, endDate))
+                    .where(
+                            criteriaBuilder.between(root.get("targetDate"), startDate, endDate)
+                    )
                     .orderBy(criteriaBuilder.asc(root.get("targetDate")));
-
-//            String hql = "SELECT Budget FROM Budget "
-//                    + "WHERE Budget.user = :user "
-//                    + "AND (Budget.targetDate) between :startDate and :endDate "
-//                    + "ORDER BY targetDate ASC";
             return session.createQuery(criteriaQuery).getResultList();
         }
     }
