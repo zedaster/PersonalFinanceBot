@@ -7,9 +7,8 @@ import ru.naumen.personalfinancebot.models.Operation;
 import ru.naumen.personalfinancebot.models.User;
 import ru.naumen.personalfinancebot.repositories.HibernateRepository;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,16 +46,16 @@ public class HibernateOperationRepository extends HibernateRepository implements
      */
     @Override
     public Map<String, Double> getOperationsSumByType(User user, int month, int year, CategoryType type) {
-        LocalDateTime startDate = LocalDateTime.of(year, month, 1, 0, 0);
-        LocalDateTime endDate = startDate.plusMonths(1);
-
-        final String hql = "SELECT cat.categoryName, sum (operation.payment) " +
-                "FROM Operation operation " +
-                "LEFT JOIN operation.category cat on cat.id = operation.category.id " +
-                "WHERE cat.type = :categoryType " +
-                "AND (operation.user = :user OR operation.user = NULL) " +
-                "AND operation.createdAt BETWEEN :startDate AND :endDate " +
-                "GROUP BY operation.category.id, cat.id";
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.plusMonths(1);
+        try (Session session = this.sessionFactory.openSession()) {
+            String hql = "SELECT cat.categoryName, sum (operation.payment) " +
+                    "FROM Operation operation " +
+                    "LEFT JOIN operation.category cat on cat.id = operation.category.id " +
+                    "WHERE cat.type = :categoryType " +
+                    "AND (operation.user = :user OR operation.user = NULL) " +
+                    "AND operation.createdAt BETWEEN :startDate AND :endDate " +
+                    "GROUP BY operation.category.id, cat.id";
 
         return produceTransaction(session -> {
             List<?> operations = session.createQuery(hql)
@@ -65,7 +64,7 @@ public class HibernateOperationRepository extends HibernateRepository implements
                     .setParameter("startDate", startDate)
                     .setParameter("endDate", endDate)
                     .getResultList();
-            if (operations.isEmpty()){
+            if (operations.isEmpty()) {
                 return null;
             }
             Map<String, Double> result = new LinkedHashMap<>();
@@ -76,7 +75,7 @@ public class HibernateOperationRepository extends HibernateRepository implements
                 result.put(category, payment);
             }
             return result;
-        }
+        });
     }
 
     /**
@@ -88,6 +87,23 @@ public class HibernateOperationRepository extends HibernateRepository implements
      */
     @Override
     public double getCurrentUserPaymentSummary(User user, CategoryType type, YearMonth yearMonth) {
-        return 0.0;
+        LocalDate startDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonth(), 1);
+        LocalDate endDate = startDate.plusMonths(1);
+        try (Session session = this.sessionFactory.openSession()) {
+            String hql = "SELECT sum(Operation.payment) from Operation "
+                    + "LEFT JOIN Category on Category.id = Operation.category.id "
+                    + "WHERE Operation.user = :user "
+                    + "AND Operation.createdAt BETWEEN :startDate AND :endDate "
+                    + "AND Category.type = :type";
+
+            double paymentSummary = (double) session
+                    .createQuery(hql)
+                    .setParameter("user", user)
+                    .setParameter("startDate", startDate)
+                    .setParameter("endDate", endDate)
+                    .setParameter("type", type)
+                    .uniqueResult();
+            return paymentSummary;
+        }
     }
 }
