@@ -88,22 +88,22 @@ public class HibernateOperationRepository extends HibernateRepository implements
     @Override
     public double getCurrentUserPaymentSummary(User user, CategoryType type, YearMonth yearMonth) {
         LocalDate startDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonth(), 1);
-        LocalDate endDate = startDate.plusMonths(1);
+        LocalDate endDate = startDate.plusMonths(1).minusDays(1);
         try (Session session = this.sessionFactory.openSession()) {
-            String hql = "SELECT sum(Operation.payment) from Operation "
-                    + "LEFT JOIN Category on Category.id = Operation.category.id "
-                    + "WHERE Operation.user = :user "
-                    + "AND Operation.createdAt BETWEEN :startDate AND :endDate "
-                    + "AND Category.type = :type";
+            String hql = "SELECT sum(op.payment) from Operation op "
+                    + "LEFT JOIN Category cat on cat.id = op.category.id "
+                    + "WHERE op.user = :user "
+                    + "AND cat.type = :type "
+                    + "AND op.createdAt BETWEEN :startDate AND :endDate";
 
-            double paymentSummary = (double) session
+            Object paymentSummary = session
                     .createQuery(hql)
                     .setParameter("user", user)
+                    .setParameter("type", type)
                     .setParameter("startDate", startDate)
                     .setParameter("endDate", endDate)
-                    .setParameter("type", type)
                     .uniqueResult();
-            return paymentSummary;
+            return (double) paymentSummary;
         }
     }
 }
