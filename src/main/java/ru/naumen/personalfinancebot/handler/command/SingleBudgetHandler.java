@@ -56,7 +56,7 @@ public class SingleBudgetHandler implements CommandHandler {
 
         commandEvent.getBot().sendMessage(
                 commandEvent.getUser(),
-                "Бюджент на " + budget.get().getYearMonth()
+                "Бюджент на " + budget.get().getTargetDate()
                         + "Ожидаемые доходы: " + budget.get().getExpectedSummary(CategoryType.INCOME)
                         + "Ожидаемые расходы: " + budget.get().getExpectedSummary(CategoryType.EXPENSE)
                         + "Текущие доходы: " + incomePayment
