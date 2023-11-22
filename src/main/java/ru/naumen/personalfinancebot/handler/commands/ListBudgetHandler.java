@@ -57,11 +57,11 @@ public class ListBudgetHandler implements CommandHandler {
         resultReplyMessage.append("Ваши запланированные доходы и расходы по месяцам");
         for (Budget budget : budgets) {
             double incomeOperationsSummary = this.operationRepository
-                    .getCurrentUserPaymentSummary(commandEvent.getUser(), CategoryType.INCOME, budget.getYearMonth());
+                    .getCurrentUserPaymentSummary(commandEvent.getUser(), CategoryType.INCOME, budget.getTargetDate());
             double expenseOperationSummary = this.operationRepository
-                    .getCurrentUserPaymentSummary(commandEvent.getUser(), CategoryType.EXPENSE, budget.getYearMonth());
+                    .getCurrentUserPaymentSummary(commandEvent.getUser(), CategoryType.EXPENSE, budget.getTargetDate());
             resultReplyMessage
-                    .append(budget.getYearMonth().toString())
+                    .append(budget.getTargetDate().toString())
                     .append("Ожидание: +").append(budget.getExpectedSummary(CategoryType.INCOME)).append(" | -")
                     .append(budget.getExpectedSummary(CategoryType.EXPENSE))
                     .append("\nРеальность: +").append(incomeOperationsSummary).append(" | -")

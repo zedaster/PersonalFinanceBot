@@ -7,9 +7,8 @@ import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.Operation;
 import ru.naumen.personalfinancebot.models.User;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,8 +52,8 @@ public class HibernateOperationRepository implements OperationRepository {
      */
     @Override
     public Map<String, Double> getOperationsSumByType(User user, int month, int year, CategoryType type) {
-        LocalDateTime startDate = LocalDateTime.of(year, month, 1, 0, 0);
-        LocalDateTime endDate = startDate.plusMonths(1);
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.plusMonths(1);
         try (Session session = this.sessionFactory.openSession()) {
             String hql = "SELECT cat.categoryName, sum (operation.payment) " +
                     "FROM Operation operation " +
@@ -70,7 +69,7 @@ public class HibernateOperationRepository implements OperationRepository {
                     .setParameter("startDate", startDate)
                     .setParameter("endDate", endDate)
                     .getResultList();
-            if (operations.isEmpty()){
+            if (operations.isEmpty()) {
                 return null;
             }
             Map<String, Double> result = new LinkedHashMap<>();
@@ -86,13 +85,31 @@ public class HibernateOperationRepository implements OperationRepository {
 
     /**
      * Метод возвращает сумму операций пользователя указанного типа (расход/доход) за определённый месяц
-     * @param user Пользователь
-     * @param type Тип операции
+     *
+     * @param user      Пользователь
+     * @param type      Тип операции
      * @param yearMonth Месяц, год
      * @return Сумма операций
      */
     @Override
     public double getCurrentUserPaymentSummary(User user, CategoryType type, YearMonth yearMonth) {
-        return 0.0;
+        LocalDate startDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonth(), 1);
+        LocalDate endDate = startDate.plusMonths(1).minusDays(1);
+        try (Session session = this.sessionFactory.openSession()) {
+            String hql = "SELECT sum(op.payment) from Operation op "
+                    + "LEFT JOIN Category cat on cat.id = op.category.id "
+                    + "WHERE op.user = :user "
+                    + "AND cat.type = :type "
+                    + "AND op.createdAt BETWEEN :startDate AND :endDate";
+
+            Object paymentSummary = session
+                    .createQuery(hql)
+                    .setParameter("user", user)
+                    .setParameter("type", type)
+                    .setParameter("startDate", startDate)
+                    .setParameter("endDate", endDate)
+                    .uniqueResult();
+            return (double) paymentSummary;
+        }
     }
 }

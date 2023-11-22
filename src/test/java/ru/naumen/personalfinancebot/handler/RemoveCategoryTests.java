@@ -10,6 +10,8 @@ import ru.naumen.personalfinancebot.messages.StaticMessages;
 import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.User;
+import ru.naumen.personalfinancebot.repositories.budget.BudgetRepository;
+import ru.naumen.personalfinancebot.repositories.budget.HibernateBudgetRepository;
 import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repositories.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
@@ -108,7 +110,8 @@ public class RemoveCategoryTests {
     }
 
     public RemoveCategoryTests() {
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
+        BudgetRepository budgetRepository = new HibernateBudgetRepository(sessionFactory);
+        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, budgetRepository);
     }
 
     /**

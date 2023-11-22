@@ -1,36 +1,107 @@
 package ru.naumen.personalfinancebot.models;
 
+import javax.persistence.*;
+import java.time.LocalDate;
 import java.time.YearMonth;
 
 /**
  * Модель данных "Бюджет"
  */
+@Entity
+@Table(name = "budgets")
 public class Budget {
+    /**
+     * День месяца, который указывается в типе данных {@link LocalDate}
+     */
+    private static final int FIRST_DAY_OF_MONTH = 1;
 
     /**
-     * @return Месяц-Год бюджета
+     * Уникальный идентификатор
      */
-    public YearMonth getYearMonth() {
-        return null;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", unique = true, nullable = false)
+    private long id;
+
+    /**
+     * Внешний ключ на пользователя
+     */
+    @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    private User user;
+
+    /**
+     * Планируемый доход
+     */
+    @Column(name = "income", nullable = false)
+    private double income;
+
+    /**
+     * Планируемый расход
+     */
+    @Column(name = "expense", nullable = false)
+    private double expense;
+
+    /**
+     * Дата, обозначающая год и месяц, за которыми закреплён ожидаемый бюджет
+     * <p>Java-тип {@link YearMonth}, СУБД тип {@link LocalDate} (Date)</p>
+     */
+    @Column(name = "target_date", nullable = false)
+    private LocalDate targetDate;
+
+    public Budget() {
+
+    }
+
+    /**
+     * @param user      Пользователь
+     * @param income    Ожидаемый доход
+     * @param expense   Ожидаемый расход
+     * @param yearMonth Год-месяй
+     */
+    public Budget(User user, double income, double expense, YearMonth yearMonth) {
+        this.user = user;
+        this.income = income;
+        this.expense = expense;
+        this.targetDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonth(), FIRST_DAY_OF_MONTH);
+    }
+
+    /**
+     * @return Уникальный идентификатор
+     */
+    private long getId() {
+        return this.id;
+    }
+
+
+    /**
+     * @return Год-Месяц бюджета
+     */
+    public YearMonth getTargetDate() {
+        return YearMonth.of(this.targetDate.getYear(), this.targetDate.getMonth());
     }
 
     /**
      * Устанавливает месяц-год бюджета
      *
-     * @param yearMonth месяц-год
+     * @param targetDate Год-Месяц
      */
-    public void setYearMonth(YearMonth yearMonth) {
-        // TODO
+    public void setTargetDate(YearMonth targetDate) {
+        this.targetDate = LocalDate.of(targetDate.getYear(), targetDate.getMonth(), FIRST_DAY_OF_MONTH);
     }
 
     /**
      * Устанавливает ожидаемую сумма дохода/расхода
      *
-     * @param type   Расход/Доход
-     * @param income Сумма
+     * @param type    Расход/Доход
+     * @param summary Сумма
      */
-    public void setExpectedSummary(CategoryType type, double income) {
-        // TODO
+    public void setExpectedSummary(CategoryType type, double summary) {
+        switch (type) {
+            case INCOME -> this.income = summary;
+            case EXPENSE -> this.expense = summary;
+            default -> throw new IllegalArgumentException();
+        }
     }
 
     /**
@@ -40,8 +111,22 @@ public class Budget {
      * @return Сумма расхода/дохода
      */
     public double getExpectedSummary(CategoryType type) {
-        // TODO
-        return 0.0;
+        switch (type) {
+            case INCOME -> {
+                return this.income;
+            }
+            case EXPENSE -> {
+                return this.expense;
+            }
+            default -> throw new IllegalArgumentException();
+        }
+    }
+
+    /**
+     * @return Пользователь - создатель бюджета
+     */
+    public User getUser() {
+        return this.user;
     }
 
     /**
@@ -50,6 +135,6 @@ public class Budget {
      * @param user Пользователь
      */
     public void setUser(User user) {
-        // TODO
+        this.user = user;
     }
 }

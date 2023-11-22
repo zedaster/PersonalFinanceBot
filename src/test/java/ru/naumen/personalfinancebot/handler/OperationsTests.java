@@ -12,6 +12,8 @@ import ru.naumen.personalfinancebot.messages.StaticMessages;
 import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.User;
+import ru.naumen.personalfinancebot.repositories.budget.BudgetRepository;
+import ru.naumen.personalfinancebot.repositories.budget.HibernateBudgetRepository;
 import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repositories.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repositories.operation.HibernateOperationRepository;
@@ -38,6 +40,11 @@ public class OperationsTests {
     private final CategoryRepository categoryRepository;
 
     /**
+     *
+     */
+    private final BudgetRepository budgetRepository;
+
+    /**
      * Обработчик операций в боте
      */
     private final FinanceBotHandler botHandler;
@@ -49,9 +56,10 @@ public class OperationsTests {
 
         this.userRepository = new HibernateUserRepository(sessionFactory);
         this.categoryRepository = new HibernateCategoryRepository(sessionFactory);
+        this.budgetRepository = new HibernateBudgetRepository(sessionFactory);
         OperationRepository operationRepository = new HibernateOperationRepository(sessionFactory);
 
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
+        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, budgetRepository);
     }
 
     // Тесты, с созданием категории (Т.е. пользователь может добавить операцию по категории)

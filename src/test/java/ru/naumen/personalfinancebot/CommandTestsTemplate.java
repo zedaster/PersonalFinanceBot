@@ -7,7 +7,10 @@ import org.junit.Before;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
+import ru.naumen.personalfinancebot.models.Budget;
 import ru.naumen.personalfinancebot.models.User;
+import ru.naumen.personalfinancebot.repositories.budget.BudgetRepository;
+import ru.naumen.personalfinancebot.repositories.budget.HibernateBudgetRepository;
 import ru.naumen.personalfinancebot.repositories.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repositories.user.HibernateUserRepository;
@@ -23,6 +26,7 @@ public class CommandTestsTemplate {
     private static final UserRepository userRepository;
     private static final TestHibernateCategoryRepository categoryRepository;
     private static final OperationRepository operationRepository;
+    private static final BudgetRepository budgetRepository;
 
     private final FinanceBotHandler botHandler;
 
@@ -35,11 +39,12 @@ public class CommandTestsTemplate {
         userRepository = new HibernateUserRepository(sessionFactory);
         categoryRepository = new TestHibernateCategoryRepository(sessionFactory);
         operationRepository = new HibernateOperationRepository(sessionFactory);
+        budgetRepository = new HibernateBudgetRepository(sessionFactory);
         // Добавить все стандартные значения здесь
     }
 
     public CommandTestsTemplate() {
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
+        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, budgetRepository);
     }
 
     /**
