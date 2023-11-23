@@ -6,7 +6,9 @@ import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.Operation;
 import ru.naumen.personalfinancebot.model.User;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,5 +55,33 @@ public class HibernateOperationRepository implements OperationRepository {
             result.put(category, payment);
         }
         return result;
+    }
+
+    /**
+     * Метод возвращает сумму операций пользователя указанного типа (расход/доход) за определённый месяц
+     *
+     * @param user      Пользователь
+     * @param type      Тип операции
+     * @param yearMonth Месяц, год
+     * @return Сумма операций
+     */
+    @Override
+    public double getCurrentUserPaymentSummary(Session session, User user, CategoryType type, YearMonth yearMonth) {
+        LocalDate startDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonth(), 1);
+        LocalDate endDate = startDate.plusMonths(1).minusDays(1);
+        String hql = "SELECT sum(op.payment) from Operation op "
+                + "LEFT JOIN Category cat on cat.id = op.category.id "
+                + "WHERE op.user = :user "
+                + "AND cat.type = :type "
+                + "AND op.createdAt BETWEEN :startDate AND :endDate";
+
+        Object paymentSummary = session
+                .createQuery(hql)
+                .setParameter("user", user)
+                .setParameter("type", type)
+                .setParameter("startDate", startDate)
+                .setParameter("endDate", endDate)
+                .uniqueResult();
+        return (double) paymentSummary;
     }
 }

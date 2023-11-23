@@ -2,7 +2,6 @@ package ru.naumen.personalfinancebot.repositories.operation;
 
 import org.hibernate.SessionFactory;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.models.Category;

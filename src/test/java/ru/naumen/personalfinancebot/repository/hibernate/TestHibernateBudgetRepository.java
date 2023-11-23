@@ -1,8 +1,8 @@
-package ru.naumen.personalfinancebot.repository;
+package ru.naumen.personalfinancebot.repository.hibernate;
 
 import org.hibernate.SessionFactory;
 import ru.naumen.personalfinancebot.models.User;
-import ru.naumen.personalfinancebot.repositories.budget.HibernateBudgetRepository;
+import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
 
 public class TestHibernateBudgetRepository extends HibernateBudgetRepository {
 
