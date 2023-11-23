@@ -1,8 +1,9 @@
-package ru.naumen.personalfinancebot.repositories.budget;
+package ru.naumen.personalfinancebot.repository.budget;
 
 import com.sun.istack.Nullable;
-import ru.naumen.personalfinancebot.models.Budget;
-import ru.naumen.personalfinancebot.models.User;
+import org.hibernate.Session;
+import ru.naumen.personalfinancebot.model.Budget;
+import ru.naumen.personalfinancebot.model.User;
 
 import java.time.YearMonth;
 import java.util.List;
@@ -17,7 +18,7 @@ public interface BudgetRepository {
      *
      * @param budget Бюджет
      */
-    void saveBudget(Budget budget);
+    void saveBudget(Session session, Budget budget);
 
     /**
      * Возвращает бюджет пользователя за Месяц-Год
@@ -26,7 +27,7 @@ public interface BudgetRepository {
      * @param yearMonth Месяц-Год
      * @return Бюджет пользователя
      */
-    Optional<Budget> getBudget(User user, @Nullable YearMonth yearMonth);
+    Optional<Budget> getBudget(Session session, User user, @Nullable YearMonth yearMonth);
 
     /**
      * Возвращает список бюджетов для пользователя, за заданный промежуток
@@ -36,5 +37,5 @@ public interface BudgetRepository {
      * @param to   Месяц-Год конца диапазона
      * @return Список бюджетов
      */
-    List<Budget> selectBudgetRange(User user, YearMonth from, YearMonth to);
+    List<Budget> selectBudgetRange(Session session, User user, YearMonth from, YearMonth to);
 }

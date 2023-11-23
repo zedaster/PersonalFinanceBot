@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.repository;
+package ru.naumen.personalfinancebot.repository.hibernate;
 
 import org.hibernate.Session;
 

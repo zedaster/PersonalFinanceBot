@@ -10,6 +10,8 @@ import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.User;
 import ru.naumen.personalfinancebot.repositories.user.HibernateUserRepository;
 import ru.naumen.personalfinancebot.repositories.user.UserRepository;
+import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
+import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
 
 import java.time.YearMonth;
 import java.util.List;
