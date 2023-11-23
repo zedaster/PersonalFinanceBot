@@ -7,7 +7,6 @@ import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.messages.StaticMessages;
-import ru.naumen.personalfinancebot.models.Budget;
 import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.User;
@@ -16,8 +15,8 @@ import ru.naumen.personalfinancebot.repositories.budget.HibernateBudgetRepositor
 import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repositories.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
-import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
-import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateCategoryRepository;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateUserRepository;
 
 import java.util.ArrayList;
 import java.util.List;

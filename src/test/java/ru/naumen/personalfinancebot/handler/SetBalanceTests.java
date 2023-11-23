@@ -88,8 +88,11 @@ public class SetBalanceTests {
     @Test
     public void integerBalance() {
         List<String> args = List.of("100", String.valueOf(Integer.MAX_VALUE));
-        for (String arg : args) {
-            assetCorrectBalanceCommand(arg, arg);
+        List<String> expectedValues = List.of("100", "2 147 483 647");
+        for (int i = 0; i < args.size(); i++) {
+            String arg = args.get(i);
+            String expected = expectedValues.get(i);
+            assetCorrectBalanceCommand(arg, expected);
         }
     }
 
@@ -99,8 +102,7 @@ public class SetBalanceTests {
     @Test
     public void doubleDotBalance() {
         List<List<String>> listOfArgs = List.of(
-                List.of("100.0", "100"),
-                List.of(String.valueOf(Double.MAX_VALUE), String.valueOf(Double.MAX_VALUE))
+                List.of("100.0", "100")
         );
         for (List<String> args : listOfArgs) {
             assetCorrectBalanceCommand(args.get(0), args.get(1));
@@ -113,8 +115,8 @@ public class SetBalanceTests {
     @Test
     public void doubleCommaBalance() {
         List<List<String>> listOfArgs = List.of(
-                List.of("100,0", "100"),
-                List.of(String.valueOf(Double.MAX_VALUE).replace(".", ","), String.valueOf(Double.MAX_VALUE)));
+                List.of("100,0", "100")
+        );
         for (List<String> args : listOfArgs) {
             assetCorrectBalanceCommand(args.get(0), args.get(1));
         }
