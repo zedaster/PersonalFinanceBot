@@ -17,7 +17,7 @@ import ru.naumen.personalfinancebot.repositories.operation.HibernateOperationRep
 import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repositories.user.HibernateUserRepository;
 import ru.naumen.personalfinancebot.repositories.user.UserRepository;
-import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateCategoryRepository;
 
 import java.util.Arrays;
 import java.util.List;

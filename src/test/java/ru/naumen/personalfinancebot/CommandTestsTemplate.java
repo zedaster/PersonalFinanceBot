@@ -7,7 +7,6 @@ import org.junit.Before;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
-import ru.naumen.personalfinancebot.models.Budget;
 import ru.naumen.personalfinancebot.models.User;
 import ru.naumen.personalfinancebot.repositories.budget.BudgetRepository;
 import ru.naumen.personalfinancebot.repositories.budget.HibernateBudgetRepository;
@@ -15,7 +14,7 @@ import ru.naumen.personalfinancebot.repositories.operation.HibernateOperationRep
 import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repositories.user.HibernateUserRepository;
 import ru.naumen.personalfinancebot.repositories.user.UserRepository;
-import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateCategoryRepository;
 
 /**
  * Шаблон для создания последующих тестов для команд

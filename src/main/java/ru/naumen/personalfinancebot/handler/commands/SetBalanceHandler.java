@@ -4,6 +4,7 @@ import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.messages.StaticMessages;
 import ru.naumen.personalfinancebot.repositories.user.UserRepository;
 import ru.naumen.personalfinancebot.services.ArgumentParseService;
+import ru.naumen.personalfinancebot.services.OutputFormatService;
 
 /**
  * Обработчик команды для установки баланса
@@ -17,12 +18,19 @@ public class SetBalanceHandler implements CommandHandler {
     private final ArgumentParseService argumentParser;
 
     /**
+     * Сервис, который приводит данные для вывода к нужному формату
+     */
+    private final OutputFormatService outputFormatter;
+
+    /**
      * Хранилище пользователей
      */
     private final UserRepository userRepository;
 
-    public SetBalanceHandler(ArgumentParseService argumentParser, UserRepository userRepository) {
+    public SetBalanceHandler(ArgumentParseService argumentParser, OutputFormatService outputFormatter,
+                             UserRepository userRepository) {
         this.argumentParser = argumentParser;
+        this.outputFormatter = outputFormatter;
         this.userRepository = userRepository;
     }
 
@@ -43,18 +51,6 @@ public class SetBalanceHandler implements CommandHandler {
         event.getUser().setBalance(amount);
         userRepository.saveUser(event.getUser());
         event.getBot().sendMessage(event.getUser(), StaticMessages.SET_BALANCE_SUCCESSFULLY
-                .replace("{balance}", beautifyDouble(amount)));
-
-    }
-
-    /**
-     * Форматирует double в красивую строку.
-     * Если число целое, то вернет его без дробной части.
-     * Т.е. 1000.0 будет выведено как 1000,
-     * а 1000.99 будет выведено как 1000.99
-     */
-    private String beautifyDouble(double d) {
-        if ((int) d == d) return String.valueOf((int) d);
-        return String.valueOf(d);
+                .replace("{balance}", outputFormatter.formatDouble(amount)));
     }
 }

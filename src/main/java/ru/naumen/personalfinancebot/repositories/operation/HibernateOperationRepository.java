@@ -24,7 +24,7 @@ public class HibernateOperationRepository implements OperationRepository {
     }
 
     /**
-     * Класс для добавления операции
+     * Метод для добавления операции
      *
      * @param user     Пользователь, совершивший операцию
      * @param category Категория дохода/расхода
@@ -43,12 +43,12 @@ public class HibernateOperationRepository implements OperationRepository {
     }
 
     /**
-     * Возвращает словарь с названием категории и суммой расходов этой категории за указанный год и месяц
+     * Возвращает словарь с названием категории и суммой расходов/доходов этой категории за указанный год и месяц
      *
      * @param user  Пользователь
      * @param month Месяц
      * @param year  Год
-     * @return Список операций
+     * @return Список операций или null, если запрашиваемые операции отсутствуют
      */
     @Override
     public Map<String, Double> getOperationsSumByType(User user, int month, int year, CategoryType type) {
