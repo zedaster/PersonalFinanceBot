@@ -49,6 +49,12 @@ public class Category {
 
     }
 
+    public Category(User user, String categoryName, CategoryType type) {
+        this.user = user;
+        this.categoryName = categoryName;
+        this.type = type;
+    }
+
     /**
      * @return ID категории
      */
