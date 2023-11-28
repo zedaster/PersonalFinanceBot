@@ -40,13 +40,19 @@ public class StaticMessages {
             "Указанная категория не числится. Используйте команду /add_category чтобы добавить её";
 
     public static final String INCORRECT_SELF_REPORT_ARGS =
-            "Команда /report_expense принимает 1 аргумент [mm.yyyy], например /report_expense 11.2023";
+            "Команда /report_expense принимает 1 аргумент [mm.yyyy], например \"/report_expense 11.2023\"";
 
-    public static final String INCORRECT_SELF_REPORT_VALUES = "Переданы неверные данные месяца и года";
+    public static final String INCORRECT_SELF_REPORT_VALUES = """
+    Переданы неверные данные месяца и года.
+    Дата должна быть передана в виде "MM.YYYY", например, "11.2023".""";
 
     public static final String SELF_REPORT_MESSAGE = "Подготовил отчёт по вашим расходам за указанный месяц:\n";
 
     public static final String INCORRECT_PAYMENT_ARG = "Сумма операции указана в неверном формате.";
 
     public static final String ILLEGAL_PAYMENT_ARGUMENT = "Ошибка! Аргумент [payment] должен быть больше 0";
+
+    public static final String EXPENSES_NOT_EXIST = "К сожалению, данные по затратам отсутствуют";
+
+    public static final String EXPENSE_REPORT_PATTERN = "{category}: {payment} руб.\n";
 }
