@@ -7,11 +7,6 @@ import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.Operation;
 import ru.naumen.personalfinancebot.models.User;
 
-import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.Root;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.LinkedHashMap;
@@ -109,15 +104,16 @@ public class HibernateOperationRepository implements OperationRepository {
     }
 
     /**
-     * Метод возвращает словарь, где ключ - название стандартной категории, значение - сумма операций по этой категории
+     * Метод возвращает словарь, где ключ - название стандартной категории,
+     * значение - <b>средняя</b> сумма операций по этой категории
      *
      * @param yearMonth Год-Месяц
      * @return Словарь<Категория, Плата>
      */
     @Override
-    public Map<String, Double> getSummaryByStandardCategory(YearMonth yearMonth) {
+    public Map<String, Double> getAverageSummaryByStandardCategory(YearMonth yearMonth) {
         try (Session session = this.sessionFactory.openSession()) {
-            String hql = "SELECT categories.categoryName, sum(operations.payment) FROM Operation operations "
+            String hql = "SELECT categories.categoryName, avg(operations.payment) FROM Operation operations "
                     + "JOIN Category categories on operations.category.id = categories.id "
                     + "WHERE categories.user is null "
                     + "AND year(operations.createdAt) = :year "

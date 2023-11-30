@@ -41,7 +41,7 @@ public class ReportService {
      * @return Отчёт в виде строки
      */
     public String getAverageReport(YearMonth yearMonth) {
-        Map<String, Double> data = this.operationRepository.getSummaryByStandardCategory(yearMonth);
+        Map<String, Double> data = this.operationRepository.getAverageSummaryByStandardCategory(yearMonth);
         if (data == null) {
             return null;
         }

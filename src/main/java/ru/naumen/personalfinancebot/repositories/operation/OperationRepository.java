@@ -46,5 +46,5 @@ public interface OperationRepository {
      * @param yearMonth Год-Месяц
      * @return Словарь<Категория, Плата>
      */
-    Map<String, Double> getSummaryByStandardCategory(YearMonth yearMonth);
+    Map<String, Double> getAverageSummaryByStandardCategory(YearMonth yearMonth);
 }

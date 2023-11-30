@@ -193,9 +193,9 @@ public class AverageReportHandlerTest {
      * @param categories Список категорий
      */
     private void createOperations(List<User> users, List<Category> categories) {
-        for (User user : users) {
-            for (Category category : categories) {
-                this.operationRepository.addOperation(user, category, 500);
+        for (Category category : categories) {
+            for (User user : users) {
+                this.operationRepository.addOperation(user, category, 450);
             }
         }
     }
@@ -217,9 +217,9 @@ public class AverageReportHandlerTest {
 
         String expected = """
                 Подготовил отчет по стандартным категориям со всех пользователей за {ruMonth} {year}:
-                Аптеки: 2 000 руб.
-                Развлечения: 2 000 руб.
-                Супермаркеты: 2 000 руб.
+                Аптеки: 450 руб.
+                Развлечения: 450 руб.
+                Супермаркеты: 450 руб.
                 """
                 .replace("{ruMonth}", month)
                 .replace("{year}", String.valueOf(ym.getYear()));

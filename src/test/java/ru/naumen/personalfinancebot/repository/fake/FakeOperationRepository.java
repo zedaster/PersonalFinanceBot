@@ -124,7 +124,7 @@ public class FakeOperationRepository implements OperationRepository {
      * @return Словарь<Категория, Плата>
      */
     @Override
-    public Map<String, Double> getSummaryByStandardCategory(YearMonth yearMonth) {
+    public Map<String, Double> getAverageSummaryByStandardCategory(YearMonth yearMonth) {
         return null;
     }
 

@@ -36,7 +36,7 @@ public class EmptyOperationRepository implements OperationRepository {
      * @return Словарь<Категория, Плата>
      */
     @Override
-    public Map<String, Double> getSummaryByStandardCategory(YearMonth yearMonth) {
+    public Map<String, Double> getAverageSummaryByStandardCategory(YearMonth yearMonth) {
         throw new RuntimeException("Operation repository shouldn't be touched");
     }
 }
