@@ -7,6 +7,11 @@ import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.Operation;
 import ru.naumen.personalfinancebot.models.User;
 
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Root;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.LinkedHashMap;
@@ -69,17 +74,7 @@ public class HibernateOperationRepository implements OperationRepository {
                     .setParameter("startDate", startDate)
                     .setParameter("endDate", endDate)
                     .getResultList();
-            if (operations.isEmpty()) {
-                return null;
-            }
-            Map<String, Double> result = new LinkedHashMap<>();
-            for (Object operation : operations) {
-                Object[] row = (Object[]) operation;
-                String category = (String) row[0];
-                Double payment = (Double) row[1];
-                result.put(category, payment);
-            }
-            return result;
+            return getCategoryPaymentMap(operations);
         }
     }
 
@@ -111,5 +106,52 @@ public class HibernateOperationRepository implements OperationRepository {
                     .uniqueResult();
             return (double) paymentSummary;
         }
+    }
+
+    /**
+     * Метод возвращает словарь, где ключ - название стандартной категории, значение - сумма операций по этой категории
+     *
+     * @param yearMonth Год-Месяц
+     * @return Словарь<Категория, Плата>
+     */
+    @Override
+    public Map<String, Double> getSummaryByStandardCategory(YearMonth yearMonth) {
+        try (Session session = this.sessionFactory.openSession()) {
+            String hql = "SELECT categories.categoryName, sum(operations.payment) FROM Operation operations "
+                    + "JOIN Category categories on operations.category.id = categories.id "
+                    + "WHERE categories.user is null "
+                    + "AND year(operations.createdAt) = :year "
+                    + "AND month(operations.createdAt) = :month "
+                    + "GROUP BY categories.categoryName "
+                    + "ORDER BY categories.categoryName ASC ";
+
+            List<?> operations = session.createQuery(hql)
+                    .setParameter("year", yearMonth.getYear())
+                    .setParameter("month", yearMonth.getMonth().getValue())
+                    .getResultList();
+
+            return getCategoryPaymentMap(operations);
+        }
+    }
+
+    /**
+     * Делегирующий метод, который возвращает LinkedHashMap с ключом - названием операции, значением - суммой операции
+     *
+     * @param operations Список полученных операций
+     * @return Словарь с названием операции и платой
+     */
+    private Map<String, Double> getCategoryPaymentMap(List<?> operations) {
+        if (operations.isEmpty()) {
+            return null;
+        }
+        Map<String, Double> result = new LinkedHashMap<>();
+
+        for (Object operation : operations) {
+            Object[] row = (Object[]) operation;
+            String category = (String) row[0];
+            Double payment = (Double) row[1];
+            result.put(category, payment);
+        }
+        return result;
     }
 }

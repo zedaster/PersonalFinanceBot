@@ -35,7 +35,7 @@ public class FinanceBotHandler {
         ArgumentParseService argumentParseService = new ArgumentParseService();
         OutputFormatService outputFormatService = new OutputFormatService();
         CategoryListService categoryListService = new CategoryListService(categoryRepository);
-        ReportService reportService = new ReportService(operationRepository);
+        ReportService reportService = new ReportService(operationRepository, outputFormatService);
 
         commandHandlers = new HashMap<>();
         commandHandlers.put("start", new StartCommandHandler());
@@ -71,6 +71,8 @@ public class FinanceBotHandler {
                 argumentParseService, outputFormatService, CategoryType.EXPENSE));
         commandHandlers.put("budget_list", new ListBudgetHandler(budgetRepository, operationRepository,
                 argumentParseService, outputFormatService));
+
+        commandHandlers.put("avg_report", new AverageReportHandler(argumentParseService, reportService));
     }
 
     /**

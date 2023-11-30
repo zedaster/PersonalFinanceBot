@@ -118,6 +118,17 @@ public class FakeOperationRepository implements OperationRepository {
     }
 
     /**
+     * Метод возвращает словарь, где ключ - название стандартной категории, значение - сумма операций по этой категории
+     *
+     * @param yearMonth Год-Месяц
+     * @return Словарь<Категория, Плата>
+     */
+    @Override
+    public Map<String, Double> getSummaryByStandardCategory(YearMonth yearMonth) {
+        return null;
+    }
+
+    /**
      * Запись, содержащая в себе пользователя и тип категории. Необходима для группировки операций
      *
      * @param user         Пользователь

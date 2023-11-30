@@ -1,5 +1,7 @@
 package ru.naumen.personalfinancebot.models;
 
+import com.sun.istack.Nullable;
+
 import javax.persistence.*;
 import java.util.List;
 import java.util.Objects;
@@ -23,6 +25,7 @@ public class Category {
      */
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @Nullable
     private User user;
 
     /**
@@ -49,7 +52,7 @@ public class Category {
 
     }
 
-    public Category(User user, String categoryName, CategoryType type) {
+    public Category(@Nullable User user, String categoryName, CategoryType type) {
         this.user = user;
         this.categoryName = categoryName;
         this.type = type;
@@ -72,7 +75,7 @@ public class Category {
     /**
      * @param user ID пользователя
      */
-    public void setUser(User user) {
+    public void setUser(@Nullable User user) {
         this.user = user;
     }
 

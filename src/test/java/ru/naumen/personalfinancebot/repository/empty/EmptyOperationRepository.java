@@ -28,4 +28,15 @@ public class EmptyOperationRepository implements OperationRepository {
     public double getCurrentUserPaymentSummary(User user, CategoryType type, YearMonth yearMonth) {
         throw new RuntimeException("Operation repository shouldn't be touched");
     }
+
+    /**
+     * Метод возвращает словарь, где ключ - название стандартной категории, значение - сумма операций по этой категории
+     *
+     * @param yearMonth Год-Месяц
+     * @return Словарь<Категория, Плата>
+     */
+    @Override
+    public Map<String, Double> getSummaryByStandardCategory(YearMonth yearMonth) {
+        throw new RuntimeException("Operation repository shouldn't be touched");
+    }
 }

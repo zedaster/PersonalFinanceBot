@@ -40,4 +40,11 @@ public interface OperationRepository {
      * @return Сумма операций
      */
     double getCurrentUserPaymentSummary(User user, CategoryType type, YearMonth yearMonth);
+
+    /**
+     * Метод возвращает словарь, где ключ - название стандартной категории, значение - сумма операций по этой категории
+     * @param yearMonth Год-Месяц
+     * @return Словарь<Категория, Плата>
+     */
+    Map<String, Double> getSummaryByStandardCategory(YearMonth yearMonth);
 }

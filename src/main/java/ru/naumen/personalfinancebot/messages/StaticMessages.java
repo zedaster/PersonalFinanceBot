@@ -130,4 +130,15 @@ public class StaticMessages {
             Текущий баланс: {balance}
             Нужно еще заработать: {income_left}
             Еще осталось на траты: {expenses_left}""";
+
+    public static final String AVG_REPORT_INCORRECT_ARGUMENT_COUNT =
+            """
+            Команда "/avg_report" не принимает аргументов, либо принимает Месяц и Год в формате "MM.YYYY".
+            Например, "/avg_report" или "/avg_report 12.2023".""";
+
+    public static final String DATA_NOT_EXISTS = "На данный момент данные отсутсвуют. Попробуйте позже...";
+
+    public static final String CATEGORY_PAYMENT_REPORT_PATTERN = "{category}: {payment} руб.\n";
+
+    public static final String AVG_REPORT_HEADER = "Подготовил отчет по стандартным категориям со всех пользователей за {ruMonth} {year}:\n";
 }
