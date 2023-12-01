@@ -21,7 +21,7 @@ import java.util.stream.IntStream;
 /**
  * Тесты для команды /set_balance в FinanceBotHandler
  */
-public class SetBalanceTests {
+public class SetBalanceTest {
     /**
      * Хранилище пользователей
      */
@@ -33,7 +33,7 @@ public class SetBalanceTests {
      */
     private final FinanceBotHandler botHandler;
 
-    public SetBalanceTests() {
+    public SetBalanceTest() {
         HibernateConfiguration hibernateUserRepository = new HibernateConfiguration();
         this.userRepository = new HibernateUserRepository(hibernateUserRepository.getSessionFactory());
 

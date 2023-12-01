@@ -142,4 +142,9 @@ public interface CategoryRepository {
     class RemovingNonExistentCategoryException extends Exception {
 
     }
+
+    /**
+     * Исключение, выбрасываемое в случае, если категория не существует
+     */
+    class CategoryDoesNotExist extends Exception {}
 }

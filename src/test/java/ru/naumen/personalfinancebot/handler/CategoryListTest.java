@@ -6,7 +6,7 @@ import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.messages.StaticMessages;
+import ru.naumen.personalfinancebot.messages.Messages;
 import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.User;
@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 /**
  * Тесты на команды для вывода категорий
  */
-public class CategoryListTests {
+public class CategoryListTest {
     // Static необходим для инициализации данных перед тестами и очистки после всех тестов
 
     /**
@@ -82,7 +82,7 @@ public class CategoryListTests {
         }
     }
 
-    public CategoryListTests() {
+    public CategoryListTest() {
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
     }
 
@@ -213,8 +213,8 @@ public class CategoryListTests {
                         1. Standard expense 1
                         2. Standard expense 2
                         """,
-                StaticMessages.EMPTY_LIST_CONTENT + "\n",
-                StaticMessages.EMPTY_LIST_CONTENT + "\n"
+                Messages.EMPTY_LIST_CONTENT + "\n",
+                Messages.EMPTY_LIST_CONTENT + "\n"
         );
         assertShowCategories(0, expect);
     }
@@ -243,7 +243,7 @@ public class CategoryListTests {
                         2. Personal income 2
                         3. Personal income 3
                         """,
-                StaticMessages.EMPTY_LIST_CONTENT + "\n"
+                Messages.EMPTY_LIST_CONTENT + "\n"
         );
         ExpectedCategoryFormat expectSecondUserFormat = new ExpectedCategoryFormat(
                 """
@@ -254,8 +254,8 @@ public class CategoryListTests {
                         1. Standard expense 1
                         2. Standard expense 2
                         """,
-                StaticMessages.EMPTY_LIST_CONTENT + "\n",
-                StaticMessages.EMPTY_LIST_CONTENT + "\n"
+                Messages.EMPTY_LIST_CONTENT + "\n",
+                Messages.EMPTY_LIST_CONTENT + "\n"
         );
         assertAllCommandExecution(this.mockUser, expectMockUserFormat);
         assertAllCommandExecution(secondUser, expectSecondUserFormat);
@@ -340,7 +340,7 @@ public class CategoryListTests {
      * Получает текст сообщения, которое ожидается для вывода категорий доходов/расходов.
      */
     private String getExpectedResponse(CategoryType type, String expectStandardListFormat, String expectPersonalListFormat) {
-        return StaticMessages.LIST_TYPED_CATEGORIES
+        return Messages.LIST_TYPED_CATEGORIES
                 .replace("{type}", type.getPluralShowLabel())
                 .replace("{standard_list}", expectStandardListFormat)
                 .replace("{personal_list}", expectPersonalListFormat);

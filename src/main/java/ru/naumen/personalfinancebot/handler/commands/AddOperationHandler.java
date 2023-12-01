@@ -1,7 +1,7 @@
 package ru.naumen.personalfinancebot.handler.commands;
 
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.messages.StaticMessages;
+import ru.naumen.personalfinancebot.messages.Messages;
 import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.Operation;
@@ -53,20 +53,20 @@ public class AddOperationHandler implements CommandHandler {
     @Override
     public void handleCommand(HandleCommandEvent event) {
         if (event.getArgs().size() != 2) {
-            event.getBot().sendMessage(event.getUser(), StaticMessages.INCORRECT_OPERATION_ARGS_AMOUNT);
+            event.getBot().sendMessage(event.getUser(), Messages.INCORRECT_OPERATION_ARGS_AMOUNT);
             return;
         }
         Operation operation;
         try {
             operation = createOperationRecord(event.getUser(), event.getArgs(), categoryType);
-        } catch (OperationCategoryNotExistsException e) {
-            event.getBot().sendMessage(event.getUser(), StaticMessages.CATEGORY_DOES_NOT_EXISTS);
+        } catch (CategoryRepository.CategoryDoesNotExist e) {
+            event.getBot().sendMessage(event.getUser(), Messages.CATEGORY_DOES_NOT_EXISTS);
             return;
         } catch (NumberFormatException e) {
-            event.getBot().sendMessage(event.getUser(), StaticMessages.INCORRECT_PAYMENT_ARG);
+            event.getBot().sendMessage(event.getUser(), Messages.INCORRECT_PAYMENT_ARG);
             return;
         } catch (IllegalArgumentException e) {
-            event.getBot().sendMessage(event.getUser(), StaticMessages.ILLEGAL_PAYMENT_ARGUMENT);
+            event.getBot().sendMessage(event.getUser(), Messages.ILLEGAL_PAYMENT_ARGUMENT);
             return;
         }
         double currentBalance = event.getUser().getBalance() + operation.getPayment();
@@ -74,8 +74,8 @@ public class AddOperationHandler implements CommandHandler {
         user.setBalance(currentBalance);
         userRepository.saveUser(user);
         String message = categoryType == CategoryType.INCOME
-                ? StaticMessages.ADD_INCOME_MESSAGE
-                : StaticMessages.ADD_EXPENSE_MESSAGE;
+                ? Messages.ADD_INCOME_MESSAGE
+                : Messages.ADD_EXPENSE_MESSAGE;
         event.getBot().sendMessage(user,
                 message + operation.getCategory().getCategoryName());
 
@@ -90,7 +90,7 @@ public class AddOperationHandler implements CommandHandler {
      * @return Совершенная операция
      */
     private Operation createOperationRecord(User user, List<String> args, CategoryType type)
-            throws OperationCategoryNotExistsException {
+            throws CategoryRepository.CategoryDoesNotExist {
         double payment = Double.parseDouble(args.get(0));
         if (payment <= 0) {
             throw new IllegalArgumentException();
@@ -103,17 +103,8 @@ public class AddOperationHandler implements CommandHandler {
         }
         Optional<Category> category = this.categoryRepository.getCategoryByName(user, type, categoryName);
         if (category.isEmpty()) {
-            throw new OperationCategoryNotExistsException();
+            throw new CategoryRepository.CategoryDoesNotExist();
         }
         return this.operationRepository.addOperation(user, category.get(), payment);
-    }
-
-    /**
-     * Исключение, генерируемое при попытке добавить операцию по несуществующей категории
-     */
-    private static class OperationCategoryNotExistsException extends Exception {
-        public OperationCategoryNotExistsException() {
-            super();
-        }
     }
 }

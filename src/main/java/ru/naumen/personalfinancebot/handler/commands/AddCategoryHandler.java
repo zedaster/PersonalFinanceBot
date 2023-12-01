@@ -1,7 +1,7 @@
 package ru.naumen.personalfinancebot.handler.commands;
 
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.messages.StaticMessages;
+import ru.naumen.personalfinancebot.messages.Messages;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
 import ru.naumen.personalfinancebot.services.ArgumentParseService;
@@ -50,20 +50,20 @@ public class AddCategoryHandler implements CommandHandler {
         try {
             categoryRepository.createUserCategory(event.getUser(), type, categoryName);
         } catch (CategoryRepository.CreatingExistingUserCategoryException e) {
-            String responseText = StaticMessages.USER_CATEGORY_ALREADY_EXISTS
+            String responseText = Messages.USER_CATEGORY_ALREADY_EXISTS
                     .replace("{type}", typeLabel)
                     .replace("{name}", categoryName);
             event.getBot().sendMessage(event.getUser(), responseText);
             return;
         } catch (CategoryRepository.CreatingExistingStandardCategoryException e) {
-            String responseText = StaticMessages.STANDARD_CATEGORY_ALREADY_EXISTS
+            String responseText = Messages.STANDARD_CATEGORY_ALREADY_EXISTS
                     .replace("{type}", typeLabel)
                     .replace("{name}", categoryName);
             event.getBot().sendMessage(event.getUser(), responseText);
             return;
         }
 
-        String responseText = StaticMessages.USER_CATEGORY_ADDED
+        String responseText = Messages.USER_CATEGORY_ADDED
                 .replace("{type}", typeLabel)
                 .replace("{name}", categoryName);
         event.getBot().sendMessage(event.getUser(), responseText);

@@ -1,6 +1,6 @@
 package ru.naumen.personalfinancebot.services;
 
-import ru.naumen.personalfinancebot.messages.StaticMessages;
+import ru.naumen.personalfinancebot.messages.Messages;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.User;
 import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
@@ -32,7 +32,7 @@ public class ReportService {
         try {
             yearMonth = YearMonth.parse(args, DateTimeFormatter.ofPattern("MM.yyyy"));
         } catch (Exception exception) {
-            return StaticMessages.INCORRECT_SELF_REPORT_VALUES;
+            return Messages.INCORRECT_SELF_REPORT_VALUES;
         }
         Map<String, Double> categoryPaymentMap = this
                 .operationRepository
@@ -40,13 +40,13 @@ public class ReportService {
                         user, yearMonth.getMonth().getValue(), yearMonth.getYear(), CategoryType.EXPENSE
                 );
         if (categoryPaymentMap == null) {
-            return StaticMessages.EXPENSES_NOT_EXIST;
+            return Messages.EXPENSES_NOT_EXIST;
         }
         StringBuilder report = new StringBuilder();
-        report.append(StaticMessages.SELF_REPORT_MESSAGE);
+        report.append(Messages.SELF_REPORT_MESSAGE);
 
         for (Map.Entry<String, Double> entry : categoryPaymentMap.entrySet()) {
-             report.append(StaticMessages.EXPENSE_REPORT_PATTERN
+             report.append(Messages.EXPENSE_REPORT_PATTERN
                      .replace("{category}", entry.getKey())
                      .replace("{payment}", entry.getValue().toString())
              );

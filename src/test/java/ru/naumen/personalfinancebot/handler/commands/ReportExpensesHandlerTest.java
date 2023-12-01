@@ -2,7 +2,6 @@ package ru.naumen.personalfinancebot.handler.commands;
 
 import org.hibernate.SessionFactory;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import ru.naumen.personalfinancebot.bot.MockBot;
@@ -19,6 +18,7 @@ import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
 import ru.naumen.personalfinancebot.services.ReportService;
 
+import java.time.YearMonth;
 import java.util.List;
 
 
@@ -93,7 +93,12 @@ public class ReportExpensesHandlerTest {
         User user = userRepository.getUserByTelegramChatId(1L).get();
         MockBot bot = new MockBot();
 
-        List<String> args = List.of("12.2023");
+        YearMonth yearMonth = YearMonth.now();
+
+        List<String> args = List.of("{month}.{year}"
+                .replace("{month}", String.valueOf(yearMonth.getMonth().getValue()))
+                .replace("{year}", String.valueOf(yearMonth.getYear()))
+        );
         HandleCommandEvent commandEvent = new HandleCommandEvent(bot, user, "report_expense", args);
 
         reportExpenseHandler.handleCommand(commandEvent);

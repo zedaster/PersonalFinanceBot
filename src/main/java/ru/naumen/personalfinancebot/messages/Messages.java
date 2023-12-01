@@ -1,6 +1,9 @@
 package ru.naumen.personalfinancebot.messages;
 
-public class StaticMessages {
+/**
+ * Класс для хранения статических сообщений/шаблонов сообщений для пользователя
+ */
+public class Messages {
     public static final String WELCOME_MESSAGE = "Добро пожаловать в бота для управления финансами!";
 
     public static final String COMMAND_NOT_FOUND = "Команда не распознана...";
@@ -37,7 +40,7 @@ public class StaticMessages {
             "Данная команда принимает 2 аргумента: [payment - сумма] [категория расхода/дохода]";
 
     public static final String CATEGORY_DOES_NOT_EXISTS =
-            "Указанная категория не числится. Используйте команду /add_category чтобы добавить её";
+            "Указанная категория не числится. Используйте команду /add_[income/expense]_category чтобы добавить её";
 
     public static final String INCORRECT_SELF_REPORT_ARGS =
             "Команда /report_expense принимает 1 аргумент [mm.yyyy], например \"/report_expense 11.2023\"";

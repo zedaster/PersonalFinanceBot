@@ -1,7 +1,7 @@
 package ru.naumen.personalfinancebot.handler.commands;
 
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.messages.StaticMessages;
+import ru.naumen.personalfinancebot.messages.Messages;
 import ru.naumen.personalfinancebot.repositories.user.UserRepository;
 import ru.naumen.personalfinancebot.services.ArgumentParseService;
 
@@ -42,7 +42,7 @@ public class SetBalanceHandler implements CommandHandler {
 
         event.getUser().setBalance(amount);
         userRepository.saveUser(event.getUser());
-        event.getBot().sendMessage(event.getUser(), StaticMessages.SET_BALANCE_SUCCESSFULLY
+        event.getBot().sendMessage(event.getUser(), Messages.SET_BALANCE_SUCCESSFULLY
                 .replace("{balance}", beautifyDouble(amount)));
 
     }
@@ -54,7 +54,9 @@ public class SetBalanceHandler implements CommandHandler {
      * а 1000.99 будет выведено как 1000.99
      */
     private String beautifyDouble(double d) {
-        if ((int) d == d) return String.valueOf((int) d);
+        if ((int) d == d) {
+            return String.valueOf((int) d);
+        }
         return String.valueOf(d);
     }
 }
