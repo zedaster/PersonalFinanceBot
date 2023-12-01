@@ -92,7 +92,8 @@ public class ReportExpensesHandlerTest {
     public void handleWithCorrectArguments() {
         User user = userRepository.getUserByTelegramChatId(1L).get();
         MockBot bot = new MockBot();
-        List<String> args = List.of("11.2023");
+
+        List<String> args = List.of("12.2023");
         HandleCommandEvent commandEvent = new HandleCommandEvent(bot, user, "report_expense", args);
 
         reportExpenseHandler.handleCommand(commandEvent);
