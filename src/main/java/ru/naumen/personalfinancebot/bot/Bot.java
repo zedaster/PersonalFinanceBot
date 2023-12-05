@@ -13,7 +13,7 @@ public interface Bot {
     /**
      * Запуск бота
      */
-    void startPooling() throws PollingException;
+    void startPooling() throws PoolingException;
 
     /**
      * Отправка текстового сообщения определенному пользователю
@@ -23,7 +23,7 @@ public interface Bot {
     /**
      * Исключение, выбрасываемое в случае, если бот запустился с ошибкой
      */
-    class PollingException extends Exception {
+    class PoolingException extends Exception {
         /**
          * Стандартное сообщение об ошибке
          */
@@ -34,16 +34,20 @@ public interface Bot {
          */
         private final String exceptionMessage;
 
-        public PollingException(String exceptionMessage) {
+        /**
+         * Исключение, которое было выброшено во время запуска бота
+         */
+        private final Throwable cause;
+
+        public PoolingException(Throwable cause) {
+            this(cause, DEFAULT_MESSAGE);
+        }
+
+        public PoolingException(Throwable cause, String exceptionMessage) {
+            this.cause = cause;
             this.exceptionMessage = exceptionMessage;
-        }
-
-        public PollingException() {
-            this(DEFAULT_MESSAGE);
-        }
-
-        public String getExceptionMessage() {
-            return this.exceptionMessage;
+            System.out.println(this.exceptionMessage);
+            System.out.print("Сообщение исключения: " + this.cause.getMessage());
         }
     }
 }

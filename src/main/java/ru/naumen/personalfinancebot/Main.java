@@ -16,7 +16,7 @@ import ru.naumen.personalfinancebot.repositories.user.UserRepository;
  * Программа, запускающая Телеграм-бота
  */
 public class Main {
-    public static void main(String[] args) throws Bot.PollingException {
+    public static void main(String[] args) {
         HibernateConfiguration hibernateConfiguration = new HibernateConfiguration(
                 System.getenv("DB_URL"),
                 System.getenv("DB_USERNAME"),
@@ -35,6 +35,10 @@ public class Main {
                 handler,
                 userRepository
         );
-        bot.startPooling();
+        try {
+            bot.startPooling();
+        } catch (Bot.PoolingException exception) {
+            exception.printStackTrace();
+        }
     }
 }
