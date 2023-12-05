@@ -46,8 +46,6 @@ public interface Bot {
         public PoolingException(Throwable cause, String exceptionMessage) {
             this.cause = cause;
             this.exceptionMessage = exceptionMessage;
-            System.out.println(this.exceptionMessage);
-            System.out.print("Сообщение исключения: " + this.cause.getMessage());
         }
     }
 }
