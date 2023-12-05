@@ -1,7 +1,7 @@
 package ru.naumen.personalfinancebot.handler.commands;
 
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.messages.StaticMessages;
+import ru.naumen.personalfinancebot.messages.Messages;
 
 /**
  * Обработчик стартовой команды
@@ -14,6 +14,6 @@ public class StartCommandHandler implements CommandHandler {
      */
     @Override
     public void handleCommand(HandleCommandEvent event) {
-        event.getBot().sendMessage(event.getUser(), StaticMessages.WELCOME_MESSAGE);
+        event.getBot().sendMessage(event.getUser(), Messages.WELCOME_MESSAGE);
     }
 }

@@ -6,7 +6,7 @@ import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.messages.StaticMessages;
+import ru.naumen.personalfinancebot.messages.Messages;
 import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.User;
@@ -22,7 +22,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
-public class RemoveCategoryTests {
+/**
+ * Класс для тестирования удаления пользовательских категорий
+ */
+public class RemoveCategoryTest {
     /**
      * Название моковой тестовой категории доходов, которая пересоздается перед каждым тестом.
      */
@@ -107,7 +110,7 @@ public class RemoveCategoryTests {
         standardCategories = Arrays.stream(categories).toList();
     }
 
-    public RemoveCategoryTests() {
+    public RemoveCategoryTest() {
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
     }
 
@@ -199,7 +202,7 @@ public class RemoveCategoryTests {
         Assert.assertEquals(this.mockBot.getMessageQueueSize(), 1);
         MockMessage lastMessage = this.mockBot.poolMessageQueue();
         Assert.assertEquals(this.mockUser, lastMessage.receiver());
-        Assert.assertEquals(StaticMessages.USER_CATEGORY_ALREADY_NOT_EXISTS
+        Assert.assertEquals(Messages.USER_CATEGORY_ALREADY_NOT_EXISTS
                         .replace("{type}", CategoryType.EXPENSE.getPluralShowLabel())
                         .replace("{name}", noNameCategory),
                 lastMessage.text());
@@ -286,7 +289,7 @@ public class RemoveCategoryTests {
         Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
         MockMessage lastMessage = this.mockBot.poolMessageQueue();
         Assert.assertEquals(this.mockUser, lastMessage.receiver());
-        String expectedMessage = StaticMessages.USER_CATEGORY_ALREADY_NOT_EXISTS
+        String expectedMessage = Messages.USER_CATEGORY_ALREADY_NOT_EXISTS
                 .replace("{type}", CategoryType.INCOME.getPluralShowLabel())
                 .replace("{name}", someStandardCategory.getCategoryName());
         Assert.assertEquals(expectedMessage, lastMessage.text());
@@ -326,7 +329,7 @@ public class RemoveCategoryTests {
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
             MockMessage lastMessage = this.mockBot.poolMessageQueue();
             Assert.assertEquals(this.mockUser, lastMessage.receiver());
-            Assert.assertEquals(StaticMessages.INCORRECT_CATEGORY_ARGUMENT_COUNT, lastMessage.text());
+            Assert.assertEquals(Messages.INCORRECT_CATEGORY_ARGUMENT_COUNT, lastMessage.text());
         }
     }
 

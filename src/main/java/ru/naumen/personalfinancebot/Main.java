@@ -35,6 +35,11 @@ public class Main {
                 handler,
                 userRepository
         );
-        bot.startPooling();
+        try {
+            bot.startPooling();
+        } catch (Bot.PoolingException exception) {
+            System.out.println("Произошла ошибка при запуске бота: " + exception.getMessage());
+            exception.printStackTrace();
+        }
     }
 }

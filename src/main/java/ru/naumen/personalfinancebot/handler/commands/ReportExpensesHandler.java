@@ -1,12 +1,8 @@
 package ru.naumen.personalfinancebot.handler.commands;
 
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.messages.StaticMessages;
-import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
+import ru.naumen.personalfinancebot.messages.Messages;
 import ru.naumen.personalfinancebot.services.ReportService;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Обработчик для команды "/report_expense"
@@ -26,7 +22,7 @@ public class ReportExpensesHandler implements CommandHandler {
     @Override
     public void handleCommand(HandleCommandEvent event) {
         if (event.getArgs().size() != 1) {
-            event.getBot().sendMessage(event.getUser(), StaticMessages.INCORRECT_SELF_REPORT_ARGS);
+            event.getBot().sendMessage(event.getUser(), Messages.INCORRECT_SELF_REPORT_ARGS);
             return;
         }
         String report = this.reportService.getExpenseReport(event.getUser(), event.getArgs().get(0));

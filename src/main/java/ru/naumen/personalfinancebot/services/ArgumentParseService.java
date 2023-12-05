@@ -1,7 +1,7 @@
 package ru.naumen.personalfinancebot.services;
 
 import com.sun.istack.Nullable;
-import ru.naumen.personalfinancebot.messages.StaticMessages;
+import ru.naumen.personalfinancebot.messages.Messages;
 
 import java.util.List;
 
@@ -35,12 +35,12 @@ public class ArgumentParseService {
      */
     public String parseCategory(List<String> args) throws IllegalArgumentException {
         if (args.size() != 1) {
-            throw new IllegalArgumentException(StaticMessages.INCORRECT_CATEGORY_ARGUMENT_COUNT);
+            throw new IllegalArgumentException(Messages.INCORRECT_CATEGORY_ARGUMENT_COUNT);
         }
 
         String categoryName = beautifyCategoryName(args.get(0));
         if (!isValidCategory(categoryName)) {
-            throw new IllegalArgumentException(StaticMessages.INCORRECT_CATEGORY_ARGUMENT_FORMAT);
+            throw new IllegalArgumentException(Messages.INCORRECT_CATEGORY_ARGUMENT_FORMAT);
         }
         return categoryName;
     }

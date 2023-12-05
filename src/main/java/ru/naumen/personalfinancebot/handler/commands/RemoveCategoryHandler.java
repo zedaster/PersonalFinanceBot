@@ -1,7 +1,7 @@
 package ru.naumen.personalfinancebot.handler.commands;
 
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.messages.StaticMessages;
+import ru.naumen.personalfinancebot.messages.Messages;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
 import ru.naumen.personalfinancebot.services.ArgumentParseService;
@@ -50,14 +50,14 @@ public class RemoveCategoryHandler implements CommandHandler {
         try {
             categoryRepository.removeUserCategoryByName(event.getUser(), categoryType, categoryName);
         } catch (CategoryRepository.RemovingNonExistentCategoryException e) {
-            String responseText = StaticMessages.USER_CATEGORY_ALREADY_NOT_EXISTS
+            String responseText = Messages.USER_CATEGORY_ALREADY_NOT_EXISTS
                     .replace("{type}", typeLabel)
                     .replace("{name}", categoryName);
             event.getBot().sendMessage(event.getUser(), responseText);
             return;
         }
 
-        String responseText = StaticMessages.USER_CATEGORY_REMOVED
+        String responseText = Messages.USER_CATEGORY_REMOVED
                 .replace("{type}", typeLabel)
                 .replace("{name}", categoryName);
         event.getBot().sendMessage(event.getUser(), responseText);

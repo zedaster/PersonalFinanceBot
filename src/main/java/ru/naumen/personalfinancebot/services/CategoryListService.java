@@ -1,6 +1,6 @@
 package ru.naumen.personalfinancebot.services;
 
-import ru.naumen.personalfinancebot.messages.StaticMessages;
+import ru.naumen.personalfinancebot.messages.Messages;
 import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.User;
@@ -30,7 +30,7 @@ public class CategoryListService {
         List<Category> typedStandardCategories = categoryRepository.getStandardCategoriesByType(categoryType);
         List<Category> personalCategories = categoryRepository.getUserCategoriesByType(user, categoryType);
 
-        return StaticMessages.LIST_TYPED_CATEGORIES
+        return Messages.LIST_TYPED_CATEGORIES
                 .replace("{type}", categoryType.getPluralShowLabel())
                 .replace("{standard_list}", formatCategoryList(typedStandardCategories))
                 .replace("{personal_list}", formatCategoryList(personalCategories));
@@ -38,11 +38,11 @@ public class CategoryListService {
 
     /**
      * Форматирует список категорий в строку, содержащую нумерованный список из названия этих категорий или
-     * {@link StaticMessages#EMPTY_LIST_CONTENT}, если список пуст.
+     * {@link Messages#EMPTY_LIST_CONTENT}, если список пуст.
      */
     private String formatCategoryList(List<Category> categories) {
         if (categories.isEmpty()) {
-            return StaticMessages.EMPTY_LIST_CONTENT + "\n";
+            return Messages.EMPTY_LIST_CONTENT + "\n";
         }
 
         StringBuilder stringBuilder = new StringBuilder();

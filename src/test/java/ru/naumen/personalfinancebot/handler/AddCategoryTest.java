@@ -8,7 +8,7 @@ import org.junit.Test;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.messages.StaticMessages;
+import ru.naumen.personalfinancebot.messages.Messages;
 import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.User;
@@ -24,7 +24,7 @@ import java.util.Optional;
 /**
  * Тесты для команды добавления категории
  */
-public class AddCategoryTests {
+public class AddCategoryTest {
 
     /**
      * Session factory для работы с сессиями в хранилищах
@@ -59,7 +59,7 @@ public class AddCategoryTests {
         operationRepository = new HibernateOperationRepository(sessionFactory);
     }
 
-    public AddCategoryTests() {
+    public AddCategoryTest() {
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
     }
 
@@ -142,7 +142,7 @@ public class AddCategoryTests {
                 User user = createTestUser(1);
                 MockBot bot = executeAddCategoryCommand(user, type, args);
                 Assert.assertEquals(1, bot.getMessageQueueSize());
-                Assert.assertEquals(StaticMessages.INCORRECT_CATEGORY_ARGUMENT_COUNT, bot.poolMessageQueue().text());
+                Assert.assertEquals(Messages.INCORRECT_CATEGORY_ARGUMENT_COUNT, bot.poolMessageQueue().text());
                 userRepository.removeUserById(user.getId());
             }
         }

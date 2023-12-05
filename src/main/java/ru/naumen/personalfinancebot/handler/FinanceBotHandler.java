@@ -2,7 +2,7 @@ package ru.naumen.personalfinancebot.handler;
 
 import ru.naumen.personalfinancebot.handler.commands.*;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.messages.StaticMessages;
+import ru.naumen.personalfinancebot.messages.Messages;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
@@ -61,7 +61,7 @@ public class FinanceBotHandler {
         if (handler != null) {
             handler.handleCommand(event);
         } else {
-            event.getBot().sendMessage(event.getUser(), StaticMessages.COMMAND_NOT_FOUND);
+            event.getBot().sendMessage(event.getUser(), Messages.COMMAND_NOT_FOUND);
         }
     }
 }
