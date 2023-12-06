@@ -6,8 +6,6 @@ import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.messages.Messages;
-import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.User;
 import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
@@ -16,18 +14,12 @@ import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  * Тесты на команды для вывода категорий
  */
 public class CategoryListTest {
-    // Static необходим для инициализации данных перед тестами и очистки после всех тестов
-
     /**
      * Session factory для работы с сессиями в хранилищах
      */
@@ -36,18 +28,18 @@ public class CategoryListTest {
     /**
      * Хранилище пользователей
      */
-    private static final TestHibernateUserRepository userRepository;
+    private final TestHibernateUserRepository userRepository;
 
     /**
      * Хранилище категорий
      * Данная реализация позволяет сделать полную очистку категорий после тестов
      */
-    private static final TestHibernateCategoryRepository categoryRepository;
+    private final TestHibernateCategoryRepository categoryRepository;
 
     /**
      * Хранилище операций
      */
-    private static final OperationRepository operationRepository;
+    private final OperationRepository operationRepository;
 
     /**
      * Обработчик команд для бота
@@ -57,7 +49,7 @@ public class CategoryListTest {
     /**
      * Моковый пользователь. Пересоздается для каждого теста
      */
-    private User mockUser;
+    private final User mockUser;
 
     /**
      * Моковый бот. Пересоздается для каждого теста.
@@ -67,9 +59,32 @@ public class CategoryListTest {
     // Инициализация статических полей перед использованием класса
     static {
         sessionFactory = new HibernateConfiguration().getSessionFactory();
-        userRepository = new TestHibernateUserRepository(sessionFactory);
-        categoryRepository = new TestHibernateCategoryRepository(sessionFactory);
-        operationRepository = new HibernateOperationRepository(sessionFactory);
+    }
+
+    public CategoryListTest() {
+        this.userRepository = new TestHibernateUserRepository(sessionFactory);
+        this.categoryRepository = new TestHibernateCategoryRepository(sessionFactory);
+        this.operationRepository = new HibernateOperationRepository(sessionFactory);
+        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
+
+        this.mockUser = new User(1L, 100);
+        this.userRepository.saveUser(this.mockUser);
+    }
+
+    /**
+     * Очистка стандартных категорий и закрытие sessionFactory после выполнения всех тестов в этом классе
+     */
+    @AfterClass
+    public static void finishTests() {
+        sessionFactory.close();
+    }
+
+    /**
+     * Создаем пользователя и бота перед каждым тестом
+     */
+    @Before
+    public void beforeEachTest() {
+        this.mockBot = new MockBot();
 
         // Наполняем стандартные категории перед тестами
         try {
@@ -82,97 +97,86 @@ public class CategoryListTest {
         }
     }
 
-    public CategoryListTest() {
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
-    }
-
-    /**
-     * Очистка стандартных категорий и закрытие sessionFactory после выполнения всех тестов в этом классе
-     */
-    @AfterClass
-    public static void finishTests() {
-        categoryRepository.removeAll();
-        sessionFactory.close();
-    }
-
-    /**
-     * Создаем пользователя и бота перед каждым тестом
-     */
-    @Before
-    public void beforeEachTest() {
-        this.mockUser = new User(1L, 100);
-        userRepository.saveUser(this.mockUser);
-        this.mockBot = new MockBot();
-    }
-
     /**
      * Удаляем всех пользователей из БД после каждого теста
      */
     @After
     public void afterEachTest() {
+        categoryRepository.removeAll();
         userRepository.removeAll();
     }
 
     /**
-     * Тестирует отображение нескольких (трех) категорий доходов и нескольких (трех) категорий расходов
+     * Тестирует отображение доходов+расходов или доходов или расходов нескольких (трех) категорий доходов и
+     * нескольких (трех) категорий расходов.
      */
     @Test
     public void showCoupleOfCategories() throws CategoryRepository.CreatingExistingCategoryException {
-        ExpectedCategoryFormat expect = new ExpectedCategoryFormat(
-                """
-                        1. Standard income 1
-                        2. Standard income 2
-                        """,
-                """
-                        1. Standard expense 1
-                        2. Standard expense 2
-                        """,
-                """
-                        1. Personal income 1
-                        2. Personal income 2
-                        3. Personal income 3
-                        """,
-                """
-                        1. Personal expense 1
-                        2. Personal expense 2
-                        3. Personal expense 3
-                        """
-        );
+        final String expectFullMsg = """
+                Все доступные вам категории доходов:
+                Стандартные:
+                1. Standard income 1
+                2. Standard income 2
+                                
+                Персональные:
+                1. Personal income 1
+                2. Personal income 2
+                3. Personal income 3
+                                
+                Все доступные вам категории расходов:
+                Стандартные:
+                1. Standard expense 1
+                2. Standard expense 2
+                                
+                Персональные:
+                1. Personal expense 1
+                2. Personal expense 2
+                3. Personal expense 3
+                """;
 
-        assertShowCategories(3, expect);
-    }
+        final String expectIncomeMsg = """
+                Все доступные вам категории доходов:
+                Стандартные:
+                1. Standard income 1
+                2. Standard income 2
+                                
+                Персональные:
+                1. Personal income 1
+                2. Personal income 2
+                3. Personal income 3
+                """;
 
-    /**
-     * Тестирует отображение 100 категорий у пользователя (50 на расходы, 50 на доходы)
-     * Должно быть отправлено одно длинное сообщение.
-     * Бот его разделит сам при необходимости.
-     */
-    @Test
-    public void showHundredCategories() throws CategoryRepository.CreatingExistingCategoryException {
-        ExpectedCategoryFormat expect = new ExpectedCategoryFormat(
-                """
-                        1. Standard income 1
-                        2. Standard income 2
-                        """,
-                """
-                        1. Standard expense 1
-                        2. Standard expense 2
-                        """,
-                getExpectPersonalCategoriesFormat(CategoryType.INCOME, 50),
-                getExpectPersonalCategoriesFormat(CategoryType.EXPENSE, 50)
-        );
+        final String expectExpensesMsg = """
+                Все доступные вам категории расходов:
+                Стандартные:
+                1. Standard expense 1
+                2. Standard expense 2
+                                
+                Персональные:
+                1. Personal expense 1
+                2. Personal expense 2
+                3. Personal expense 3
+                """;
 
-        assertShowCategories(50, expect);
-    }
+        addUserCategories(this.mockUser, CategoryType.INCOME, "Personal income 1", "Personal income 2",
+                "Personal income 3");
+        addUserCategories(this.mockUser, CategoryType.EXPENSE, "Personal expense 1", "Personal expense 2",
+                "Personal expense 3");
 
-    /**
-     * Генерирует и выводит ожидаемый нумерованный список в виде строки
-     */
-    private String getExpectPersonalCategoriesFormat(CategoryType type, int count) {
-        List<String> namesList = this.getPersonalCategoriesNames(type, count);
-        return IntStream.range(0, count)
-                .mapToObj(i -> (i + 1) + ". " + namesList.get(i) + "\n")
-                .collect(Collectors.joining());
+        final List<String> commands = List.of("list_categories", "list_income_categories", "list_expense_categories");
+        for (String commandName : commands) {
+            HandleCommandEvent allCommand = new HandleCommandEvent(
+                    this.mockBot,
+                    this.mockUser,
+                    commandName,
+                    List.of());
+            this.botHandler.handleCommand(allCommand);
+        }
+
+        Assert.assertEquals(3, this.mockBot.getMessageQueueSize());
+        Assert.assertEquals(expectFullMsg, this.mockBot.poolMessageQueue().text());
+        Assert.assertEquals(expectIncomeMsg, this.mockBot.poolMessageQueue().text());
+        Assert.assertEquals(expectExpensesMsg, this.mockBot.poolMessageQueue().text());
     }
 
     /**
@@ -180,43 +184,64 @@ public class CategoryListTest {
      */
     @Test
     public void showOneCategory() throws CategoryRepository.CreatingExistingCategoryException {
-        ExpectedCategoryFormat expect = new ExpectedCategoryFormat(
-                """
-                        1. Standard income 1
-                        2. Standard income 2
-                        """,
-                """
-                        1. Standard expense 1
-                        2. Standard expense 2
-                        """,
-                """
-                        1. Personal income 1
-                        """,
-                """
-                        1. Personal expense 1
-                        """
-        );
-        assertShowCategories(1, expect);
+        final String expectMsg = """
+                Все доступные вам категории доходов:
+                Стандартные:
+                1. Standard income 1
+                2. Standard income 2
+                                
+                Персональные:
+                1. Personal income 1
+                                
+                Все доступные вам категории расходов:
+                Стандартные:
+                1. Standard expense 1
+                2. Standard expense 2
+                                
+                Персональные:
+                1. Personal expense 1
+                """;
+
+        addUserCategories(this.mockUser, CategoryType.INCOME, "Personal income 1");
+        addUserCategories(this.mockUser, CategoryType.EXPENSE, "Personal expense 1");
+
+        HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, "list_categories",
+                List.of());
+        this.botHandler.handleCommand(command);
+        Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
+        MockMessage lastMessage = this.mockBot.poolMessageQueue();
+        Assert.assertEquals(expectMsg, lastMessage.text());
     }
 
     /**
      * Тестирует отображение пользовательских категорий при их отсутствии
      */
     @Test
-    public void showNoCategories() throws CategoryRepository.CreatingExistingCategoryException {
-        ExpectedCategoryFormat expect = new ExpectedCategoryFormat(
-                """
-                        1. Standard income 1
-                        2. Standard income 2
-                        """,
-                """
-                        1. Standard expense 1
-                        2. Standard expense 2
-                        """,
-                Messages.EMPTY_LIST_CONTENT + "\n",
-                Messages.EMPTY_LIST_CONTENT + "\n"
-        );
-        assertShowCategories(0, expect);
+    public void showNoCategories() {
+        final String expectMsg = """
+                Все доступные вам категории доходов:
+                Стандартные:
+                1. Standard income 1
+                2. Standard income 2
+                                
+                Персональные:
+                <отсутствуют>
+                                
+                Все доступные вам категории расходов:
+                Стандартные:
+                1. Standard expense 1
+                2. Standard expense 2
+                                
+                Персональные:
+                <отсутствуют>
+                """;
+
+        HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, "list_categories",
+                List.of());
+        this.botHandler.handleCommand(command);
+        Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
+        MockMessage lastMessage = this.mockBot.poolMessageQueue();
+        Assert.assertEquals(expectMsg, lastMessage.text());
     }
 
     /**
@@ -227,164 +252,69 @@ public class CategoryListTest {
         User secondUser = new User(2L, 200.0);
         userRepository.saveUser(secondUser);
 
-        List<Category> incomeCategories = addNumberedCategories(this.mockUser, CategoryType.INCOME, 3);
+        addUserCategories(this.mockUser, CategoryType.INCOME, "Personal income 1", "Personal income 2",
+                "Personal income 3");
 
-        ExpectedCategoryFormat expectMockUserFormat = new ExpectedCategoryFormat(
-                """
-                        1. Standard income 1
-                        2. Standard income 2
-                        """,
-                """
-                        1. Standard expense 1
-                        2. Standard expense 2
-                        """,
-                """
-                        1. Personal income 1
-                        2. Personal income 2
-                        3. Personal income 3
-                        """,
-                Messages.EMPTY_LIST_CONTENT + "\n"
-        );
-        ExpectedCategoryFormat expectSecondUserFormat = new ExpectedCategoryFormat(
-                """
-                        1. Standard income 1
-                        2. Standard income 2
-                        """,
-                """
-                        1. Standard expense 1
-                        2. Standard expense 2
-                        """,
-                Messages.EMPTY_LIST_CONTENT + "\n",
-                Messages.EMPTY_LIST_CONTENT + "\n"
-        );
-        assertAllCommandExecution(this.mockUser, expectMockUserFormat);
-        assertAllCommandExecution(secondUser, expectSecondUserFormat);
+        final String expectMockUserMsg = """
+                Все доступные вам категории доходов:
+                Стандартные:
+                1. Standard income 1
+                2. Standard income 2
+                                
+                Персональные:
+                1. Personal income 1
+                2. Personal income 2
+                3. Personal income 3
+                                
+                Все доступные вам категории расходов:
+                Стандартные:
+                1. Standard expense 1
+                2. Standard expense 2
+                                
+                Персональные:
+                <отсутствуют>
+                """;
 
-        incomeCategories.forEach((category -> {
-            try {
-                categoryRepository.removeCategoryById(category.getId());
-            } catch (CategoryRepository.RemovingStandardCategoryException e) {
-                throw new RuntimeException(e);
-            }
-        }));
-    }
+        final String expectSecondUserMsg = """
+                Все доступные вам категории доходов:
+                Стандартные:
+                1. Standard income 1
+                2. Standard income 2
+                                
+                Персональные:
+                <отсутствуют>
+                                
+                Все доступные вам категории расходов:
+                Стандартные:
+                1. Standard expense 1
+                2. Standard expense 2
+                                
+                Персональные:
+                <отсутствуют>
+                """;
 
-    /**
-     * Добавляет определенное количество категорий пользователю и проверяет работоспособность команд для
-     * просмотра категорий (всех/только расходы/только доходы)
-     *
-     * @param eachTypeCount количество категорий для каждого типа
-     * @param expectFormat ожидаемые сообщения
-     */
-    private void assertShowCategories(int eachTypeCount, ExpectedCategoryFormat expectFormat)
-            throws CategoryRepository.CreatingExistingCategoryException {
-        List<Category> incomeCategories = addNumberedCategories(this.mockUser, CategoryType.INCOME, eachTypeCount);
-        List<Category> expenseCategories = addNumberedCategories(this.mockUser, CategoryType.EXPENSE, eachTypeCount);
-        List<Category> allCategories = concatLists(incomeCategories, expenseCategories);
+        List<User> users = List.of(this.mockUser, secondUser);
+        List<String> expectMessages = List.of(expectMockUserMsg, expectSecondUserMsg);
+        for (int i = 0; i < 2; i++) {
+            HandleCommandEvent command = new HandleCommandEvent(
+                    this.mockBot,
+                    users.get(i),
+                    "list_categories",
+                    List.of());
+            this.botHandler.handleCommand(command);
 
-        assertAllCommandExecution(this.mockUser, expectFormat);
-        assertTypedCommandExecution(this.mockUser, CategoryType.INCOME,
-                expectFormat.standardIncomeCategories, expectFormat.personalIncomeCategories);
-        assertTypedCommandExecution(this.mockUser, CategoryType.EXPENSE, expectFormat.standardExpenseCategories,
-                expectFormat.personalExpenseCategories);
-
-        allCategories.forEach((category -> {
-            try {
-                categoryRepository.removeCategoryById(category.getId());
-            } catch (CategoryRepository.RemovingStandardCategoryException e) {
-                throw new RuntimeException(e);
-            }
-        }));
-    }
-
-    /**
-     * Проверяет выполнение команды для вывода категорий расходов (/list_expense_categories) или
-     * категорий доходов (/list_income_categories)
-     */
-    private void assertTypedCommandExecution(User user, CategoryType type, String expectStandardListFormat,
-                                             String expectPersonalListFormat) {
-        String expectedResponse = getExpectedResponse(type, expectStandardListFormat,
-                expectPersonalListFormat);
-
-        String commandName = "list_%s_categories".formatted(type.getCommandLabel());
-        assertCommand(user, commandName, expectedResponse);
-    }
-
-    /**
-     * Проверяет выполнение команды для вывода всех категорий расходов, доступных пользователю (/list_categories).
-     */
-    private void assertAllCommandExecution(User user, ExpectedCategoryFormat expectFormat) {
-        String expectedIncomesTypesResponse = getExpectedResponse(CategoryType.INCOME,
-                expectFormat.standardIncomeCategories(), expectFormat.personalIncomeCategories());
-        String expectedExpensesTypesResponse = getExpectedResponse(CategoryType.EXPENSE,
-                expectFormat.standardExpenseCategories(), expectFormat.personalExpenseCategories());
-        String expectedResponse = expectedIncomesTypesResponse + "\n" + expectedExpensesTypesResponse;
-
-        assertCommand(user, "list_categories", expectedResponse);
-    }
-
-    /**
-     * Проверяет выполнение команды commandName без аргументов для пользователя user с ожидаемым текстом сообщения
-     * expectedResponse.
-     */
-    private void assertCommand(User user, String commandName, String expectedResponse) {
-        HandleCommandEvent command = new HandleCommandEvent(this.mockBot, user, commandName, List.of());
-        this.botHandler.handleCommand(command);
-        Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
-        MockMessage lastMessage = this.mockBot.poolMessageQueue();
-        Assert.assertEquals(user, lastMessage.receiver());
-        Assert.assertEquals(expectedResponse, lastMessage.text());
-    }
-
-    /**
-     * Получает текст сообщения, которое ожидается для вывода категорий доходов/расходов.
-     */
-    private String getExpectedResponse(CategoryType type, String expectStandardListFormat, String expectPersonalListFormat) {
-        return Messages.LIST_TYPED_CATEGORIES
-                .replace("{type}", type.getPluralShowLabel())
-                .replace("{standard_list}", expectStandardListFormat)
-                .replace("{personal_list}", expectPersonalListFormat);
-    }
-
-
-    /**
-     * Создает и сохраняет пользовательские категории в БД типа categoryType в количестве count штук.
-     */
-    private List<Category> addNumberedCategories(User testUser, CategoryType categoryType, int count)
-            throws CategoryRepository.CreatingExistingCategoryException {
-        List<Category> categories = new ArrayList<>();
-        for (String name : getPersonalCategoriesNames(categoryType, count)) {
-            Category category = categoryRepository.createUserCategory(testUser, categoryType, name);
-            categories.add(category);
+            Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
+            MockMessage lastMessage = this.mockBot.poolMessageQueue();
+            Assert.assertEquals(users.get(i), lastMessage.receiver());
+            Assert.assertEquals(expectMessages.get(i), lastMessage.text());
         }
-        return categories;
     }
 
-    /**
-     * Создает названия для пользовательских категорий типа categoryType в количестве count штук.
-     */
-    private List<String> getPersonalCategoriesNames(CategoryType categoryType, int count) {
-        List<String> names = new ArrayList<>();
-        for (int i = 1; i <= count; i++) {
-            String name = "Personal %s %d".formatted(categoryType.getCommandLabel(), i);
-            names.add(name);
+    private void addUserCategories(User user, CategoryType type, String... names) throws
+            CategoryRepository.CreatingExistingUserCategoryException,
+            CategoryRepository.CreatingExistingStandardCategoryException {
+        for (String name : names) {
+            this.categoryRepository.createUserCategory(user, type, name);
         }
-        return names;
-    }
-
-    /**
-     * Объединяет два списка в один
-     */
-    private <T> List<T> concatLists(List<T> list1, List<T> list2) {
-        return Stream.concat(list1.stream(), list2.stream()).toList();
-    }
-
-    /**
-     * Ожидаемые строковые значения нумерованного списка категорий при вызове команды
-     */
-    private record ExpectedCategoryFormat(String standardIncomeCategories,
-                                          String standardExpenseCategories,
-                                          String personalIncomeCategories,
-                                          String personalExpenseCategories) {
     }
 }
