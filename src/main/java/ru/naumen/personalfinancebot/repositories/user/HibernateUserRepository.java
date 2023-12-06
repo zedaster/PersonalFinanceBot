@@ -1,27 +1,21 @@
 package ru.naumen.personalfinancebot.repositories.user;
 
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
 import ru.naumen.personalfinancebot.models.User;
+import ru.naumen.personalfinancebot.repositories.HibernateRepository;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
-import java.util.List;
 import java.util.Optional;
 
 /**
  * Реализация хранилища пользователей в БД с помощью библиотеки Hibernate
  */
-public class HibernateUserRepository implements UserRepository {
-    /**
-     * Для открытия новых сессий
-     */
-    private final SessionFactory sessionFactory;
-
+public class HibernateUserRepository extends HibernateRepository implements UserRepository {
     public HibernateUserRepository(SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
+        super(sessionFactory);
     }
 
     /**
@@ -29,20 +23,15 @@ public class HibernateUserRepository implements UserRepository {
      */
     @Override
     public Optional<User> getUserByTelegramChatId(Long chatId) {
-        try (Session session = sessionFactory.openSession()) {
+        return produceTransaction(session -> {
             CriteriaBuilder cb = session.getCriteriaBuilder();
             CriteriaQuery<User> cq = cb.createQuery(User.class);
             Root<User> root = cq.from(User.class);
             cq.select(root).where(cb.equal(root.get("chatId"), chatId));
 
             Query<User> query = session.createQuery(cq);
-            List<User> users = query.getResultList();
-
-            if (!users.isEmpty()) {
-                return Optional.of(users.get(0));
-            }
-        }
-        return Optional.empty();
+            return query.getResultStream().findFirst();
+        });
     }
 
     /**
@@ -50,15 +39,13 @@ public class HibernateUserRepository implements UserRepository {
      */
     @Override
     public void saveUser(User user) {
-        try (Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
+        produceVoidTransaction(session -> {
             if (user.getId() == null) {
                 session.persist(user);
             } else {
                 session.merge(user);
             }
-            session.getTransaction().commit();
-        }
+        });
     }
 
     /**
@@ -66,13 +53,11 @@ public class HibernateUserRepository implements UserRepository {
      */
     @Override
     public void removeUserById(long id) {
-        try (Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
+        produceVoidTransaction(session -> {
             User user = session.get(User.class, id);
             if (user != null) {
                 session.delete(user);
             }
-            session.getTransaction().commit();
-        }
+        });
     }
 }
