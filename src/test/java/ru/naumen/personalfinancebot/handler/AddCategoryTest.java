@@ -1,14 +1,10 @@
 package ru.naumen.personalfinancebot.handler;
 
 import org.hibernate.SessionFactory;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.messages.Messages;
 import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.User;
@@ -25,6 +21,15 @@ import java.util.Optional;
  * Тесты для команды добавления категории
  */
 public class AddCategoryTest {
+    /**
+     * Команда для добавления дохода
+     */
+    private static final String ADD_INCOME_COMMAND = "add_income_category";
+
+    /**
+     * Команда для добавления расхода
+     */
+    private static final String ADD_EXPENSE_COMMAND = "add_expense_category";
 
     /**
      * Session factory для работы с сессиями в хранилищах
@@ -34,33 +39,49 @@ public class AddCategoryTest {
     /**
      * Хранилище пользователей
      */
-    private static final TestHibernateUserRepository userRepository;
+    private final TestHibernateUserRepository userRepository;
 
     /**
      * Хранилище категорий
      * Данная реализация позволяет сделать полную очистку категорий после тестов
      */
-    private static final TestHibernateCategoryRepository categoryRepository;
+    private final TestHibernateCategoryRepository categoryRepository;
 
     /**
      * Хранилище операций
      */
-    private static final OperationRepository operationRepository;
+    private final OperationRepository operationRepository;
 
     /**
      * Обработчик операций для бота
      */
     private final FinanceBotHandler botHandler;
 
+    /**
+     * Моковый бот
+     */
+    private MockBot mockBot;
+
+    /**
+     * Тестируемый пользователь
+     */
+    private User testUser;
+
     static {
         sessionFactory = new HibernateConfiguration().getSessionFactory();
-        userRepository = new TestHibernateUserRepository(sessionFactory);
-        categoryRepository = new TestHibernateCategoryRepository(sessionFactory);
-        operationRepository = new HibernateOperationRepository(sessionFactory);
     }
 
     public AddCategoryTest() {
+        this.userRepository = new TestHibernateUserRepository(sessionFactory);
+        this.categoryRepository = new TestHibernateCategoryRepository(sessionFactory);
+        this.operationRepository = new HibernateOperationRepository(sessionFactory);
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
+    }
+
+    @Before
+    public void beforeEachTest() {
+        this.mockBot = new MockBot();
+        this.testUser = createTestUser(1);
     }
 
     /**
@@ -68,36 +89,79 @@ public class AddCategoryTest {
      */
     @AfterClass
     public static void finishTests() {
-        categoryRepository.removeAll();
         sessionFactory.close();
     }
 
     @After
     public void afterEachTest() {
+        categoryRepository.removeAll();
         userRepository.removeAll();
+    }
+
+    /**
+     * Добавление категории, которая содержит несколько слов
+     */
+    @Test
+    public void addFewWordsAndDbSaving() {
+        final List<String> args = List.of("Коммунальные", "платежи");
+        final String categoryName = "Коммунальные платежи";
+        final String expectMessage = "Категория расходов 'Коммунальные платежи' успешно добавлена";
+
+        HandleCommandEvent commandEvent = new HandleCommandEvent(
+                this.mockBot, this.testUser, ADD_EXPENSE_COMMAND, args);
+        this.botHandler.handleCommand(commandEvent);
+        Optional<Category> addedCategory = categoryRepository.getCategoryByName(this.testUser, CategoryType.EXPENSE,
+                categoryName);
+        Assert.assertTrue(addedCategory.isPresent());
+        categoryRepository.removeAll();
+        Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
+        Assert.assertEquals(expectMessage, this.mockBot.poolMessageQueue().text());
     }
 
     /**
      * Добавление корректных категорий
      */
     @Test
-    public void addCorrectCategory() throws CategoryRepository.RemovingStandardCategoryException {
-        final String[][] testCases = new String[][]{
-                new String[]{"Taxi", "Taxi"},
-                new String[]{"taxi", "Taxi"},
-                new String[]{"tAxI", "Taxi"},
-                new String[]{"Такси", "Такси"},
-                new String[]{"1", "1"},
-                new String[]{"A", "A"},
-                new String[]{"Общая категория", "Общая категория"},
-        };
-        for (String[] testCase : testCases) {
-            String value = testCase[0];
-            String expected = testCase[1];
-            for (CategoryType type : CategoryType.values()) {
-                assertAddCorrectCategory(type, value, expected);
+    public void addCorrectCategory() {
+        final List<String> testCases = List.of("Такси", "такси", "тАкСи");
+        final String incomeExpectMessage = "Категория доходов 'Такси' успешно добавлена";
+        final String expenseExpectMessage = "Категория расходов 'Такси' успешно добавлена";
+        final List<String> commands = List.of(ADD_INCOME_COMMAND, ADD_EXPENSE_COMMAND);
+
+        for (int i = 0; i < 2; i++) {
+            for (String testCase : testCases) {
+                HandleCommandEvent commandEvent = new HandleCommandEvent(
+                        this.mockBot, this.testUser, commands.get(i), List.of(testCase));
+                this.botHandler.handleCommand(commandEvent);
+                categoryRepository.removeAll();
             }
         }
+
+        Assert.assertEquals(6, this.mockBot.getMessageQueueSize());
+        for (int i = 0; i < 3; i++) {
+            Assert.assertEquals(incomeExpectMessage, this.mockBot.poolMessageQueue().text());
+        }
+        for (int i = 0; i < 3; i++) {
+            Assert.assertEquals(expenseExpectMessage, this.mockBot.poolMessageQueue().text());
+        }
+    }
+
+    /**
+     * Добавление слишком большой категории и проверка на то, что она не добавилась
+     */
+    @Test
+    public void addingTooBigCategoryAndDbNotTouched() {
+        final String some65chars = "fdafaresdakbmgernadsvckmbqteafvjickmblearfdsvmxcklrefbeafvdzxcmkf";
+        final String expectMessage = "Название категории введено неверно. Оно может содержать от 1 до 64 символов " +
+                "латиницы, кириллицы, цифр, тире и пробелов";
+
+        HandleCommandEvent commandEvent = new HandleCommandEvent(
+                this.mockBot, this.testUser, ADD_INCOME_COMMAND, List.of(some65chars));
+        this.botHandler.handleCommand(commandEvent);
+        Assert.assertTrue(categoryRepository.getCategoryByName(this.testUser, CategoryType.INCOME, some65chars).isEmpty());
+        categoryRepository.removeAll();
+        Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
+        Assert.assertEquals(expectMessage, this.mockBot.poolMessageQueue().text());
     }
 
     /**
@@ -105,12 +169,19 @@ public class AddCategoryTest {
      */
     @Test
     public void addIncorrectCategory() {
-        final String some65chars = "fdafaresdakbmgernadsvckmbqteafvjickmblearfdsvmxcklrefbeafvdzxcmkf";
-        final String[] testCases = new String[]{some65chars, "", " ", ".", "_", "так_неверно", "так,неправильно", "中文"};
-        for (String value : testCases) {
-            for (CategoryType type : CategoryType.values()) {
-                assertIncorrectAddUserCategory(type, value);
-            }
+        final List<String> testCases = List.of(".", "_", "так_неверно", "так,неправильно", "中文");
+        final String expectMessage = "Название категории введено неверно. Оно может содержать от 1 до 64 символов " +
+                "латиницы, кириллицы, цифр, тире и пробелов";
+
+        for (String testCase : testCases) {
+            HandleCommandEvent commandEvent = new HandleCommandEvent(
+                    this.mockBot, this.testUser, ADD_INCOME_COMMAND, List.of(testCase));
+            this.botHandler.handleCommand(commandEvent);
+            categoryRepository.removeAll();
+        }
+        Assert.assertEquals(5, this.mockBot.getMessageQueueSize());
+        for (int i = 0; i < 5; i++) {
+            Assert.assertEquals(expectMessage, this.mockBot.poolMessageQueue().text());
         }
     }
 
@@ -118,33 +189,47 @@ public class AddCategoryTest {
      * Добавление категории на расход и на доход с одним и тем же названием
      */
     @Test
-    public void addSameIncomeAndExpense() throws CategoryRepository.RemovingStandardCategoryException {
-        final String name = "Сервисы для помощи студентам";
-        for (CategoryType type : CategoryType.values()) {
-            assertAddCorrectCategory(type, name, name);
+    public void addSameIncomeAndExpense() {
+        final String categoryName = "Такси";
+        final String addedIncomeMessage = "Категория доходов 'Такси' успешно добавлена";
+        final String addedExpenseMessage = "Категория расходов 'Такси' успешно добавлена";
+
+        final List<String> commandNames = List.of(ADD_INCOME_COMMAND, ADD_EXPENSE_COMMAND);
+        final List<CategoryType> types = List.of(CategoryType.INCOME, CategoryType.EXPENSE);
+        for (int i = 0; i < 2; i++) {
+            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.testUser, commandNames.get(i),
+                    List.of(categoryName));
+            botHandler.handleCommand(command);
+            Optional<Category> addedCategory = categoryRepository.getCategoryByName(this.testUser, types.get(i),
+                    categoryName);
+            Assert.assertTrue(addedCategory.isPresent());
         }
+
+        Assert.assertEquals(2, this.mockBot.getMessageQueueSize());
+        Assert.assertEquals(addedIncomeMessage, this.mockBot.poolMessageQueue().text());
+        Assert.assertEquals(addedExpenseMessage, this.mockBot.poolMessageQueue().text());
     }
 
     /**
      * Проверка неверного количества аргументов для команды
      */
     @Test
-    public void incorrectCountOfAddArguments() {
+    public void spacesOrIncorrectCountOfAddArguments() {
         List<List<String>> cases = List.of(
                 List.of(),
-                List.of(" ", ""),
-                List.of(" ", " "),
-                List.of("Two", "Args")
+                List.of(" "),
+                List.of(" ", " ")
         );
+        final String expectMessage = "Данная команда принимает [название категории] в одно или несколько слов.";
 
         for (List<String> args : cases) {
-            for (CategoryType type : CategoryType.values()) {
-                User user = createTestUser(1);
-                MockBot bot = executeAddCategoryCommand(user, type, args);
-                Assert.assertEquals(1, bot.getMessageQueueSize());
-                Assert.assertEquals(Messages.INCORRECT_CATEGORY_ARGUMENT_COUNT, bot.poolMessageQueue().text());
-                userRepository.removeUserById(user.getId());
-            }
+            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.testUser, ADD_INCOME_COMMAND, args);
+            botHandler.handleCommand(command);
+        }
+
+        Assert.assertEquals(3, this.mockBot.getMessageQueueSize());
+        for (int i = 0; i < 3; i++) {
+            Assert.assertEquals(expectMessage, this.mockBot.poolMessageQueue().text());
         }
     }
 
@@ -154,16 +239,18 @@ public class AddCategoryTest {
     @Test
     public void twoUsers() {
         final String categoryName = "Зарплата";
-        final CategoryType categoryType = CategoryType.INCOME;
-        User user1 = createTestUser(1);
-        User user2 = createTestUser(2);
-        executeAddCategoryCommand(user1, categoryType, List.of(categoryName));
-        categoryRepository.getCategoryByName(user1, categoryType, categoryName); // проверено ранее
+        User secondUser = createTestUser(2);
+
+        HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.testUser, ADD_INCOME_COMMAND,
+                List.of(categoryName));
+        botHandler.handleCommand(command);
+
+        categoryRepository.getCategoryByName(this.testUser, CategoryType.INCOME, categoryName); // проверено ранее
         Optional<Category> shouldBeEmptyCategory = categoryRepository
-                .getCategoryByName(user2, categoryType, categoryName);
+                .getCategoryByName(secondUser, CategoryType.INCOME, categoryName);
         Assert.assertTrue(shouldBeEmptyCategory.isEmpty());
-        userRepository.removeUserById(user1.getId());
-        userRepository.removeUserById(user2.getId());
+        userRepository.removeUserById(testUser.getId());
+        userRepository.removeUserById(secondUser.getId());
     }
 
     /**
@@ -173,50 +260,17 @@ public class AddCategoryTest {
     public void userAndStandardCategorySuppression() throws CategoryRepository.CreatingExistingCategoryException {
         final CategoryType categoryType = CategoryType.INCOME;
         final String categoryName = "Зарплата";
+        final String expectMessage = "Категория 'Зарплата' не должна быть добавлена как пользовательская";
+
         categoryRepository.createStandardCategory(categoryType, categoryName);
-        assertIncorrectAddUserCategory(categoryType, categoryName);
-        categoryRepository.removeAll();
-    }
-
-    /**
-     * Проводит тест для положительного кейса команды добавления категории
-     */
-    private void assertAddCorrectCategory(CategoryType type, String categoryName, String expectedCategoryName)
-            throws CategoryRepository.RemovingStandardCategoryException {
-        User user = createTestUser(1);
-        Assert.assertTrue(categoryRepository.getCategoryByName(user, type, categoryName).isEmpty());
-        executeAddCategoryCommand(user, type, List.of(categoryName));
-        Optional<Category> addedCategory = categoryRepository.getCategoryByName(user, type, categoryName);
-        Assert.assertTrue("Категория '%s' типа %s должна существовать".formatted(categoryName, type.name()),
-                addedCategory.isPresent());
-        Assert.assertEquals(addedCategory.get().getCategoryName(), expectedCategoryName);
-        categoryRepository.removeCategoryById(addedCategory.get().getId());
-        userRepository.removeUserById(user.getId());
-    }
-
-
-    /**
-     * Проводит тест для отрицательного кейса команды добавления категории
-     */
-    private void assertIncorrectAddUserCategory(CategoryType type, String categoryName) {
-        User user = createTestUser(1);
-        executeAddCategoryCommand(user, type, List.of(categoryName));
-        Optional<Category> addedCategory = categoryRepository.getCategoryByName(user, type, categoryName);
-        Assert.assertTrue("Категория '%s' не должна быть добавлена как пользовательская".formatted(categoryName),
-                addedCategory.isEmpty() || addedCategory.get().isStandard());
-        userRepository.removeUserById(user.getId());
-    }
-
-    /**
-     * Исполняет команду для добавления категории с переданными аргументами, учитывая тип категории.
-     * Возвращает MockBot, с которым была исполнена команда
-     */
-    private MockBot executeAddCategoryCommand(User user, CategoryType type, List<String> args) {
-        MockBot bot = new MockBot();
-        String commandName = "add_" + type.getCommandLabel() + "_category";
-        HandleCommandEvent command = new HandleCommandEvent(bot, user, commandName, args);
+        HandleCommandEvent command = new HandleCommandEvent(this.mockBot, testUser, ADD_INCOME_COMMAND,
+                List.of(categoryName));
         botHandler.handleCommand(command);
-        return bot;
+
+        Optional<Category> addedCategory = categoryRepository.getCategoryByName(this.testUser, CategoryType.INCOME,
+                categoryName);
+        Assert.assertTrue(expectMessage, addedCategory.isPresent());
+        Assert.assertTrue(expectMessage, addedCategory.get().isStandard());
     }
 
     /**

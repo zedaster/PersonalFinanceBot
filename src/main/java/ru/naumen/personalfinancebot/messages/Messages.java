@@ -14,9 +14,9 @@ public class Messages {
     public static final String ADD_EXPENSE_MESSAGE = "Добавлен расход по категории: ";
 
     public static final String INCORRECT_CATEGORY_ARGUMENT_COUNT =
-            "Данная команда принимает 1 аргумент: [название категории]";
+            "Данная команда принимает [название категории] в одно или несколько слов.";
     public static final String INCORRECT_CATEGORY_ARGUMENT_FORMAT = "Название категории введено неверно. Оно может " +
-            "содержать от 1 до 64 символов латиницы, кириллицы, цифр и пробелов";
+            "содержать от 1 до 64 символов латиницы, кириллицы, цифр, тире и пробелов";
 
     public static final String USER_CATEGORY_ALREADY_EXISTS = "Персональная категория {type} '{name}' уже существует.";
     public static final String STANDARD_CATEGORY_ALREADY_EXISTS = "Стандартная категория {type} '{name}' уже " +

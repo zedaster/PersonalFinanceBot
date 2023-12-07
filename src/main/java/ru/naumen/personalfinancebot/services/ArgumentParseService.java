@@ -34,11 +34,12 @@ public class ArgumentParseService {
      * @throws IllegalArgumentException если аргументы введены неверно
      */
     public String parseCategory(List<String> args) throws IllegalArgumentException {
-        if (args.size() != 1) {
+        String joinedString;
+        if (args.isEmpty() || (joinedString = String.join(" ", args).trim()).isEmpty()) {
             throw new IllegalArgumentException(Messages.INCORRECT_CATEGORY_ARGUMENT_COUNT);
         }
 
-        String categoryName = beautifyCategoryName(args.get(0));
+        String categoryName = beautifyCategoryName(joinedString);
         if (!isValidCategory(categoryName)) {
             throw new IllegalArgumentException(Messages.INCORRECT_CATEGORY_ARGUMENT_FORMAT);
         }
@@ -69,12 +70,12 @@ public class ArgumentParseService {
     /**
      * Проверяет, соответствует ли название категории правильному формату.
      * Символов должно быть от 1 до 64, каждый должен являться либо буквой в кириллице, латинице, либо цифрой,
-     * либо пробелом.
+     * либо пробелом, либо тире
      *
      * @param categoryName Название категории
      * @return true/false в зависимости от валидности названия категории
      */
     private boolean isValidCategory(String categoryName) {
-        return categoryName.matches("^[A-Za-zА-Яа-я0-9 ]{1,64}$");
+        return categoryName.matches("^[A-Za-zА-Яа-я0-9\\- ]{1,64}$");
     }
 }
