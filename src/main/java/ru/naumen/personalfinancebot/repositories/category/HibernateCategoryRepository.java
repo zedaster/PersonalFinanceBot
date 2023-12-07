@@ -8,6 +8,7 @@ import org.hibernate.query.Query;
 import ru.naumen.personalfinancebot.models.Category;
 import ru.naumen.personalfinancebot.models.CategoryType;
 import ru.naumen.personalfinancebot.models.User;
+import ru.naumen.personalfinancebot.repositories.HibernateRepository;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -17,11 +18,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class HibernateCategoryRepository implements CategoryRepository {
-    protected final SessionFactory sessionFactory;
-
+public class HibernateCategoryRepository extends HibernateRepository implements CategoryRepository {
     public HibernateCategoryRepository(SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
+        super(sessionFactory);
     }
 
     /**
@@ -107,17 +106,20 @@ public class HibernateCategoryRepository implements CategoryRepository {
      */
     @Override
     public void removeCategoryById(Long id) throws RemovingStandardCategoryException {
-        try (Session session = sessionFactory.openSession()) {
+        boolean isRemovingSuccessful = produceTransaction(session -> {
             Category category = session.get(Category.class, id);
             if (category == null) {
-                return;
+                return true;
             }
             if (category.isStandard()) {
-                throw new RemovingStandardCategoryException();
+                return false;
             }
-            session.beginTransaction();
             session.delete(category);
-            session.getTransaction().commit();
+            return true;
+        });
+
+        if (!isRemovingSuccessful) {
+            throw new RemovingStandardCategoryException();
         }
     }
 
@@ -129,16 +131,12 @@ public class HibernateCategoryRepository implements CategoryRepository {
      */
     public void removeUserCategoryByName(User user, CategoryType type, String categoryName)
             throws RemovingNonExistentCategoryException {
-        try (Session session = sessionFactory.openSession()) {
-            Optional<Category> category = getCategoryByName(user, type, categoryName);
-            if (category.isEmpty() || category.get().isStandard()) {
-                throw new RemovingNonExistentCategoryException();
-            }
-
-            session.beginTransaction();
-            session.delete(category.get());
-            session.getTransaction().commit();
+        Optional<Category> category = getCategoryByName(user, type, categoryName);
+        if (category.isEmpty() || category.get().isStandard()) {
+            throw new RemovingNonExistentCategoryException();
         }
+
+        produceVoidTransaction(session -> session.delete(category.get()));
     }
 
     /**
@@ -151,8 +149,9 @@ public class HibernateCategoryRepository implements CategoryRepository {
      */
     @Override
     public Optional<Category> getCategoryByName(@Nullable User user, CategoryType type, String categoryName) {
-        try (Session session = sessionFactory.openSession()) {
+        return produceTransaction(session -> {
             Query<Category> resultQuery;
+
             if (user == null) {
                 resultQuery = selectCategoriesSeparately(session, type, null, categoryName);
             } else {
@@ -162,8 +161,7 @@ public class HibernateCategoryRepository implements CategoryRepository {
             return resultQuery
                     .getResultStream()
                     .findFirst();
-        }
-
+        });
     }
 
     /**
@@ -171,9 +169,10 @@ public class HibernateCategoryRepository implements CategoryRepository {
      * Регистр названия категории игнорируется.
      */
     private List<Category> getCategoriesByType(@Nullable User user, CategoryType type) {
-        try (Session session = sessionFactory.openSession()) {
-            return selectCategoriesSeparately(session, type, user, null).getResultList();
-        }
+        return produceTransaction(session -> {
+            Query<Category> query = selectCategoriesSeparately(session, type, user, null);
+            return query.getResultList();
+        });
     }
 
     /**
@@ -239,11 +238,9 @@ public class HibernateCategoryRepository implements CategoryRepository {
      * @return Категория
      */
     private Category createCategory(Category category) {
-        try (Session session = sessionFactory.openSession()) {
-            session.beginTransaction();
+        return produceTransaction(session -> {
             session.save(category);
-            session.getTransaction().commit();
             return category;
-        }
+        });
     }
 }

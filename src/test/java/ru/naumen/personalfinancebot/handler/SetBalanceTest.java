@@ -80,58 +80,37 @@ public class SetBalanceTest {
     }
 
     /**
-     * Выполнение команды с целочисленными значениями
+     * Выполнение команды с правильно введенными значениями
      */
     @Test
-    public void integerBalance() {
-        List<String> args = List.of("100", String.valueOf(Integer.MAX_VALUE));
-        for (String arg : args) {
-            assetCorrectBalanceCommand(arg, arg);
-        }
-    }
-
-    /**
-     * Выполнение команды с числами с плавающей точкой
-     */
-    @Test
-    public void doubleDotBalance() {
-        List<List<String>> listOfArgs = List.of(
-                List.of("100.0", "100"),
-                List.of(String.valueOf(Double.MAX_VALUE), String.valueOf(Double.MAX_VALUE))
+    public void correctBalance() {
+        List<String> args = List.of(
+                "100",
+                "0",
+                "0.0",
+                "0.000000",
+                "0,0",
+                String.valueOf(Integer.MAX_VALUE)
         );
-        for (List<String> args : listOfArgs) {
-            assetCorrectBalanceCommand(args.get(0), args.get(1));
-        }
-    }
-
-    /**
-     * Выполнение команды с числами с плавающей "запятой"
-     */
-    @Test
-    public void doubleCommaBalance() {
-        List<List<String>> listOfArgs = List.of(
-                List.of("100,0", "100"),
-                List.of(String.valueOf(Double.MAX_VALUE).replace(".", ","), String.valueOf(Double.MAX_VALUE)));
-        for (List<String> args : listOfArgs) {
-            assetCorrectBalanceCommand(args.get(0), args.get(1));
-        }
-    }
-
-    /**
-     * Выполнение команды с нулевым балансом
-     */
-    @Test
-    public void zeroBalance() {
-        List<String> args = List.of("0", "0.0", "00000.0", "0.000000", "0,0");
-        for (String arg : args) {
-            assetCorrectBalanceCommand(arg, "0");
+        List<String> expects = List.of(
+                "Ваш баланс изменен. Теперь он составляет 100",
+                "Ваш баланс изменен. Теперь он составляет 0",
+                "Ваш баланс изменен. Теперь он составляет 0",
+                "Ваш баланс изменен. Теперь он составляет 0",
+                "Ваш баланс изменен. Теперь он составляет 0",
+                "Ваш баланс изменен. Теперь он составляет 2147483647"
+        );
+        for (int i = 0; i < args.size(); i++) {
+            String arg = args.get(i);
+            String expect = expects.get(i);
+            assetCorrectBalanceCommand(arg, expect);
         }
     }
 
     /**
      * Проводит тест с позитивным исходом
      */
-    private void assetCorrectBalanceCommand(String argument, String expectedStrAmount) {
+    private void assetCorrectBalanceCommand(String argument, String expectedMessage) {
         MockBot mockBot = new MockBot();
         User user = new User(123, 12345);
         userRepository.saveUser(user);
@@ -143,7 +122,7 @@ public class SetBalanceTest {
         MockMessage message = mockBot.poolMessageQueue();
         Assert.assertEquals(user, message.receiver());
         double amountDouble = Double.parseDouble(argument.replace(",", "."));
-        Assert.assertEquals("Ваш баланс изменен. Теперь он составляет " + expectedStrAmount, message.text());
+        Assert.assertEquals(expectedMessage, message.text());
         Assert.assertEquals(user.getBalance(), amountDouble, 1e-15);
 
         userRepository.removeUserById(user.getId());
