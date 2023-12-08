@@ -10,5 +10,5 @@ public interface CommandHandler {
     /**
      * Метод, вызываемый при получении команды
      */
-    void handleCommand(CommandData event, Session session);
+    void handleCommand(CommandData commandData, Session session);
 }

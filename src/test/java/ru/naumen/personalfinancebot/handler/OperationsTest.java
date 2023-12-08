@@ -94,9 +94,9 @@ public class OperationsTest {
         transactionManager.produceTransaction(session -> {
             User user = createUser(session);
             MockBot bot = new MockBot();
-            CommandData commandEventCategoryAdd = new CommandData(
+            CommandData commandDataCategoryAdd = new CommandData(
                     bot, user, "add_expense_category", List.of("Такси"));
-            this.botHandler.handleCommand(commandEventCategoryAdd, session);
+            this.botHandler.handleCommand(commandDataCategoryAdd, session);
             bot.poolMessageQueue();
 
             CommandData commandAddIncome = new CommandData(

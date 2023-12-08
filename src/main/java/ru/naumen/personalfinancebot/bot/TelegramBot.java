@@ -54,8 +54,8 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
                 List<String> msgWords = List.of(update.getMessage().getText().split(" "));
                 String cmdName = msgWords.get(0).substring(1);
                 List<String> args = msgWords.subList(1, msgWords.size());
-                CommandData event = new CommandData(this, user.get(), cmdName, args);
-                this.botHandler.handleCommand(event, session);
+                CommandData commandData = new CommandData(this, user.get(), cmdName, args);
+                this.botHandler.handleCommand(commandData, session);
             });
         }
     }

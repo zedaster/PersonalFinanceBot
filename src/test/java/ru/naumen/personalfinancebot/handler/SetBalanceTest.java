@@ -119,8 +119,8 @@ public class SetBalanceTest {
         transactionManager.produceTransaction(session -> {
             userRepository.saveUser(session, user);
             List<String> args = List.of(argument);
-            CommandData commandEvent = new CommandData(mockBot, user, "set_balance", args);
-            this.botHandler.handleCommand(commandEvent, session);
+            CommandData commandData = new CommandData(mockBot, user, "set_balance", args);
+            this.botHandler.handleCommand(commandData, session);
 
             Assert.assertEquals(1, mockBot.getMessageQueueSize());
             MockMessage message = mockBot.poolMessageQueue();
@@ -141,8 +141,8 @@ public class SetBalanceTest {
             MockBot mockBot = new MockBot();
             User user = new User(123, 12345);
             userRepository.saveUser(session, user);
-            CommandData commandEvent = new CommandData(mockBot, user, "set_balance", args);
-            this.botHandler.handleCommand(commandEvent, session);
+            CommandData commandData = new CommandData(mockBot, user, "set_balance", args);
+            this.botHandler.handleCommand(commandData, session);
 
             Assert.assertEquals(1, mockBot.getMessageQueueSize());
             MockMessage message = mockBot.poolMessageQueue();

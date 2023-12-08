@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.handler.commandData;
+package ru.naumen.personalfinancebot.handler.commandDataData;
 
 import org.hibernate.Session;
 import ru.naumen.personalfinancebot.bot.Bot;

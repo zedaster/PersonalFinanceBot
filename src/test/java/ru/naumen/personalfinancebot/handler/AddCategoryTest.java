@@ -107,9 +107,9 @@ public class AddCategoryTest {
             final String categoryName = "Коммунальные платежи";
             final String expectMessage = "Категория расходов 'Коммунальные платежи' успешно добавлена";
 
-            CommandData commandEvent = new CommandData(
+            CommandData commandData = new CommandData(
                     this.mockBot, this.testUser, ADD_EXPENSE_COMMAND, args);
-            this.botHandler.handleCommand(commandEvent, session);
+            this.botHandler.handleCommand(commandData, session);
             Optional<Category> addedCategory = categoryRepository.getCategoryByName(session, this.testUser, CategoryType.EXPENSE,
                     categoryName);
             Assert.assertTrue(addedCategory.isPresent());
@@ -132,9 +132,9 @@ public class AddCategoryTest {
 
             for (int i = 0; i < 2; i++) {
                 for (String testCase : testCases) {
-                    CommandData commandEvent = new CommandData(
+                    CommandData commandData = new CommandData(
                             this.mockBot, this.testUser, commands.get(i), List.of(testCase));
-                    this.botHandler.handleCommand(commandEvent, session);
+                    this.botHandler.handleCommand(commandData, session);
                     categoryRepository.removeAll();
                 }
             }
@@ -159,9 +159,9 @@ public class AddCategoryTest {
             final String expectMessage = "Название категории введено неверно. Оно может содержать от 1 до 64 символов " +
                     "латиницы, кириллицы, цифр, тире и пробелов";
 
-            CommandData commandEvent = new CommandData(
+            CommandData commandData = new CommandData(
                     this.mockBot, this.testUser, ADD_INCOME_COMMAND, List.of(some65chars));
-            this.botHandler.handleCommand(commandEvent, session);
+            this.botHandler.handleCommand(commandData, session);
             Assert.assertTrue(categoryRepository.getCategoryByName(session, this.testUser, CategoryType.INCOME, some65chars).isEmpty());
             categoryRepository.removeAll();
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
@@ -180,9 +180,9 @@ public class AddCategoryTest {
                     "латиницы, кириллицы, цифр, тире и пробелов";
 
             for (String testCase : testCases) {
-                CommandData commandEvent = new CommandData(
+                CommandData commandData = new CommandData(
                         this.mockBot, this.testUser, ADD_INCOME_COMMAND, List.of(testCase));
-                this.botHandler.handleCommand(commandEvent, session);
+                this.botHandler.handleCommand(commandData, session);
                 categoryRepository.removeAll();
             }
             Assert.assertEquals(5, this.mockBot.getMessageQueueSize());

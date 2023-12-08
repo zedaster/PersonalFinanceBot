@@ -117,8 +117,8 @@ public class ReportExpensesHandlerTest {
                     .replace("{month}", String.valueOf(yearMonth.getMonth().getValue()))
                     .replace("{year}", String.valueOf(yearMonth.getYear()))
             );
-            CommandData commandEvent = new CommandData(bot, user, "report_expense", args);
-            reportExpenseHandler.handleCommand(commandEvent, session);
+            CommandData commandData = new CommandData(bot, user, "report_expense", args);
+            reportExpenseHandler.handleCommand(commandData, session);
             MockMessage message = bot.poolMessageQueue();
             Assert.assertEquals(
                     "Подготовил отчёт по вашим расходам за указанный месяц:\nТакси: 1500.0 руб.\nХимчистка: 2400.0 руб.\n",
@@ -138,8 +138,8 @@ public class ReportExpensesHandlerTest {
             MockBot bot = new MockBot();
             List<String> args = List.of("11.pp", "pp.2023", "pp.pp", "-11.-2023", "-11.2023", "11.-2023");
             for (String arg : args) {
-                CommandData commandEvent = new CommandData(bot, user, "report_expense", List.of(arg));
-                reportExpenseHandler.handleCommand(commandEvent, session);
+                CommandData commandData = new CommandData(bot, user, "report_expense", List.of(arg));
+                reportExpenseHandler.handleCommand(commandData, session);
                 MockMessage message = bot.poolMessageQueue();
                 Assert.assertEquals(
                         """
@@ -166,8 +166,8 @@ public class ReportExpensesHandlerTest {
                     List.of()
             );
             for (List<String> args : argsList) {
-                CommandData commandEvent = new CommandData(bot, user, "report_expense", args);
-                reportExpenseHandler.handleCommand(commandEvent, session);
+                CommandData commandData = new CommandData(bot, user, "report_expense", args);
+                reportExpenseHandler.handleCommand(commandData, session);
                 MockMessage message = bot.poolMessageQueue();
                 Assert.assertEquals(
                         "Команда /report_expense принимает 1 аргумент [mm.yyyy], например \"/report_expense 11.2023\"",
