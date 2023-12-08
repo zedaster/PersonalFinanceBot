@@ -1,7 +1,7 @@
 package ru.naumen.personalfinancebot.handler.event;
 
 import ru.naumen.personalfinancebot.bot.Bot;
-import ru.naumen.personalfinancebot.models.User;
+import ru.naumen.personalfinancebot.model.User;
 
 import java.util.List;
 

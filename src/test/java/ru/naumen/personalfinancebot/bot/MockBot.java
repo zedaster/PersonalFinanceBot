@@ -1,6 +1,6 @@
 package ru.naumen.personalfinancebot.bot;
 
-import ru.naumen.personalfinancebot.models.User;
+import ru.naumen.personalfinancebot.model.User;
 
 import java.util.LinkedList;
 import java.util.Queue;

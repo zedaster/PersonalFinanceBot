@@ -1,8 +1,8 @@
 package ru.naumen.personalfinancebot.repository;
 
 import org.hibernate.SessionFactory;
-import ru.naumen.personalfinancebot.models.Category;
-import ru.naumen.personalfinancebot.repositories.category.HibernateCategoryRepository;
+import ru.naumen.personalfinancebot.model.Category;
+import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
 
 /**
  * Хранилище категорий для тестов
@@ -11,17 +11,17 @@ public class TestHibernateCategoryRepository extends HibernateCategoryRepository
     /**
      * Объект, позволяющий совершать транзакции для тестовых хранилищ
      */
-    private final TestHibernateTransactions testHibernateTransactions;
+    private final TestHibernateTransaction testHibernateTransaction;
 
     public TestHibernateCategoryRepository(SessionFactory sessionFactory) {
         super(sessionFactory);
-        testHibernateTransactions = new TestHibernateTransactions(Category.class, sessionFactory);
+        testHibernateTransaction = new TestHibernateTransaction(Category.class, sessionFactory);
     }
 
     /**
      * Очистка всех данных в таблице с категориями
      */
     public void removeAll() {
-        testHibernateTransactions.removeAll();
+        testHibernateTransaction.removeAll();
     }
 }

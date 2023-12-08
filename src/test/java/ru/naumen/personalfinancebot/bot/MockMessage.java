@@ -1,6 +1,6 @@
 package ru.naumen.personalfinancebot.bot;
 
-import ru.naumen.personalfinancebot.models.User;
+import ru.naumen.personalfinancebot.model.User;
 
 /**
  * Представляет из себя класс сообщения для мокового бота.

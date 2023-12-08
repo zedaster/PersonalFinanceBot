@@ -6,12 +6,12 @@ import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.models.Category;
-import ru.naumen.personalfinancebot.models.CategoryType;
-import ru.naumen.personalfinancebot.models.User;
-import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
-import ru.naumen.personalfinancebot.repositories.operation.HibernateOperationRepository;
-import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
+import ru.naumen.personalfinancebot.model.Category;
+import ru.naumen.personalfinancebot.model.CategoryType;
+import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
+import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
+import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
 
