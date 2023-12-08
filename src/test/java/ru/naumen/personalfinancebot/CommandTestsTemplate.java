@@ -7,11 +7,11 @@ import org.junit.Before;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
-import ru.naumen.personalfinancebot.models.User;
-import ru.naumen.personalfinancebot.repositories.operation.HibernateOperationRepository;
-import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
-import ru.naumen.personalfinancebot.repositories.user.HibernateUserRepository;
-import ru.naumen.personalfinancebot.repositories.user.UserRepository;
+import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
+import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
+import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
+import ru.naumen.personalfinancebot.repository.user.UserRepository;
 import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
 
 /**

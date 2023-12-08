@@ -9,8 +9,8 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import ru.naumen.personalfinancebot.configuration.TelegramBotConfiguration;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.models.User;
-import ru.naumen.personalfinancebot.repositories.user.UserRepository;
+import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.repository.user.UserRepository;
 
 import java.util.List;
 import java.util.Optional;

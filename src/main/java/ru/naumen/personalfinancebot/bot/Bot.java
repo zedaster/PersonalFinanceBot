@@ -1,10 +1,6 @@
 package ru.naumen.personalfinancebot.bot;
 
-import com.sun.istack.Nullable;
-import org.apache.commons.lang3.ObjectUtils;
-import ru.naumen.personalfinancebot.models.User;
-
-import java.util.Objects;
+import ru.naumen.personalfinancebot.model.User;
 
 /**
  * Описание методов для бота

@@ -1,15 +1,15 @@
 package ru.naumen.personalfinancebot.handler;
 
-import ru.naumen.personalfinancebot.handler.commands.*;
+import ru.naumen.personalfinancebot.handler.command.*;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.messages.Messages;
-import ru.naumen.personalfinancebot.models.CategoryType;
-import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
-import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
-import ru.naumen.personalfinancebot.repositories.user.UserRepository;
-import ru.naumen.personalfinancebot.services.ArgumentParseService;
-import ru.naumen.personalfinancebot.services.CategoryListService;
-import ru.naumen.personalfinancebot.services.ReportService;
+import ru.naumen.personalfinancebot.message.Message;
+import ru.naumen.personalfinancebot.model.CategoryType;
+import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
+import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
+import ru.naumen.personalfinancebot.repository.user.UserRepository;
+import ru.naumen.personalfinancebot.service.ArgumentParseService;
+import ru.naumen.personalfinancebot.service.CategoryListService;
+import ru.naumen.personalfinancebot.service.ReportService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -61,7 +61,7 @@ public class FinanceBotHandler {
         if (handler != null) {
             handler.handleCommand(event);
         } else {
-            event.getBot().sendMessage(event.getUser(), Messages.COMMAND_NOT_FOUND);
+            event.getBot().sendMessage(event.getUser(), Message.COMMAND_NOT_FOUND);
         }
     }
 }
