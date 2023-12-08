@@ -5,7 +5,7 @@ import org.junit.Test;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
-import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
@@ -119,8 +119,8 @@ public class SetBalanceTest {
         transactionManager.produceTransaction(session -> {
             userRepository.saveUser(session, user);
             List<String> args = List.of(argument);
-            HandleCommandEvent commandEvent = new HandleCommandEvent(mockBot, user, "set_balance", args, session);
-            this.botHandler.handleCommand(commandEvent);
+            CommandData commandEvent = new CommandData(mockBot, user, "set_balance", args);
+            this.botHandler.handleCommand(commandEvent, session);
 
             Assert.assertEquals(1, mockBot.getMessageQueueSize());
             MockMessage message = mockBot.poolMessageQueue();
@@ -141,8 +141,8 @@ public class SetBalanceTest {
             MockBot mockBot = new MockBot();
             User user = new User(123, 12345);
             userRepository.saveUser(session, user);
-            HandleCommandEvent commandEvent = new HandleCommandEvent(mockBot, user, "set_balance", args, session);
-            this.botHandler.handleCommand(commandEvent);
+            CommandData commandEvent = new CommandData(mockBot, user, "set_balance", args);
+            this.botHandler.handleCommand(commandEvent, session);
 
             Assert.assertEquals(1, mockBot.getMessageQueueSize());
             MockMessage message = mockBot.poolMessageQueue();

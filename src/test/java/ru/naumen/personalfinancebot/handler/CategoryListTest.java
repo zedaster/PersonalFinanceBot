@@ -6,7 +6,7 @@ import org.junit.*;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
-import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
@@ -172,12 +172,12 @@ public class CategoryListTest {
 
             final List<String> commands = List.of("list_categories", "list_income_categories", "list_expense_categories");
             for (String commandName : commands) {
-                HandleCommandEvent allCommand = new HandleCommandEvent(
+                CommandData allCommand = new CommandData(
                         this.mockBot,
                         this.mockUser,
                         commandName,
-                        List.of(), session);
-                this.botHandler.handleCommand(allCommand);
+                        List.of());
+                this.botHandler.handleCommand(allCommand, session);
             }
 
             Assert.assertEquals(3, this.mockBot.getMessageQueueSize());
@@ -217,9 +217,9 @@ public class CategoryListTest {
                 throw new RuntimeException(e);
             }
 
-            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, "list_categories",
-                    List.of(), session);
-            this.botHandler.handleCommand(command);
+            CommandData command = new CommandData(this.mockBot, this.mockUser, "list_categories",
+                    List.of());
+            this.botHandler.handleCommand(command, session);
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
             MockMessage lastMessage = this.mockBot.poolMessageQueue();
             Assert.assertEquals(expectMsg, lastMessage.text());
@@ -250,9 +250,9 @@ public class CategoryListTest {
                 """;
 
         transactionManager.produceTransaction(session -> {
-            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, "list_categories",
-                    List.of(), session);
-            this.botHandler.handleCommand(command);
+            CommandData command = new CommandData(this.mockBot, this.mockUser, "list_categories",
+                    List.of());
+            this.botHandler.handleCommand(command, session);
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
             MockMessage lastMessage = this.mockBot.poolMessageQueue();
             Assert.assertEquals(expectMsg, lastMessage.text());
@@ -315,12 +315,12 @@ public class CategoryListTest {
             List<User> users = List.of(this.mockUser, secondUser);
             List<String> expectMessages = List.of(expectMockUserMsg, expectSecondUserMsg);
             for (int i = 0; i < 2; i++) {
-                HandleCommandEvent command = new HandleCommandEvent(
+                CommandData command = new CommandData(
                         this.mockBot,
                         users.get(i),
                         "list_categories",
-                        List.of(), session);
-                this.botHandler.handleCommand(command);
+                        List.of());
+                this.botHandler.handleCommand(command, session);
 
                 Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
                 MockMessage lastMessage = this.mockBot.poolMessageQueue();

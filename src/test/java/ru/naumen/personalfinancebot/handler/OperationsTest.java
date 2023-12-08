@@ -7,7 +7,7 @@ import org.junit.Test;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
-import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
@@ -68,14 +68,14 @@ public class OperationsTest {
         transactionManager.produceTransaction(session -> {
             User user = createUser(session);
             MockBot bot = new MockBot();
-            HandleCommandEvent commandEventCategoryAdd = new HandleCommandEvent(
-                    bot, user, "add_income_category", List.of("Зарплата"), session);
-            this.botHandler.handleCommand(commandEventCategoryAdd);
+            CommandData commandCategoryAdd = new CommandData(
+                    bot, user, "add_income_category", List.of("Зарплата"));
+            this.botHandler.handleCommand(commandCategoryAdd, session);
             bot.poolMessageQueue();
 
-            HandleCommandEvent commandAddIncome = new HandleCommandEvent(
-                    bot, user, "add_income", List.of("2000", "Зарплата"), session);
-            this.botHandler.handleCommand(commandAddIncome);
+            CommandData commandAddIncome = new CommandData(
+                    bot, user, "add_income", List.of("2000", "Зарплата"));
+            this.botHandler.handleCommand(commandAddIncome, session);
             MockMessage message = bot.poolMessageQueue();
 
             Assert.assertEquals(102_000, user.getBalance(), 1e-10);
@@ -94,14 +94,14 @@ public class OperationsTest {
         transactionManager.produceTransaction(session -> {
             User user = createUser(session);
             MockBot bot = new MockBot();
-            HandleCommandEvent commandEventCategoryAdd = new HandleCommandEvent(
-                    bot, user, "add_expense_category", List.of("Такси"), session);
-            this.botHandler.handleCommand(commandEventCategoryAdd);
+            CommandData commandEventCategoryAdd = new CommandData(
+                    bot, user, "add_expense_category", List.of("Такси"));
+            this.botHandler.handleCommand(commandEventCategoryAdd, session);
             bot.poolMessageQueue();
 
-            HandleCommandEvent commandAddIncome = new HandleCommandEvent(
-                    bot, user, "add_expense", List.of("2000", "Такси"), session);
-            this.botHandler.handleCommand(commandAddIncome);
+            CommandData commandAddIncome = new CommandData(
+                    bot, user, "add_expense", List.of("2000", "Такси"));
+            this.botHandler.handleCommand(commandAddIncome, session);
             MockMessage message = bot.poolMessageQueue();
 
             Assert.assertEquals(98_000, user.getBalance(), 1e-10);
@@ -117,9 +117,9 @@ public class OperationsTest {
         transactionManager.produceTransaction(session -> {
             User user = createUser(session);
             MockBot bot = new MockBot();
-            HandleCommandEvent commandAddIncome = new HandleCommandEvent(
-                    bot, user, "add_expense", List.of("2000", "Стипендия"), session);
-            this.botHandler.handleCommand(commandAddIncome);
+            CommandData commandAddIncome = new CommandData(
+                    bot, user, "add_expense", List.of("2000", "Стипендия"));
+            this.botHandler.handleCommand(commandAddIncome, session);
             MockMessage message = bot.poolMessageQueue();
 
             Assert.assertEquals(100_000, user.getBalance(), 1e-10);
@@ -138,9 +138,9 @@ public class OperationsTest {
         transactionManager.produceTransaction(session -> {
             User user = createUser(session);
             MockBot bot = new MockBot();
-            HandleCommandEvent commandAddIncome = new HandleCommandEvent(
-                    bot, user, "add_income", List.of("2000", "Такси"), session);
-            this.botHandler.handleCommand(commandAddIncome);
+            CommandData commandAddIncome = new CommandData(
+                    bot, user, "add_income", List.of("2000", "Такси"));
+            this.botHandler.handleCommand(commandAddIncome, session);
             MockMessage message = bot.poolMessageQueue();
 
             Assert.assertEquals(100_000, user.getBalance(), 1e-10);
@@ -221,8 +221,8 @@ public class OperationsTest {
      */
     private void testPattern(Session session, String command, MockBot bot, String expected, List<List<String>> arguments, User user) {
         for (List<String> args : arguments) {
-            HandleCommandEvent commandAddIncome = new HandleCommandEvent(bot, user, command, args, session);
-            this.botHandler.handleCommand(commandAddIncome);
+            CommandData commandAddIncome = new CommandData(bot, user, command, args);
+            this.botHandler.handleCommand(commandAddIncome, session);
             MockMessage message = bot.poolMessageQueue();
             Assert.assertEquals(expected, message.text());
         }

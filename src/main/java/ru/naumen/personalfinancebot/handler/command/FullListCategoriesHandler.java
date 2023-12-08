@@ -1,7 +1,7 @@
 package ru.naumen.personalfinancebot.handler.command;
 
 import org.hibernate.Session;
-import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.service.CategoryListService;
 
@@ -24,9 +24,9 @@ public class FullListCategoriesHandler implements CommandHandler {
      * Метод, вызываемый при получении команды
      */
     @Override
-    public void handleCommand(HandleCommandEvent event) {
-        String incomeContent = categoryListService.getListContent(event.getSession(), event.getUser(), CategoryType.INCOME);
-        String expenseContent = categoryListService.getListContent(event.getSession(), event.getUser(), CategoryType.EXPENSE);
-        event.getBot().sendMessage(event.getUser(), incomeContent + "\n" + expenseContent);
+    public void handleCommand(CommandData commandData, Session session) {
+        String incomeContent = categoryListService.getListContent(session, commandData.getUser(), CategoryType.INCOME);
+        String expenseContent = categoryListService.getListContent(session, commandData.getUser(), CategoryType.EXPENSE);
+        commandData.getBot().sendMessage(commandData.getUser(), incomeContent + "\n" + expenseContent);
     }
 }

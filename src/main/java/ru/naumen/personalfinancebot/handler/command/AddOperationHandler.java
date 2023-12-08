@@ -1,7 +1,7 @@
 package ru.naumen.personalfinancebot.handler.command;
 
 import org.hibernate.Session;
-import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
@@ -52,33 +52,32 @@ public class AddOperationHandler implements CommandHandler {
      * Метод, вызываемый при получении команды
      */
     @Override
-    public void handleCommand(HandleCommandEvent event) {
-        Session session = event.getSession();
-        if (event.getArgs().size() != 2) {
-            event.getBot().sendMessage(event.getUser(), Message.INCORRECT_OPERATION_ARGS_AMOUNT);
+    public void handleCommand(CommandData commandData, Session session) {
+        if (commandData.getArgs().size() != 2) {
+            commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_OPERATION_ARGS_AMOUNT);
             return;
         }
         Operation operation;
         try {
-            operation = createOperationRecord(event.getUser(), event.getArgs(), categoryType, session);
+            operation = createOperationRecord(commandData.getUser(), commandData.getArgs(), categoryType, session);
         } catch (CategoryRepository.CategoryDoesNotExist e) {
-            event.getBot().sendMessage(event.getUser(), Message.CATEGORY_DOES_NOT_EXISTS);
+            commandData.getBot().sendMessage(commandData.getUser(), Message.CATEGORY_DOES_NOT_EXISTS);
             return;
         } catch (NumberFormatException e) {
-            event.getBot().sendMessage(event.getUser(), Message.INCORRECT_PAYMENT_ARG);
+            commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_PAYMENT_ARG);
             return;
         } catch (IllegalArgumentException e) {
-            event.getBot().sendMessage(event.getUser(), Message.ILLEGAL_PAYMENT_ARGUMENT);
+            commandData.getBot().sendMessage(commandData.getUser(), Message.ILLEGAL_PAYMENT_ARGUMENT);
             return;
         }
-        double currentBalance = event.getUser().getBalance() + operation.getPayment();
-        User user = event.getUser();
+        double currentBalance = commandData.getUser().getBalance() + operation.getPayment();
+        User user = commandData.getUser();
         user.setBalance(currentBalance);
         userRepository.saveUser(session, user);
         String message = categoryType == CategoryType.INCOME
                 ? Message.ADD_INCOME_MESSAGE
                 : Message.ADD_EXPENSE_MESSAGE;
-        event.getBot().sendMessage(user,
+        commandData.getBot().sendMessage(user,
                 message + operation.getCategory().getCategoryName());
 
     }

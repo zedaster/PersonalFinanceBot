@@ -8,7 +8,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import ru.naumen.personalfinancebot.configuration.TelegramBotConfiguration;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
-import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
@@ -54,8 +54,8 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
                 List<String> msgWords = List.of(update.getMessage().getText().split(" "));
                 String cmdName = msgWords.get(0).substring(1);
                 List<String> args = msgWords.subList(1, msgWords.size());
-                HandleCommandEvent event = new HandleCommandEvent(this, user.get(), cmdName, args, session);
-                this.botHandler.handleCommand(event);
+                CommandData event = new CommandData(this, user.get(), cmdName, args);
+                this.botHandler.handleCommand(event, session);
             });
         }
     }

@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.handler.event;
+package ru.naumen.personalfinancebot.handler.commandData;
 
 import org.hibernate.Session;
 import ru.naumen.personalfinancebot.bot.Bot;
@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Событие, вызываемое при выполнении пользователем какой-либо команды
  */
-public class HandleCommandEvent {
+public class CommandData {
     /**
      * Бот, который обрабатывает команду
      */
@@ -30,14 +30,11 @@ public class HandleCommandEvent {
      */
     private final List<String> args;
 
-    private final Session session;
-
-    public HandleCommandEvent(Bot bot, User user, String commandName, List<String> args, Session session) {
+    public CommandData(Bot bot, User user, String commandName, List<String> args) {
         this.bot = bot;
         this.user = user;
         this.commandName = commandName;
         this.args = args;
-        this.session = session;
     }
 
     /**
@@ -66,9 +63,5 @@ public class HandleCommandEvent {
      */
     public List<String> getArgs() {
         return args;
-    }
-
-    public Session getSession() {
-        return session;
     }
 }

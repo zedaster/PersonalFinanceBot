@@ -1,7 +1,7 @@
 package ru.naumen.personalfinancebot.handler.command;
 
 import org.hibernate.Session;
-import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
@@ -38,30 +38,29 @@ public class RemoveCategoryHandler implements CommandHandler {
      * Метод, вызываемый при получении команды
      */
     @Override
-    public void handleCommand(HandleCommandEvent event) {
-        Session session = event.getSession();
+    public void handleCommand(CommandData commandData, Session session) {
         String typeLabel = categoryType.getPluralShowLabel();
         String categoryName;
         try {
-            categoryName = argumentParser.parseCategory(event.getArgs());
+            categoryName = argumentParser.parseCategory(commandData.getArgs());
         } catch (IllegalArgumentException ex) {
-            event.getBot().sendMessage(event.getUser(), ex.getMessage());
+            commandData.getBot().sendMessage(commandData.getUser(), ex.getMessage());
             return;
         }
 
         try {
-            categoryRepository.removeUserCategoryByName(session, event.getUser(), categoryType, categoryName);
+            categoryRepository.removeUserCategoryByName(session, commandData.getUser(), categoryType, categoryName);
         } catch (CategoryRepository.RemovingNonExistentCategoryException e) {
             String responseText = Message.USER_CATEGORY_ALREADY_NOT_EXISTS
                     .replace("{type}", typeLabel)
                     .replace("{name}", categoryName);
-            event.getBot().sendMessage(event.getUser(), responseText);
+            commandData.getBot().sendMessage(commandData.getUser(), responseText);
             return;
         }
 
         String responseText = Message.USER_CATEGORY_REMOVED
                 .replace("{type}", typeLabel)
                 .replace("{name}", categoryName);
-        event.getBot().sendMessage(event.getUser(), responseText);
+        commandData.getBot().sendMessage(commandData.getUser(), responseText);
     }
 }

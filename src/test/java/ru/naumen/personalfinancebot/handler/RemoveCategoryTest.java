@@ -6,7 +6,7 @@ import org.junit.*;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
-import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
@@ -138,9 +138,9 @@ public class RemoveCategoryTest {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-                HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
-                        args, session);
-                this.botHandler.handleCommand(command);
+                CommandData command = new CommandData(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
+                        args);
+                this.botHandler.handleCommand(command, session);
 
                 Optional<Category> category = categoryRepository.getCategoryByName(session, this.mockUser, CategoryType.EXPENSE,
                         categoryName);
@@ -170,9 +170,9 @@ public class RemoveCategoryTest {
                 throw new RuntimeException(e);
             }
 
-            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
-                    List.of(categoryName), session);
-            this.botHandler.handleCommand(command);
+            CommandData command = new CommandData(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
+                    List.of(categoryName));
+            this.botHandler.handleCommand(command, session);
 
             // Несуществование в базе удаленного элемента уже проверено выше
 
@@ -191,9 +191,9 @@ public class RemoveCategoryTest {
     @Test
     public void removeNonExistingCategory() {
         transactionManager.produceTransaction(session -> {
-            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
-                    List.of("No", "name"), session);
-            this.botHandler.handleCommand(command);
+            CommandData command = new CommandData(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
+                    List.of("No", "name"));
+            this.botHandler.handleCommand(command, session);
 
             Assert.assertEquals(this.mockBot.getMessageQueueSize(), 1);
             MockMessage lastMessage = this.mockBot.poolMessageQueue();
@@ -219,9 +219,9 @@ public class RemoveCategoryTest {
                 throw new RuntimeException(e);
             }
 
-            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_INCOME_COMMAND,
-                    List.of(testSameIncomeCategoryName), session);
-            this.botHandler.handleCommand(command);
+            CommandData command = new CommandData(this.mockBot, this.mockUser, REMOVE_INCOME_COMMAND,
+                    List.of(testSameIncomeCategoryName));
+            this.botHandler.handleCommand(command, session);
 
             Assert.assertTrue(categoryRepository
                     .getCategoryByName(session, secondUser, CategoryType.INCOME, testSameIncomeCategoryName)
@@ -244,9 +244,9 @@ public class RemoveCategoryTest {
                 throw new RuntimeException(e);
             }
 
-            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
-                    List.of(categoryName), session);
-            this.botHandler.handleCommand(command);
+            CommandData command = new CommandData(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
+                    List.of(categoryName));
+            this.botHandler.handleCommand(command, session);
 
             Assert.assertTrue(categoryRepository
                     .getCategoryByName(session, this.mockUser, CategoryType.EXPENSE, categoryName)
@@ -273,8 +273,8 @@ public class RemoveCategoryTest {
             }
 
             final List<String> emptyList = List.of();
-            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND, emptyList, session);
-            this.botHandler.handleCommand(command);
+            CommandData command = new CommandData(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND, emptyList);
+            this.botHandler.handleCommand(command, session);
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
             MockMessage lastMessage = this.mockBot.poolMessageQueue();
             Assert.assertEquals(expectMessage, lastMessage.text());

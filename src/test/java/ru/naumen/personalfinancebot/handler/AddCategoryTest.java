@@ -5,7 +5,7 @@ import org.hibernate.SessionFactory;
 import org.junit.*;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
-import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
@@ -107,9 +107,9 @@ public class AddCategoryTest {
             final String categoryName = "Коммунальные платежи";
             final String expectMessage = "Категория расходов 'Коммунальные платежи' успешно добавлена";
 
-            HandleCommandEvent commandEvent = new HandleCommandEvent(
-                    this.mockBot, this.testUser, ADD_EXPENSE_COMMAND, args, session);
-            this.botHandler.handleCommand(commandEvent);
+            CommandData commandEvent = new CommandData(
+                    this.mockBot, this.testUser, ADD_EXPENSE_COMMAND, args);
+            this.botHandler.handleCommand(commandEvent, session);
             Optional<Category> addedCategory = categoryRepository.getCategoryByName(session, this.testUser, CategoryType.EXPENSE,
                     categoryName);
             Assert.assertTrue(addedCategory.isPresent());
@@ -132,9 +132,9 @@ public class AddCategoryTest {
 
             for (int i = 0; i < 2; i++) {
                 for (String testCase : testCases) {
-                    HandleCommandEvent commandEvent = new HandleCommandEvent(
-                            this.mockBot, this.testUser, commands.get(i), List.of(testCase), session);
-                    this.botHandler.handleCommand(commandEvent);
+                    CommandData commandEvent = new CommandData(
+                            this.mockBot, this.testUser, commands.get(i), List.of(testCase));
+                    this.botHandler.handleCommand(commandEvent, session);
                     categoryRepository.removeAll();
                 }
             }
@@ -159,9 +159,9 @@ public class AddCategoryTest {
             final String expectMessage = "Название категории введено неверно. Оно может содержать от 1 до 64 символов " +
                     "латиницы, кириллицы, цифр, тире и пробелов";
 
-            HandleCommandEvent commandEvent = new HandleCommandEvent(
-                    this.mockBot, this.testUser, ADD_INCOME_COMMAND, List.of(some65chars), session);
-            this.botHandler.handleCommand(commandEvent);
+            CommandData commandEvent = new CommandData(
+                    this.mockBot, this.testUser, ADD_INCOME_COMMAND, List.of(some65chars));
+            this.botHandler.handleCommand(commandEvent, session);
             Assert.assertTrue(categoryRepository.getCategoryByName(session, this.testUser, CategoryType.INCOME, some65chars).isEmpty());
             categoryRepository.removeAll();
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
@@ -180,9 +180,9 @@ public class AddCategoryTest {
                     "латиницы, кириллицы, цифр, тире и пробелов";
 
             for (String testCase : testCases) {
-                HandleCommandEvent commandEvent = new HandleCommandEvent(
-                        this.mockBot, this.testUser, ADD_INCOME_COMMAND, List.of(testCase), session);
-                this.botHandler.handleCommand(commandEvent);
+                CommandData commandEvent = new CommandData(
+                        this.mockBot, this.testUser, ADD_INCOME_COMMAND, List.of(testCase));
+                this.botHandler.handleCommand(commandEvent, session);
                 categoryRepository.removeAll();
             }
             Assert.assertEquals(5, this.mockBot.getMessageQueueSize());
@@ -205,9 +205,9 @@ public class AddCategoryTest {
             final List<String> commandNames = List.of(ADD_INCOME_COMMAND, ADD_EXPENSE_COMMAND);
             final List<CategoryType> types = List.of(CategoryType.INCOME, CategoryType.EXPENSE);
             for (int i = 0; i < 2; i++) {
-                HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.testUser, commandNames.get(i),
-                        List.of(categoryName), session);
-                botHandler.handleCommand(command);
+                CommandData command = new CommandData(this.mockBot, this.testUser, commandNames.get(i),
+                        List.of(categoryName));
+                botHandler.handleCommand(command, session);
                 Optional<Category> addedCategory = categoryRepository.getCategoryByName(session, this.testUser, types.get(i),
                         categoryName);
                 Assert.assertTrue(addedCategory.isPresent());
@@ -232,8 +232,8 @@ public class AddCategoryTest {
             );
             final String expectMessage = "Данная команда принимает [название категории] в одно или несколько слов.";
             for (List<String> args : cases) {
-                HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.testUser, ADD_INCOME_COMMAND, args, session);
-                botHandler.handleCommand(command);
+                CommandData command = new CommandData(this.mockBot, this.testUser, ADD_INCOME_COMMAND, args);
+                botHandler.handleCommand(command, session);
             }
             Assert.assertEquals(3, this.mockBot.getMessageQueueSize());
             for (int i = 0; i < 3; i++) {
@@ -251,9 +251,9 @@ public class AddCategoryTest {
             final String categoryName = "Зарплата";
             User secondUser = createTestUser(session, 2);
 
-            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.testUser, ADD_INCOME_COMMAND,
-                    List.of(categoryName), session);
-            botHandler.handleCommand(command);
+            CommandData command = new CommandData(this.mockBot, this.testUser, ADD_INCOME_COMMAND,
+                    List.of(categoryName));
+            botHandler.handleCommand(command, session);
 
             categoryRepository.getCategoryByName(session, this.testUser, CategoryType.INCOME, categoryName); // проверено ранее
             Optional<Category> shouldBeEmptyCategory = categoryRepository
@@ -279,9 +279,9 @@ public class AddCategoryTest {
             } catch (CategoryRepository.CreatingExistingStandardCategoryException e) {
                 throw new RuntimeException(e);
             }
-            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, testUser, ADD_INCOME_COMMAND,
-                    List.of(categoryName), session);
-            botHandler.handleCommand(command);
+            CommandData command = new CommandData(this.mockBot, testUser, ADD_INCOME_COMMAND,
+                    List.of(categoryName));
+            botHandler.handleCommand(command, session);
 
             Optional<Category> addedCategory = categoryRepository.getCategoryByName(session, this.testUser, CategoryType.INCOME,
                     categoryName);
