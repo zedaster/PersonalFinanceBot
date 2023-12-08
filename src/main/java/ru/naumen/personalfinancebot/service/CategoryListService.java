@@ -1,5 +1,6 @@
 package ru.naumen.personalfinancebot.service;
 
+import org.hibernate.Session;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
@@ -26,9 +27,9 @@ public class CategoryListService {
     /**
      * Получает текст сообщения для вывода категорий доходов или расходов.
      */
-    public String getListContent(User user, CategoryType categoryType) {
-        List<Category> typedStandardCategories = categoryRepository.getStandardCategoriesByType(categoryType);
-        List<Category> personalCategories = categoryRepository.getUserCategoriesByType(user, categoryType);
+    public String getListContent(Session session, User user, CategoryType categoryType) {
+        List<Category> typedStandardCategories = categoryRepository.getStandardCategoriesByType(session, categoryType);
+        List<Category> personalCategories = categoryRepository.getUserCategoriesByType(session, user, categoryType);
 
         return Message.LIST_TYPED_CATEGORIES
                 .replace("{type}", categoryType.getPluralShowLabel())

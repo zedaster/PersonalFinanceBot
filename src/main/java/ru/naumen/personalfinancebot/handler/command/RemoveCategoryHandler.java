@@ -1,5 +1,6 @@
 package ru.naumen.personalfinancebot.handler.command;
 
+import org.hibernate.Session;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
@@ -38,6 +39,7 @@ public class RemoveCategoryHandler implements CommandHandler {
      */
     @Override
     public void handleCommand(HandleCommandEvent event) {
+        Session session = event.getSession();
         String typeLabel = categoryType.getPluralShowLabel();
         String categoryName;
         try {
@@ -48,7 +50,7 @@ public class RemoveCategoryHandler implements CommandHandler {
         }
 
         try {
-            categoryRepository.removeUserCategoryByName(event.getUser(), categoryType, categoryName);
+            categoryRepository.removeUserCategoryByName(session, event.getUser(), categoryType, categoryName);
         } catch (CategoryRepository.RemovingNonExistentCategoryException e) {
             String responseText = Message.USER_CATEGORY_ALREADY_NOT_EXISTS
                     .replace("{type}", typeLabel)

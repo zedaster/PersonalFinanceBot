@@ -10,6 +10,7 @@ import ru.naumen.personalfinancebot.configuration.TelegramBotConfiguration;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
 
 import java.util.List;
@@ -22,16 +23,19 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
     private final TelegramBotConfiguration configuration;
     private final FinanceBotHandler botHandler;
     private final UserRepository userRepository;
+    private final TransactionManager transactionManager;
 
     public TelegramBot(
             TelegramBotConfiguration configuration,
             FinanceBotHandler botHandler,
-            UserRepository userRepository
+            UserRepository userRepository,
+            TransactionManager transactionManager
     ) {
         super(configuration.getBotToken());
         this.configuration = configuration;
         this.botHandler = botHandler;
         this.userRepository = userRepository;
+        this.transactionManager = transactionManager;
     }
 
     /**
@@ -40,17 +44,19 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText() && update.getMessage().getText().startsWith("/")) {
-            Long chatId = update.getMessage().getChatId();
-            Optional<User> user = this.userRepository.getUserByTelegramChatId(chatId);
-            if (user.isEmpty()) {
-                user = Optional.of(new User(chatId, 0));
-                this.userRepository.saveUser(user.get());
-            }
-            List<String> msgWords = List.of(update.getMessage().getText().split(" "));
-            String cmdName = msgWords.get(0).substring(1);
-            List<String> args = msgWords.subList(1, msgWords.size());
-            HandleCommandEvent event = new HandleCommandEvent(this, user.get(), cmdName, args);
-            this.botHandler.handleCommand(event);
+            transactionManager.produceTransaction(session -> {
+                Long chatId = update.getMessage().getChatId();
+                Optional<User> user = this.userRepository.getUserByTelegramChatId(session, chatId);
+                if (user.isEmpty()) {
+                    user = Optional.of(new User(chatId, 0));
+                    this.userRepository.saveUser(session, user.get());
+                }
+                List<String> msgWords = List.of(update.getMessage().getText().split(" "));
+                String cmdName = msgWords.get(0).substring(1);
+                List<String> args = msgWords.subList(1, msgWords.size());
+                HandleCommandEvent event = new HandleCommandEvent(this, user.get(), cmdName, args, session);
+                this.botHandler.handleCommand(event);
+            });
         }
     }
 

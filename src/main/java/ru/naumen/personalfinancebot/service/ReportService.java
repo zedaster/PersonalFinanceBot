@@ -1,5 +1,6 @@
 package ru.naumen.personalfinancebot.service;
 
+import org.hibernate.Session;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
@@ -27,7 +28,7 @@ public class ReportService {
      * @param args Аргументы, переданные вместе с командой
      * @return "Словарь" с категориями и затратоми
      */
-    public String getExpenseReport(User user, String args) {
+    public String getExpenseReport(Session session, User user, String args) {
         YearMonth yearMonth;
         try {
             yearMonth = YearMonth.parse(args, DateTimeFormatter.ofPattern("MM.yyyy"));
@@ -37,6 +38,7 @@ public class ReportService {
         Map<String, Double> categoryPaymentMap = this
                 .operationRepository
                 .getOperationsSumByType(
+                        session,
                         user, yearMonth.getMonth().getValue(), yearMonth.getYear(), CategoryType.EXPENSE
                 );
         if (categoryPaymentMap == null) {

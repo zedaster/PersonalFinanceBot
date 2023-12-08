@@ -1,5 +1,6 @@
 package ru.naumen.personalfinancebot.handler.command;
 
+import org.hibernate.Session;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
@@ -38,6 +39,7 @@ public class AddCategoryHandler implements CommandHandler {
      */
     @Override
     public void handleCommand(HandleCommandEvent event) {
+        Session session = event.getSession();
         String categoryName;
         try {
             categoryName = argumentParser.parseCategory(event.getArgs());
@@ -48,7 +50,7 @@ public class AddCategoryHandler implements CommandHandler {
 
         String typeLabel = type.getPluralShowLabel();
         try {
-            categoryRepository.createUserCategory(event.getUser(), type, categoryName);
+            categoryRepository.createUserCategory(session, event.getUser(), type, categoryName);
         } catch (CategoryRepository.CreatingExistingUserCategoryException e) {
             String responseText = Message.USER_CATEGORY_ALREADY_EXISTS
                     .replace("{type}", typeLabel)

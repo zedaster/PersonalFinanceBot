@@ -1,5 +1,6 @@
 package ru.naumen.personalfinancebot.handler.event;
 
+import org.hibernate.Session;
 import ru.naumen.personalfinancebot.bot.Bot;
 import ru.naumen.personalfinancebot.model.User;
 
@@ -29,11 +30,14 @@ public class HandleCommandEvent {
      */
     private final List<String> args;
 
-    public HandleCommandEvent(Bot bot, User user, String commandName, List<String> args) {
+    private final Session session;
+
+    public HandleCommandEvent(Bot bot, User user, String commandName, List<String> args, Session session) {
         this.bot = bot;
         this.user = user;
         this.commandName = commandName;
         this.args = args;
+        this.session = session;
     }
 
     /**
@@ -62,5 +66,9 @@ public class HandleCommandEvent {
      */
     public List<String> getArgs() {
         return args;
+    }
+
+    public Session getSession() {
+        return session;
     }
 }

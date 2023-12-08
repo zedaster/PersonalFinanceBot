@@ -1,5 +1,6 @@
 package ru.naumen.personalfinancebot.handler.command;
 
+import org.hibernate.Session;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
@@ -31,6 +32,7 @@ public class SetBalanceHandler implements CommandHandler {
      */
     @Override
     public void handleCommand(HandleCommandEvent event) {
+        Session session = event.getSession();
         double amount;
         try {
             amount = argumentParser.parseBalance(event.getArgs());
@@ -41,7 +43,7 @@ public class SetBalanceHandler implements CommandHandler {
         }
 
         event.getUser().setBalance(amount);
-        userRepository.saveUser(event.getUser());
+        userRepository.saveUser(session, event.getUser());
         event.getBot().sendMessage(event.getUser(), Message.SET_BALANCE_SUCCESSFULLY
                 .replace("{balance}", beautifyDouble(amount)));
 

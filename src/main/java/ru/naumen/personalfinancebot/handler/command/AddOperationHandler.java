@@ -1,5 +1,6 @@
 package ru.naumen.personalfinancebot.handler.command;
 
+import org.hibernate.Session;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.Category;
@@ -52,13 +53,14 @@ public class AddOperationHandler implements CommandHandler {
      */
     @Override
     public void handleCommand(HandleCommandEvent event) {
+        Session session = event.getSession();
         if (event.getArgs().size() != 2) {
             event.getBot().sendMessage(event.getUser(), Message.INCORRECT_OPERATION_ARGS_AMOUNT);
             return;
         }
         Operation operation;
         try {
-            operation = createOperationRecord(event.getUser(), event.getArgs(), categoryType);
+            operation = createOperationRecord(event.getUser(), event.getArgs(), categoryType, session);
         } catch (CategoryRepository.CategoryDoesNotExist e) {
             event.getBot().sendMessage(event.getUser(), Message.CATEGORY_DOES_NOT_EXISTS);
             return;
@@ -72,7 +74,7 @@ public class AddOperationHandler implements CommandHandler {
         double currentBalance = event.getUser().getBalance() + operation.getPayment();
         User user = event.getUser();
         user.setBalance(currentBalance);
-        userRepository.saveUser(user);
+        userRepository.saveUser(session, user);
         String message = categoryType == CategoryType.INCOME
                 ? Message.ADD_INCOME_MESSAGE
                 : Message.ADD_EXPENSE_MESSAGE;
@@ -89,7 +91,7 @@ public class AddOperationHandler implements CommandHandler {
      * @param type Расход/Бюджет.
      * @return Совершенная операция
      */
-    private Operation createOperationRecord(User user, List<String> args, CategoryType type)
+    private Operation createOperationRecord(User user, List<String> args, CategoryType type, Session session)
             throws CategoryRepository.CategoryDoesNotExist {
         double payment = Double.parseDouble(args.get(0));
         if (payment <= 0) {
@@ -101,10 +103,10 @@ public class AddOperationHandler implements CommandHandler {
         } else if (type == CategoryType.INCOME) {
             payment = Math.abs(payment);
         }
-        Optional<Category> category = this.categoryRepository.getCategoryByName(user, type, categoryName);
+        Optional<Category> category = this.categoryRepository.getCategoryByName(session, user, type, categoryName);
         if (category.isEmpty()) {
             throw new CategoryRepository.CategoryDoesNotExist();
         }
-        return this.operationRepository.addOperation(user, category.get(), payment);
+        return this.operationRepository.addOperation(session, user, category.get(), payment);
     }
 }

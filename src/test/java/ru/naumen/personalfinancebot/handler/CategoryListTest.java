@@ -1,5 +1,6 @@
 package ru.naumen.personalfinancebot.handler;
 
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.junit.*;
 import ru.naumen.personalfinancebot.bot.MockBot;
@@ -8,11 +9,12 @@ import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
+import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
+import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
-import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
-import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
 
 import java.util.List;
 
@@ -25,50 +27,48 @@ public class CategoryListTest {
      */
     private static final SessionFactory sessionFactory;
 
-    /**
-     * Хранилище пользователей
-     */
-    private final TestHibernateUserRepository userRepository;
-
-    /**
-     * Хранилище категорий
-     * Данная реализация позволяет сделать полную очистку категорий после тестов
-     */
-    private final TestHibernateCategoryRepository categoryRepository;
-
-    /**
-     * Хранилище операций
-     */
-    private final OperationRepository operationRepository;
-
-    /**
-     * Обработчик команд для бота
-     */
-    private final FinanceBotHandler botHandler;
-
-    /**
-     * Моковый пользователь. Пересоздается для каждого теста
-     */
-    private final User mockUser;
-
-    /**
-     * Моковый бот. Пересоздается для каждого теста.
-     */
-    private MockBot mockBot;
-
     // Инициализация статических полей перед использованием класса
     static {
         sessionFactory = new HibernateConfiguration().getSessionFactory();
     }
 
+    /**
+     * Хранилище пользователей
+     */
+    private final TestHibernateUserRepository userRepository;
+    /**
+     * Хранилище категорий
+     * Данная реализация позволяет сделать полную очистку категорий после тестов
+     */
+    private final TestHibernateCategoryRepository categoryRepository;
+    /**
+     * Хранилище операций
+     */
+    private final OperationRepository operationRepository;
+    /**
+     * Обработчик команд для бота
+     */
+    private final FinanceBotHandler botHandler;
+    /**
+     * Моковый пользователь. Пересоздается для каждого теста
+     */
+    private final User mockUser;
+    private final TransactionManager transactionManager;
+    /**
+     * Моковый бот. Пересоздается для каждого теста.
+     */
+    private MockBot mockBot;
+
     public CategoryListTest() {
         this.userRepository = new TestHibernateUserRepository(sessionFactory);
         this.categoryRepository = new TestHibernateCategoryRepository(sessionFactory);
-        this.operationRepository = new HibernateOperationRepository(sessionFactory);
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
+        this.operationRepository = new HibernateOperationRepository();
+        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, sessionFactory);
+        this.transactionManager = new TransactionManager(sessionFactory);
 
         this.mockUser = new User(1L, 100);
-        this.userRepository.saveUser(this.mockUser);
+        transactionManager.produceTransaction(session -> this.userRepository.saveUser(session, this.mockUser));
+
     }
 
     /**
@@ -86,15 +86,17 @@ public class CategoryListTest {
     public void beforeEachTest() {
         this.mockBot = new MockBot();
 
-        // Наполняем стандартные категории перед тестами
-        try {
-            categoryRepository.createStandardCategory(CategoryType.INCOME, "Standard income 1");
-            categoryRepository.createStandardCategory(CategoryType.INCOME, "Standard income 2");
-            categoryRepository.createStandardCategory(CategoryType.EXPENSE, "Standard expense 1");
-            categoryRepository.createStandardCategory(CategoryType.EXPENSE, "Standard expense 2");
-        } catch (CategoryRepository.CreatingExistingCategoryException e) {
-            throw new RuntimeException(e);
-        }
+        transactionManager.produceTransaction(session -> {
+            // Наполняем стандартные категории перед тестами
+            try {
+                categoryRepository.createStandardCategory(session, CategoryType.INCOME, "Standard income 1");
+                categoryRepository.createStandardCategory(session, CategoryType.INCOME, "Standard income 2");
+                categoryRepository.createStandardCategory(session, CategoryType.EXPENSE, "Standard expense 1");
+                categoryRepository.createStandardCategory(session, CategoryType.EXPENSE, "Standard expense 2");
+            } catch (CategoryRepository.CreatingExistingCategoryException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     /**
@@ -158,32 +160,38 @@ public class CategoryListTest {
                 3. Personal expense 3
                 """;
 
-        addUserCategories(this.mockUser, CategoryType.INCOME, "Personal income 1", "Personal income 2",
-                "Personal income 3");
-        addUserCategories(this.mockUser, CategoryType.EXPENSE, "Personal expense 1", "Personal expense 2",
-                "Personal expense 3");
+        transactionManager.produceTransaction(session -> {
+            try {
+                addUserCategories(session, this.mockUser, CategoryType.INCOME, "Personal income 1", "Personal income 2",
+                        "Personal income 3");
+                addUserCategories(session, this.mockUser, CategoryType.EXPENSE, "Personal expense 1", "Personal expense 2",
+                        "Personal expense 3");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
 
-        final List<String> commands = List.of("list_categories", "list_income_categories", "list_expense_categories");
-        for (String commandName : commands) {
-            HandleCommandEvent allCommand = new HandleCommandEvent(
-                    this.mockBot,
-                    this.mockUser,
-                    commandName,
-                    List.of());
-            this.botHandler.handleCommand(allCommand);
-        }
+            final List<String> commands = List.of("list_categories", "list_income_categories", "list_expense_categories");
+            for (String commandName : commands) {
+                HandleCommandEvent allCommand = new HandleCommandEvent(
+                        this.mockBot,
+                        this.mockUser,
+                        commandName,
+                        List.of(), session);
+                this.botHandler.handleCommand(allCommand);
+            }
 
-        Assert.assertEquals(3, this.mockBot.getMessageQueueSize());
-        Assert.assertEquals(expectFullMsg, this.mockBot.poolMessageQueue().text());
-        Assert.assertEquals(expectIncomeMsg, this.mockBot.poolMessageQueue().text());
-        Assert.assertEquals(expectExpensesMsg, this.mockBot.poolMessageQueue().text());
+            Assert.assertEquals(3, this.mockBot.getMessageQueueSize());
+            Assert.assertEquals(expectFullMsg, this.mockBot.poolMessageQueue().text());
+            Assert.assertEquals(expectIncomeMsg, this.mockBot.poolMessageQueue().text());
+            Assert.assertEquals(expectExpensesMsg, this.mockBot.poolMessageQueue().text());
+        });
     }
 
     /**
      * Тестирует отображение по 1 категории на доход и расход у пользователя
      */
     @Test
-    public void showOneCategory() throws CategoryRepository.CreatingExistingCategoryException {
+    public void showOneCategory() {
         final String expectMsg = """
                 Все доступные вам категории доходов:
                 Стандартные:
@@ -201,16 +209,21 @@ public class CategoryListTest {
                 Персональные:
                 1. Personal expense 1
                 """;
+        transactionManager.produceTransaction(session -> {
+            try {
+                addUserCategories(session, this.mockUser, CategoryType.INCOME, "Personal income 1");
+                addUserCategories(session, this.mockUser, CategoryType.EXPENSE, "Personal expense 1");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
 
-        addUserCategories(this.mockUser, CategoryType.INCOME, "Personal income 1");
-        addUserCategories(this.mockUser, CategoryType.EXPENSE, "Personal expense 1");
-
-        HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, "list_categories",
-                List.of());
-        this.botHandler.handleCommand(command);
-        Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
-        MockMessage lastMessage = this.mockBot.poolMessageQueue();
-        Assert.assertEquals(expectMsg, lastMessage.text());
+            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, "list_categories",
+                    List.of(), session);
+            this.botHandler.handleCommand(command);
+            Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
+            MockMessage lastMessage = this.mockBot.poolMessageQueue();
+            Assert.assertEquals(expectMsg, lastMessage.text());
+        });
     }
 
     /**
@@ -236,25 +249,21 @@ public class CategoryListTest {
                 <отсутствуют>
                 """;
 
-        HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, "list_categories",
-                List.of());
-        this.botHandler.handleCommand(command);
-        Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
-        MockMessage lastMessage = this.mockBot.poolMessageQueue();
-        Assert.assertEquals(expectMsg, lastMessage.text());
+        transactionManager.produceTransaction(session -> {
+            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, "list_categories",
+                    List.of(), session);
+            this.botHandler.handleCommand(command);
+            Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
+            MockMessage lastMessage = this.mockBot.poolMessageQueue();
+            Assert.assertEquals(expectMsg, lastMessage.text());
+        });
     }
 
     /**
      * Проверяет, отобразятся ли категории одного пользователя у другого
      */
     @Test
-    public void privacyOfPersonalCategories() throws CategoryRepository.CreatingExistingCategoryException {
-        User secondUser = new User(2L, 200.0);
-        userRepository.saveUser(secondUser);
-
-        addUserCategories(this.mockUser, CategoryType.INCOME, "Personal income 1", "Personal income 2",
-                "Personal income 3");
-
+    public void privacyOfPersonalCategories() {
         final String expectMockUserMsg = """
                 Все доступные вам категории доходов:
                 Стандартные:
@@ -293,28 +302,39 @@ public class CategoryListTest {
                 <отсутствуют>
                 """;
 
-        List<User> users = List.of(this.mockUser, secondUser);
-        List<String> expectMessages = List.of(expectMockUserMsg, expectSecondUserMsg);
-        for (int i = 0; i < 2; i++) {
-            HandleCommandEvent command = new HandleCommandEvent(
-                    this.mockBot,
-                    users.get(i),
-                    "list_categories",
-                    List.of());
-            this.botHandler.handleCommand(command);
+        transactionManager.produceTransaction(session -> {
+            User secondUser = new User(2L, 200.0);
+            userRepository.saveUser(session, secondUser);
 
-            Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
-            MockMessage lastMessage = this.mockBot.poolMessageQueue();
-            Assert.assertEquals(users.get(i), lastMessage.receiver());
-            Assert.assertEquals(expectMessages.get(i), lastMessage.text());
-        }
+            try {
+                addUserCategories(session, this.mockUser, CategoryType.INCOME, "Personal income 1", "Personal income 2",
+                        "Personal income 3");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            List<User> users = List.of(this.mockUser, secondUser);
+            List<String> expectMessages = List.of(expectMockUserMsg, expectSecondUserMsg);
+            for (int i = 0; i < 2; i++) {
+                HandleCommandEvent command = new HandleCommandEvent(
+                        this.mockBot,
+                        users.get(i),
+                        "list_categories",
+                        List.of(), session);
+                this.botHandler.handleCommand(command);
+
+                Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
+                MockMessage lastMessage = this.mockBot.poolMessageQueue();
+                Assert.assertEquals(users.get(i), lastMessage.receiver());
+                Assert.assertEquals(expectMessages.get(i), lastMessage.text());
+            }
+        });
     }
 
-    private void addUserCategories(User user, CategoryType type, String... names) throws
+    private void addUserCategories(Session session, User user, CategoryType type, String... names) throws
             CategoryRepository.CreatingExistingUserCategoryException,
             CategoryRepository.CreatingExistingStandardCategoryException {
         for (String name : names) {
-            this.categoryRepository.createUserCategory(user, type, name);
+            this.categoryRepository.createUserCategory(session, user, type, name);
         }
     }
 }

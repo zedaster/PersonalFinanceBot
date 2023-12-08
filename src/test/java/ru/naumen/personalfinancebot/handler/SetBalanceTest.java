@@ -7,6 +7,7 @@ import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
@@ -33,13 +34,15 @@ public class SetBalanceTest {
      */
     private final FinanceBotHandler botHandler;
 
-    public SetBalanceTest() {
-        HibernateConfiguration hibernateUserRepository = new HibernateConfiguration();
-        this.userRepository = new HibernateUserRepository(hibernateUserRepository.getSessionFactory());
+    private final TransactionManager transactionManager;
 
-        OperationRepository operationRepository = new HibernateOperationRepository(hibernateUserRepository.getSessionFactory());
-        CategoryRepository categoryRepository = new HibernateCategoryRepository(hibernateUserRepository.getSessionFactory());
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
+    public SetBalanceTest() {
+        HibernateConfiguration hibernateConfiguration = new HibernateConfiguration();
+        this.userRepository = new HibernateUserRepository();
+        this.transactionManager = new TransactionManager(hibernateConfiguration.getSessionFactory());
+        OperationRepository operationRepository = new HibernateOperationRepository();
+        CategoryRepository categoryRepository = new HibernateCategoryRepository();
+        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, hibernateConfiguration.getSessionFactory());
     }
 
     /**
@@ -113,38 +116,41 @@ public class SetBalanceTest {
     private void assetCorrectBalanceCommand(String argument, String expectedMessage) {
         MockBot mockBot = new MockBot();
         User user = new User(123, 12345);
-        userRepository.saveUser(user);
-        List<String> args = List.of(argument);
-        HandleCommandEvent commandEvent = new HandleCommandEvent(mockBot, user, "set_balance", args);
-        this.botHandler.handleCommand(commandEvent);
+        transactionManager.produceTransaction(session -> {
+            userRepository.saveUser(session, user);
+            List<String> args = List.of(argument);
+            HandleCommandEvent commandEvent = new HandleCommandEvent(mockBot, user, "set_balance", args, session);
+            this.botHandler.handleCommand(commandEvent);
 
-        Assert.assertEquals(1, mockBot.getMessageQueueSize());
-        MockMessage message = mockBot.poolMessageQueue();
-        Assert.assertEquals(user, message.receiver());
-        double amountDouble = Double.parseDouble(argument.replace(",", "."));
-        Assert.assertEquals(expectedMessage, message.text());
-        Assert.assertEquals(user.getBalance(), amountDouble, 1e-15);
+            Assert.assertEquals(1, mockBot.getMessageQueueSize());
+            MockMessage message = mockBot.poolMessageQueue();
+            Assert.assertEquals(user, message.receiver());
+            double amountDouble = Double.parseDouble(argument.replace(",", "."));
+            Assert.assertEquals(expectedMessage, message.text());
+            Assert.assertEquals(user.getBalance(), amountDouble, 1e-15);
 
-        userRepository.removeUserById(user.getId());
+            userRepository.removeUserById(session, user.getId());
+        });
     }
 
     /**
      * Проводит тест с отрицательным исходом
      */
     private void assertIncorrectBalanceCommand(List<String> args) {
-        MockBot mockBot = new MockBot();
-        User user = new User(123, 12345);
-        userRepository.saveUser(user);
-        HandleCommandEvent commandEvent = new HandleCommandEvent(mockBot, user, "set_balance", args);
-        this.botHandler.handleCommand(commandEvent);
+        transactionManager.produceTransaction(session -> {
+            MockBot mockBot = new MockBot();
+            User user = new User(123, 12345);
+            userRepository.saveUser(session, user);
+            HandleCommandEvent commandEvent = new HandleCommandEvent(mockBot, user, "set_balance", args, session);
+            this.botHandler.handleCommand(commandEvent);
 
-        Assert.assertEquals(1, mockBot.getMessageQueueSize());
-        MockMessage message = mockBot.poolMessageQueue();
-        Assert.assertEquals(user, message.receiver());
-        Assert.assertEquals("Команда введена неверно! Введите /set_balance <новый баланс>", message.text());
-        Assert.assertEquals(user.getBalance(), 12345, 1e-15);
+            Assert.assertEquals(1, mockBot.getMessageQueueSize());
+            MockMessage message = mockBot.poolMessageQueue();
+            Assert.assertEquals(user, message.receiver());
+            Assert.assertEquals("Команда введена неверно! Введите /set_balance <новый баланс>", message.text());
+            Assert.assertEquals(user.getBalance(), 12345, 1e-15);
 
-        userRepository.removeUserById(user.getId());
+            userRepository.removeUserById(session, user.getId());
+        });
     }
-
 }

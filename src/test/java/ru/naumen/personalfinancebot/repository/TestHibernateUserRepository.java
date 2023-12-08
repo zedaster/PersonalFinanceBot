@@ -14,7 +14,6 @@ public class TestHibernateUserRepository extends HibernateUserRepository {
     private final TestHibernateTransaction testHibernateTransaction;
 
     public TestHibernateUserRepository(SessionFactory sessionFactory) {
-        super(sessionFactory);
         testHibernateTransaction = new TestHibernateTransaction(User.class, sessionFactory);
     }
 

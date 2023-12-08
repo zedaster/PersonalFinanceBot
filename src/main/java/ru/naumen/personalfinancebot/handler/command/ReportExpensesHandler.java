@@ -1,5 +1,6 @@
 package ru.naumen.personalfinancebot.handler.command;
 
+import org.hibernate.Session;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.service.ReportService;
@@ -21,11 +22,12 @@ public class ReportExpensesHandler implements CommandHandler {
      */
     @Override
     public void handleCommand(HandleCommandEvent event) {
+        Session session = event.getSession();
         if (event.getArgs().size() != 1) {
             event.getBot().sendMessage(event.getUser(), Message.INCORRECT_SELF_REPORT_ARGS);
             return;
         }
-        String report = this.reportService.getExpenseReport(event.getUser(), event.getArgs().get(0));
+        String report = this.reportService.getExpenseReport(session, event.getUser(), event.getArgs().get(0));
         event.getBot().sendMessage(event.getUser(), report);
     }
 }

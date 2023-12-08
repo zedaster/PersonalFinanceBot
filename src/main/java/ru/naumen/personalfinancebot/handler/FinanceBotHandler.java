@@ -1,9 +1,11 @@
 package ru.naumen.personalfinancebot.handler;
 
+import org.hibernate.SessionFactory;
 import ru.naumen.personalfinancebot.handler.command.*;
 import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
+import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
@@ -23,11 +25,15 @@ public class FinanceBotHandler {
      */
     private final Map<String, CommandHandler> commandHandlers;
 
+    /***/
+    private final SessionFactory sessionFactory;
+
     public FinanceBotHandler(
             UserRepository userRepository,
             OperationRepository operationRepository,
-            CategoryRepository categoryRepository
+            CategoryRepository categoryRepository, SessionFactory sessionFactory
     ) {
+        this.sessionFactory = sessionFactory;
         ArgumentParseService argumentParseService = new ArgumentParseService();
         CategoryListService categoryListService = new CategoryListService(categoryRepository);
         ReportService reportService = new ReportService(operationRepository);

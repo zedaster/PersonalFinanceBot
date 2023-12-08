@@ -1,5 +1,6 @@
 package ru.naumen.personalfinancebot.handler;
 
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.junit.*;
 import ru.naumen.personalfinancebot.bot.MockBot;
@@ -9,11 +10,11 @@ import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
-import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
-import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
-import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
+import ru.naumen.personalfinancebot.repository.TransactionManager;
+import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
+import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,48 +38,47 @@ public class RemoveCategoryTest {
      */
     private static final String REMOVE_EXPENSE_COMMAND = "remove_expense_category";
 
-    /**
-     * Хранилище пользователей
-     */
-    private final TestHibernateUserRepository userRepository;
-
-    /**
-     * Хранилище категорий
-     * Данная реализация позволяет сделать полную очистку категорий после тестов
-     */
-    private final TestHibernateCategoryRepository categoryRepository;
-
-    /**
-     * Хранилище операций
-     */
-    private final OperationRepository operationRepository;
-
-    /**
-     * Обработчик команд
-     */
-    private final FinanceBotHandler botHandler;
-
-    /**
-     * Моковый пользователь. Пересоздается перед каждым тестом
-     */
-    private User mockUser;
-
-    /**
-     * Моковый бот. Пересоздается перед каждым тестом
-     */
-    private MockBot mockBot;
-
-
     // Инициализация статических полей перед использованием класса
     static {
         sessionFactory = new HibernateConfiguration().getSessionFactory();
     }
 
+    /**
+     * Хранилище пользователей
+     */
+    private final TestHibernateUserRepository userRepository;
+    /**
+     * Хранилище категорий
+     * Данная реализация позволяет сделать полную очистку категорий после тестов
+     */
+    private final TestHibernateCategoryRepository categoryRepository;
+    /**
+     * Хранилище операций
+     */
+    private final OperationRepository operationRepository;
+    /**
+     * Обработчик команд
+     */
+    private final FinanceBotHandler botHandler;
+    /**
+     *
+     */
+    private final TransactionManager transactionManager;
+    /**
+     * Моковый пользователь. Пересоздается перед каждым тестом
+     */
+    private User mockUser;
+    /**
+     * Моковый бот. Пересоздается перед каждым тестом
+     */
+    private MockBot mockBot;
+
     public RemoveCategoryTest() {
         userRepository = new TestHibernateUserRepository(sessionFactory);
         categoryRepository = new TestHibernateCategoryRepository(sessionFactory);
-        operationRepository = new HibernateOperationRepository(sessionFactory);
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository);
+        operationRepository = new HibernateOperationRepository();
+        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, sessionFactory);
+        transactionManager = new TransactionManager(sessionFactory);
     }
 
     /**
@@ -95,7 +95,7 @@ public class RemoveCategoryTest {
      */
     @Before
     public void beforeEachTest() {
-        this.mockUser = createTestUser(1);
+        transactionManager.produceTransaction(session -> this.mockUser = createTestUser(session, 1));
         this.mockBot = new MockBot();
     }
 
@@ -112,8 +112,7 @@ public class RemoveCategoryTest {
      * Тестирует удаление одной из существующих категорий расходов.
      */
     @Test
-    public void removeOneOfOneExistingExpenseCategory() throws CategoryRepository.CreatingExistingUserCategoryException,
-            CategoryRepository.CreatingExistingStandardCategoryException {
+    public void removeOneOfOneExistingExpenseCategory() {
         final List<String> categoryNames = List.of(
                 "Жкх",
                 "Жилищно-коммунальные услуги",
@@ -129,48 +128,61 @@ public class RemoveCategoryTest {
                 "Категория расходов 'Покупки' успешно удалена"
         );
 
-        for (int i = 0; i < categoryNames.size(); i++) {
-            String categoryName = categoryNames.get(i);
-            List<String> args = argsList.get(i);
-            categoryRepository.createUserCategory(this.mockUser, CategoryType.EXPENSE, categoryName);
-            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
-                    args);
-            this.botHandler.handleCommand(command);
+        transactionManager.produceTransaction(session -> {
+            for (int i = 0; i < categoryNames.size(); i++) {
+                String categoryName = categoryNames.get(i);
+                List<String> args = argsList.get(i);
 
-            Optional<Category> category = categoryRepository.getCategoryByName(this.mockUser, CategoryType.EXPENSE,
-                    categoryName);
-            Assert.assertTrue(category.isEmpty());
-        }
+                try {
+                    categoryRepository.createUserCategory(session, this.mockUser, CategoryType.EXPENSE, categoryName);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
+                        args, session);
+                this.botHandler.handleCommand(command);
 
-        Assert.assertEquals(responses.size(), this.mockBot.getMessageQueueSize());
-        for (String response : responses) {
-            Assert.assertEquals(response, this.mockBot.poolMessageQueue().text());
-        }
+                Optional<Category> category = categoryRepository.getCategoryByName(session, this.mockUser, CategoryType.EXPENSE,
+                        categoryName);
+                Assert.assertTrue(category.isEmpty());
+            }
+
+            Assert.assertEquals(responses.size(), this.mockBot.getMessageQueueSize());
+            for (String response : responses) {
+                Assert.assertEquals(response, this.mockBot.poolMessageQueue().text());
+            }
+        });
     }
 
     /**
      * Тестирует удаление одной из существующих категорий дохода и расхода с тем же названием.
      */
     @Test
-    public void removeOneNameDifferentType() throws CategoryRepository.CreatingExistingCategoryException {
+    public void removeOneNameDifferentType() {
         final String categoryName = "ЖКХ";
         final String response = "Категория расходов 'Жкх' успешно удалена";
 
-        categoryRepository.createUserCategory(this.mockUser, CategoryType.INCOME, categoryName);
-        categoryRepository.createUserCategory(this.mockUser, CategoryType.EXPENSE, categoryName);
+        transactionManager.produceTransaction(session -> {
+            try {
+                categoryRepository.createUserCategory(session, this.mockUser, CategoryType.INCOME, categoryName);
+                categoryRepository.createUserCategory(session, this.mockUser, CategoryType.EXPENSE, categoryName);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
 
-        HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
-                List.of(categoryName));
-        this.botHandler.handleCommand(command);
+            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
+                    List.of(categoryName), session);
+            this.botHandler.handleCommand(command);
 
-        // Несуществование в базе удаленного элемента уже проверено выше
+            // Несуществование в базе удаленного элемента уже проверено выше
 
-        Assert.assertTrue(categoryRepository
-                .getCategoryByName(this.mockUser, CategoryType.INCOME, categoryName)
-                .isPresent());
+            Assert.assertTrue(categoryRepository
+                    .getCategoryByName(session, this.mockUser, CategoryType.INCOME, categoryName)
+                    .isPresent());
 
-        Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
-        Assert.assertEquals(response, this.mockBot.poolMessageQueue().text());
+            Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
+            Assert.assertEquals(response, this.mockBot.poolMessageQueue().text());
+        });
     }
 
     /**
@@ -178,13 +190,15 @@ public class RemoveCategoryTest {
      */
     @Test
     public void removeNonExistingCategory() {
-        HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
-                List.of("No", "name"));
-        this.botHandler.handleCommand(command);
+        transactionManager.produceTransaction(session -> {
+            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
+                    List.of("No", "name"), session);
+            this.botHandler.handleCommand(command);
 
-        Assert.assertEquals(this.mockBot.getMessageQueueSize(), 1);
-        MockMessage lastMessage = this.mockBot.poolMessageQueue();
-        Assert.assertEquals("Пользовательской категории расходов 'No name' не существует!", lastMessage.text());
+            Assert.assertEquals(this.mockBot.getMessageQueueSize(), 1);
+            MockMessage lastMessage = this.mockBot.poolMessageQueue();
+            Assert.assertEquals("Пользовательской категории расходов 'No name' не существует!", lastMessage.text());
+        });
     }
 
     /**
@@ -192,72 +206,90 @@ public class RemoveCategoryTest {
      * названием и типом.
      */
     @Test
-    public void removeExistingCategoryWithTwoUsers() throws CategoryRepository.CreatingExistingCategoryException {
+    public void removeExistingCategoryWithTwoUsers() {
         final String testSameIncomeCategoryName = "Super-income";
+        transactionManager.produceTransaction(session -> {
+            User secondUser = createTestUser(session, 2);
+            try {
+                categoryRepository.createUserCategory(session, this.mockUser, CategoryType.INCOME,
+                        testSameIncomeCategoryName);
+                categoryRepository.createUserCategory(session, secondUser, CategoryType.INCOME,
+                        testSameIncomeCategoryName);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
 
-        User secondUser = createTestUser(2);
-        categoryRepository.createUserCategory(this.mockUser, CategoryType.INCOME,
-                testSameIncomeCategoryName);
-        categoryRepository.createUserCategory(secondUser, CategoryType.INCOME,
-                testSameIncomeCategoryName);
+            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_INCOME_COMMAND,
+                    List.of(testSameIncomeCategoryName), session);
+            this.botHandler.handleCommand(command);
 
-        HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_INCOME_COMMAND,
-                List.of(testSameIncomeCategoryName));
-        this.botHandler.handleCommand(command);
-
-        Assert.assertTrue(categoryRepository
-                .getCategoryByName(secondUser, CategoryType.INCOME, testSameIncomeCategoryName)
-                .isPresent());
+            Assert.assertTrue(categoryRepository
+                    .getCategoryByName(session, secondUser, CategoryType.INCOME, testSameIncomeCategoryName)
+                    .isPresent());
+        });
     }
 
     /**
      * Тестирует невозможность удаления стандартной категории пользователем.
      */
     @Test
-    public void removeStandardCategoryByUser() throws CategoryRepository.CreatingExistingStandardCategoryException {
+    public void removeStandardCategoryByUser() {
         final String categoryName = "Standard";
         final String expectedMessage = "Пользовательской категории расходов 'Standard' не существует!";
 
-        categoryRepository.createStandardCategory(CategoryType.EXPENSE, categoryName);
+        transactionManager.produceTransaction(session -> {
+            try {
+                categoryRepository.createStandardCategory(session, CategoryType.EXPENSE, categoryName);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
 
-        HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
-                List.of(categoryName));
-        this.botHandler.handleCommand(command);
+            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND,
+                    List.of(categoryName), session);
+            this.botHandler.handleCommand(command);
 
-        Assert.assertTrue(categoryRepository
-                .getCategoryByName(this.mockUser, CategoryType.EXPENSE, categoryName)
-                .isPresent());
+            Assert.assertTrue(categoryRepository
+                    .getCategoryByName(session, this.mockUser, CategoryType.EXPENSE, categoryName)
+                    .isPresent());
 
-        Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
-        Assert.assertEquals(expectedMessage, this.mockBot.poolMessageQueue().text());
+            Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
+            Assert.assertEquals(expectedMessage, this.mockBot.poolMessageQueue().text());
+        });
     }
 
     /**
      * Тестирует невозможность удаления категории, если аргументы введены неверно
      */
     @Test
-    public void removeWrongArgs() throws CategoryRepository.CreatingExistingUserCategoryException,
-            CategoryRepository.CreatingExistingStandardCategoryException {
+    public void removeWrongArgs() {
         final String categoryName = "Жкх";
         final String expectMessage = "Данная команда принимает [название категории] в одно или несколько слов.";
-        categoryRepository.createUserCategory(this.mockUser, CategoryType.EXPENSE, categoryName);
 
-        final List<String> emptyList = List.of();
-        HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND, emptyList);
-        this.botHandler.handleCommand(command);
-        Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
-        MockMessage lastMessage = this.mockBot.poolMessageQueue();
-        Assert.assertEquals(expectMessage, lastMessage.text());
+        transactionManager.produceTransaction(session -> {
+            try {
+                categoryRepository.createUserCategory(session, this.mockUser, CategoryType.EXPENSE, categoryName);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            final List<String> emptyList = List.of();
+            HandleCommandEvent command = new HandleCommandEvent(this.mockBot, this.mockUser, REMOVE_EXPENSE_COMMAND, emptyList, session);
+            this.botHandler.handleCommand(command);
+            Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
+            MockMessage lastMessage = this.mockBot.poolMessageQueue();
+            Assert.assertEquals(expectMessage, lastMessage.text());
+        });
+
     }
 
     /**
      * Создает пользователя для тестов
      * У него chatId = number, А баланс = 100 * number
      */
-    private User createTestUser(int number) {
+    private User createTestUser(Session session, int number) {
         assert number > 0;
         User user = new User(number, 100 * number);
-        userRepository.saveUser(user);
+        userRepository.saveUser(session, user);
         return user;
     }
 }

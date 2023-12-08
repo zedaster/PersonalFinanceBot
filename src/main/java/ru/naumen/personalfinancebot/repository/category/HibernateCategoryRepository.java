@@ -3,25 +3,21 @@ package ru.naumen.personalfinancebot.repository.category;
 import com.sun.istack.NotNull;
 import com.sun.istack.Nullable;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
-import ru.naumen.personalfinancebot.repository.HibernateRepository;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.awt.desktop.AboutEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class HibernateCategoryRepository extends HibernateRepository implements CategoryRepository {
-    public HibernateCategoryRepository(SessionFactory sessionFactory) {
-        super(sessionFactory);
-    }
+public class HibernateCategoryRepository implements CategoryRepository {
 
     /**
      * Возвращает все категории указанного типа для указанного пользователя.
@@ -31,9 +27,9 @@ public class HibernateCategoryRepository extends HibernateRepository implements 
      * @return Список из запрошенных категорий
      */
     @Override
-    public List<Category> getUserCategoriesByType(@NotNull User user, CategoryType type) {
+    public List<Category> getUserCategoriesByType(Session session, @NotNull User user, CategoryType type) {
         if (user == null) throw new IllegalArgumentException();
-        return getCategoriesByType(user, type);
+        return getCategoriesByType(session, user, type);
     }
 
     /**
@@ -43,8 +39,8 @@ public class HibernateCategoryRepository extends HibernateRepository implements 
      * @return Список из запрошенных категорий
      */
     @Override
-    public List<Category> getStandardCategoriesByType(CategoryType type) {
-        return getCategoriesByType(null, type);
+    public List<Category> getStandardCategoriesByType(Session session, CategoryType type) {
+        return getCategoriesByType(session, null, type);
     }
 
     /**
@@ -58,9 +54,9 @@ public class HibernateCategoryRepository extends HibernateRepository implements 
      * @throws CreatingExistingStandardCategoryException если существует стандартная категория с таким же названием
      */
     @Override
-    public Category createUserCategory(User user, CategoryType type, String categoryName) throws
+    public Category createUserCategory(Session session, User user, CategoryType type, String categoryName) throws
             CreatingExistingStandardCategoryException, CreatingExistingUserCategoryException {
-        Optional<Category> existingUserCategory = this.getCategoryByName(user, type, categoryName);
+        Optional<Category> existingUserCategory = this.getCategoryByName(session, user, type, categoryName);
 
         if (existingUserCategory.isPresent()) {
             if (existingUserCategory.get().isStandard()) {
@@ -74,7 +70,7 @@ public class HibernateCategoryRepository extends HibernateRepository implements 
         category.setCategoryName(categoryName);
         category.setType(type);
         category.setUser(user);
-        return createCategory(category);
+        return createCategory(session, category);
     }
 
     /**
@@ -86,16 +82,16 @@ public class HibernateCategoryRepository extends HibernateRepository implements 
      * @throws CreatingExistingStandardCategoryException если стандартная категория с таким типом и именем уже существует
      */
     @Override
-    public Category createStandardCategory(CategoryType type, String categoryName)
+    public Category createStandardCategory(Session session, CategoryType type, String categoryName)
             throws CreatingExistingStandardCategoryException {
-        if (this.getStandardCategoryByName(type, categoryName).isPresent()) {
+        if (this.getStandardCategoryByName(session, type, categoryName).isPresent()) {
             throw new CreatingExistingStandardCategoryException(categoryName);
         }
 
         Category category = new Category();
         category.setCategoryName(categoryName);
         category.setType(type);
-        return createCategory(category);
+        return createCategory(session, category);
     }
 
     /**
@@ -105,22 +101,14 @@ public class HibernateCategoryRepository extends HibernateRepository implements 
      * @throws RemovingStandardCategoryException если категория является стандартной
      */
     @Override
-    public void removeCategoryById(Long id) throws RemovingStandardCategoryException {
-        boolean isRemovingSuccessful = produceTransaction(session -> {
-            Category category = session.get(Category.class, id);
-            if (category == null) {
-                return true;
-            }
-            if (category.isStandard()) {
-                return false;
-            }
+    public void removeCategoryById(Session session, Long id) throws RemovingStandardCategoryException {
+        Category category = session.get(Category.class, id);
+        boolean isRemovingSuccessful = category == null || (!category.isStandard());
+        if (isRemovingSuccessful) {
             session.delete(category);
-            return true;
-        });
-
-        if (!isRemovingSuccessful) {
-            throw new RemovingStandardCategoryException();
+            return;
         }
+        throw new RemovingStandardCategoryException();
     }
 
     /**
@@ -129,14 +117,13 @@ public class HibernateCategoryRepository extends HibernateRepository implements 
      * @param categoryName - название категории
      * @throws RemovingNonExistentCategoryException если такая персональная категория не существует
      */
-    public void removeUserCategoryByName(User user, CategoryType type, String categoryName)
+    public void removeUserCategoryByName(Session session, User user, CategoryType type, String categoryName)
             throws RemovingNonExistentCategoryException {
-        Optional<Category> category = getCategoryByName(user, type, categoryName);
+        Optional<Category> category = getCategoryByName(session, user, type, categoryName);
         if (category.isEmpty() || category.get().isStandard()) {
             throw new RemovingNonExistentCategoryException();
         }
-
-        produceVoidTransaction(session -> session.delete(category.get()));
+        session.delete(category.get());
     }
 
     /**
@@ -148,31 +135,27 @@ public class HibernateCategoryRepository extends HibernateRepository implements 
      * @return Опциональный объект категории (пуст, если категория не найдена)
      */
     @Override
-    public Optional<Category> getCategoryByName(@Nullable User user, CategoryType type, String categoryName) {
-        return produceTransaction(session -> {
-            Query<Category> resultQuery;
+    public Optional<Category> getCategoryByName(Session session, @Nullable User user, CategoryType type, String categoryName) {
+        Query<Category> resultQuery;
 
-            if (user == null) {
-                resultQuery = selectCategoriesSeparately(session, type, null, categoryName);
-            } else {
-                resultQuery = selectCategoriesTogether(session, type, user, categoryName);
-            }
+        if (user == null) {
+            resultQuery = selectCategoriesSeparately(session, type, null, categoryName);
+        } else {
+            resultQuery = selectCategoriesTogether(session, type, user, categoryName);
+        }
 
-            return resultQuery
-                    .getResultStream()
-                    .findFirst();
-        });
+        return resultQuery
+                .getResultStream()
+                .findFirst();
     }
 
     /**
      * Получает либо пользовательские, либо стандартные (при user = null) категории определенного типа.
      * Регистр названия категории игнорируется.
      */
-    private List<Category> getCategoriesByType(@Nullable User user, CategoryType type) {
-        return produceTransaction(session -> {
-            Query<Category> query = selectCategoriesSeparately(session, type, user, null);
-            return query.getResultList();
-        });
+    private List<Category> getCategoriesByType(Session session, @Nullable User user, CategoryType type) {
+        Query<Category> query = selectCategoriesSeparately(session, type, user, null);
+        return query.getResultList();
     }
 
     /**
@@ -237,10 +220,8 @@ public class HibernateCategoryRepository extends HibernateRepository implements 
      * @param category Категория
      * @return Категория
      */
-    private Category createCategory(Category category) {
-        return produceTransaction(session -> {
-            session.save(category);
-            return category;
-        });
+    private Category createCategory(Session session, Category category) {
+        session.save(category);
+        return category;
     }
 }
