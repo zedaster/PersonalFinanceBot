@@ -88,7 +88,7 @@ public class AddCategoryTest {
     @Before
     public void beforeEachTest() {
         this.mockBot = new MockBot();
-        transactionManager.produceTransaction(session -> this.testUser = createTestUser(session,1));
+        transactionManager.produceTransaction(session -> this.testUser = createTestUser(session, 1));
     }
 
     @After
@@ -124,29 +124,34 @@ public class AddCategoryTest {
      */
     @Test
     public void addCorrectCategory() {
-        transactionManager.produceTransaction(session -> {
-            final List<String> testCases = List.of("Такси", "такси", "тАкСи");
-            final String incomeExpectMessage = "Категория доходов 'Такси' успешно добавлена";
-            final String expenseExpectMessage = "Категория расходов 'Такси' успешно добавлена";
-            final List<String> commands = List.of(ADD_INCOME_COMMAND, ADD_EXPENSE_COMMAND);
+        final List<String> testCases = List.of("Такси", "такси", "тАкСи");
+        final String incomeExpectMessage = "Категория доходов 'Такси' успешно добавлена";
+        final String expenseExpectMessage = "Категория расходов 'Такси' успешно добавлена";
+        final List<String> commands = List.of(ADD_INCOME_COMMAND, ADD_EXPENSE_COMMAND);
+        final List<CategoryType> types = List.of(CategoryType.INCOME, CategoryType.EXPENSE);
 
+        transactionManager.produceTransaction(session -> {
             for (int i = 0; i < 2; i++) {
                 for (String testCase : testCases) {
                     CommandData commandData = new CommandData(
                             this.mockBot, this.testUser, commands.get(i), List.of(testCase));
                     this.botHandler.handleCommand(commandData, session);
-                    categoryRepository.removeAll();
+                    try {
+                        categoryRepository.removeUserCategoryByName(session, this.testUser, types.get(i), "Такси");
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
-
-            Assert.assertEquals(6, this.mockBot.getMessageQueueSize());
-            for (int i = 0; i < 3; i++) {
-                Assert.assertEquals(incomeExpectMessage, this.mockBot.poolMessageQueue().text());
-            }
-            for (int i = 0; i < 3; i++) {
-                Assert.assertEquals(expenseExpectMessage, this.mockBot.poolMessageQueue().text());
-            }
         });
+        Assert.assertEquals(6, this.mockBot.getMessageQueueSize());
+        for (int i = 0; i < 3; i++) {
+            Assert.assertEquals(incomeExpectMessage, this.mockBot.poolMessageQueue().text());
+        }
+        for (int i = 0; i < 3; i++) {
+            Assert.assertEquals(expenseExpectMessage, this.mockBot.poolMessageQueue().text());
+        }
+
     }
 
     /**
