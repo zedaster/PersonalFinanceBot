@@ -70,8 +70,8 @@ public class AddCategoryTest {
     private User testUser;
 
     public AddCategoryTest() {
-        this.userRepository = new TestHibernateUserRepository(sessionFactory);
-        this.categoryRepository = new TestHibernateCategoryRepository(sessionFactory);
+        this.userRepository = new TestHibernateUserRepository();
+        this.categoryRepository = new TestHibernateCategoryRepository();
         this.operationRepository = new HibernateOperationRepository();
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, sessionFactory);
         this.transactionManager = new TransactionManager(sessionFactory);
@@ -93,8 +93,11 @@ public class AddCategoryTest {
 
     @After
     public void afterEachTest() {
-        categoryRepository.removeAll();
-        userRepository.removeAll();
+        transactionManager.produceTransaction(session -> {
+            categoryRepository.removeAll(session);
+            userRepository.removeAll(session);
+
+        });
     }
 
     /**
@@ -113,7 +116,7 @@ public class AddCategoryTest {
             Optional<Category> addedCategory = categoryRepository.getCategoryByName(session, this.testUser, CategoryType.EXPENSE,
                     categoryName);
             Assert.assertTrue(addedCategory.isPresent());
-            categoryRepository.removeAll();
+            categoryRepository.removeAll(session);
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
             Assert.assertEquals(expectMessage, this.mockBot.poolMessageQueue().text());
         });
@@ -128,7 +131,6 @@ public class AddCategoryTest {
         final String incomeExpectMessage = "Категория доходов 'Такси' успешно добавлена";
         final String expenseExpectMessage = "Категория расходов 'Такси' успешно добавлена";
         final List<String> commands = List.of(ADD_INCOME_COMMAND, ADD_EXPENSE_COMMAND);
-        final List<CategoryType> types = List.of(CategoryType.INCOME, CategoryType.EXPENSE);
 
         transactionManager.produceTransaction(session -> {
             for (int i = 0; i < 2; i++) {
@@ -136,11 +138,7 @@ public class AddCategoryTest {
                     CommandData commandData = new CommandData(
                             this.mockBot, this.testUser, commands.get(i), List.of(testCase));
                     this.botHandler.handleCommand(commandData, session);
-                    try {
-                        categoryRepository.removeUserCategoryByName(session, this.testUser, types.get(i), "Такси");
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                    this.categoryRepository.removeAll(session);
                 }
             }
         });
@@ -168,7 +166,7 @@ public class AddCategoryTest {
                     this.mockBot, this.testUser, ADD_INCOME_COMMAND, List.of(some65chars));
             this.botHandler.handleCommand(commandData, session);
             Assert.assertTrue(categoryRepository.getCategoryByName(session, this.testUser, CategoryType.INCOME, some65chars).isEmpty());
-            categoryRepository.removeAll();
+            categoryRepository.removeAll(session);
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
             Assert.assertEquals(expectMessage, this.mockBot.poolMessageQueue().text());
         });
@@ -188,7 +186,7 @@ public class AddCategoryTest {
                 CommandData commandData = new CommandData(
                         this.mockBot, this.testUser, ADD_INCOME_COMMAND, List.of(testCase));
                 this.botHandler.handleCommand(commandData, session);
-                categoryRepository.removeAll();
+                categoryRepository.removeAll(session);
             }
             Assert.assertEquals(5, this.mockBot.getMessageQueueSize());
             for (int i = 0; i < 5; i++) {

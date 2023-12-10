@@ -74,8 +74,8 @@ public class RemoveCategoryTest {
     private MockBot mockBot;
 
     public RemoveCategoryTest() {
-        userRepository = new TestHibernateUserRepository(sessionFactory);
-        categoryRepository = new TestHibernateCategoryRepository(sessionFactory);
+        userRepository = new TestHibernateUserRepository();
+        categoryRepository = new TestHibernateCategoryRepository();
         operationRepository = new HibernateOperationRepository();
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, sessionFactory);
         transactionManager = new TransactionManager(sessionFactory);
@@ -104,8 +104,10 @@ public class RemoveCategoryTest {
      */
     @After
     public void afterEachTest() {
-        categoryRepository.removeAll();
-        userRepository.removeAll();
+        transactionManager.produceTransaction(session -> {
+            categoryRepository.removeAll(session);
+            userRepository.removeAll(session);
+        });
     }
 
     /**

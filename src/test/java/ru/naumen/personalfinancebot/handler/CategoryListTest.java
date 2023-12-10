@@ -60,8 +60,8 @@ public class CategoryListTest {
     private MockBot mockBot;
 
     public CategoryListTest() {
-        this.userRepository = new TestHibernateUserRepository(sessionFactory);
-        this.categoryRepository = new TestHibernateCategoryRepository(sessionFactory);
+        this.userRepository = new TestHibernateUserRepository();
+        this.categoryRepository = new TestHibernateCategoryRepository();
         this.operationRepository = new HibernateOperationRepository();
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, sessionFactory);
         this.transactionManager = new TransactionManager(sessionFactory);
@@ -104,8 +104,10 @@ public class CategoryListTest {
      */
     @After
     public void afterEachTest() {
-        categoryRepository.removeAll();
-        userRepository.removeAll();
+        transactionManager.produceTransaction(session -> {
+            categoryRepository.removeAll(session);
+            userRepository.removeAll(session);
+        });
     }
 
     /**

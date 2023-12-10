@@ -31,7 +31,7 @@ public class CommandTestsTemplate {
         sessionFactory = new HibernateConfiguration().getSessionFactory();
         transactionManager = new TransactionManager(sessionFactory);
         userRepository = new HibernateUserRepository();
-        categoryRepository = new TestHibernateCategoryRepository(sessionFactory);
+        categoryRepository = new TestHibernateCategoryRepository();
         operationRepository = new HibernateOperationRepository();
         // Добавить все стандартные значения здесь
     }
@@ -49,8 +49,7 @@ public class CommandTestsTemplate {
      */
     @AfterClass
     public static void finishTests() {
-        categoryRepository.removeAll();
-        sessionFactory.close();
+        transactionManager.produceTransaction(categoryRepository::removeAll);
     }
 
     /**

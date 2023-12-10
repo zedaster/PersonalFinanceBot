@@ -1,6 +1,6 @@
 package ru.naumen.personalfinancebot.repository;
 
-import org.hibernate.SessionFactory;
+import org.hibernate.Session;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
 
@@ -13,14 +13,14 @@ public class TestHibernateUserRepository extends HibernateUserRepository {
      */
     private final TestHibernateTransaction testHibernateTransaction;
 
-    public TestHibernateUserRepository(SessionFactory sessionFactory) {
-        testHibernateTransaction = new TestHibernateTransaction(User.class, sessionFactory);
+    public TestHibernateUserRepository() {
+        testHibernateTransaction = new TestHibernateTransaction(User.class);
     }
 
     /**
      * Очистка всех данных в таблице с пользователями
      */
-    public void removeAll() {
-        testHibernateTransaction.removeAll();
+    public void removeAll(Session session) {
+        testHibernateTransaction.removeAll(session);
     }
 }

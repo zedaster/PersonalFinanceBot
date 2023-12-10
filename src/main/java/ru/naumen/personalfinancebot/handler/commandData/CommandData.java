@@ -1,6 +1,5 @@
 package ru.naumen.personalfinancebot.handler.commandData;
 
-import org.hibernate.Session;
 import ru.naumen.personalfinancebot.bot.Bot;
 import ru.naumen.personalfinancebot.model.User;
 

@@ -1,6 +1,6 @@
 package ru.naumen.personalfinancebot.repository;
 
-import org.hibernate.SessionFactory;
+import org.hibernate.Session;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
 
@@ -13,14 +13,14 @@ public class TestHibernateCategoryRepository extends HibernateCategoryRepository
      */
     private final TestHibernateTransaction testHibernateTransaction;
 
-    public TestHibernateCategoryRepository(SessionFactory sessionFactory) {
-        testHibernateTransaction = new TestHibernateTransaction(Category.class, sessionFactory);
+    public TestHibernateCategoryRepository() {
+        testHibernateTransaction = new TestHibernateTransaction(Category.class);
     }
 
     /**
      * Очистка всех данных в таблице с категориями
      */
-    public void removeAll() {
-        testHibernateTransaction.removeAll();
+    public void removeAll(Session session) {
+        testHibernateTransaction.removeAll(session);
     }
 }
