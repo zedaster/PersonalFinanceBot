@@ -1,6 +1,7 @@
 package ru.naumen.personalfinancebot.handler.command;
 
-import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import org.hibernate.Session;
+import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 
 /**
  * Обработчик команды для бота
@@ -9,5 +10,5 @@ public interface CommandHandler {
     /**
      * Метод, вызываемый при получении команды
      */
-    void handleCommand(HandleCommandEvent event);
+    void handleCommand(CommandData commandData, Session session);
 }

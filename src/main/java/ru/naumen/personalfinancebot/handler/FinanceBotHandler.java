@@ -1,7 +1,9 @@
 package ru.naumen.personalfinancebot.handler;
 
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import ru.naumen.personalfinancebot.handler.command.*;
-import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
@@ -23,11 +25,17 @@ public class FinanceBotHandler {
      */
     private final Map<String, CommandHandler> commandHandlers;
 
+    /**
+     * Фабрика сессий к БД
+     */
+    private final SessionFactory sessionFactory;
+
     public FinanceBotHandler(
             UserRepository userRepository,
             OperationRepository operationRepository,
-            CategoryRepository categoryRepository
+            CategoryRepository categoryRepository, SessionFactory sessionFactory
     ) {
+        this.sessionFactory = sessionFactory;
         ArgumentParseService argumentParseService = new ArgumentParseService();
         CategoryListService categoryListService = new CategoryListService(categoryRepository);
         ReportService reportService = new ReportService(operationRepository);
@@ -56,12 +64,12 @@ public class FinanceBotHandler {
     /**
      * Вызывается при получении какой-либо команды от пользователя
      */
-    public void handleCommand(HandleCommandEvent event) {
-        CommandHandler handler = this.commandHandlers.get(event.getCommandName().toLowerCase());
+    public void handleCommand(CommandData commandData, Session session) {
+        CommandHandler handler = this.commandHandlers.get(commandData.getCommandName().toLowerCase());
         if (handler != null) {
-            handler.handleCommand(event);
+            handler.handleCommand(commandData, session);
         } else {
-            event.getBot().sendMessage(event.getUser(), Message.COMMAND_NOT_FOUND);
+            commandData.getBot().sendMessage(commandData.getUser(), Message.COMMAND_NOT_FOUND);
         }
     }
 }

@@ -1,6 +1,7 @@
 package ru.naumen.personalfinancebot.handler.command;
 
-import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import org.hibernate.Session;
+import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.message.Message;
 
 /**
@@ -13,7 +14,7 @@ public class StartCommandHandler implements CommandHandler {
      * Метод, вызываемый при получении команды
      */
     @Override
-    public void handleCommand(HandleCommandEvent event) {
-        event.getBot().sendMessage(event.getUser(), Message.WELCOME_MESSAGE);
+    public void handleCommand(CommandData commandData, Session session) {
+        commandData.getBot().sendMessage(commandData.getUser(), Message.WELCOME_MESSAGE);
     }
 }

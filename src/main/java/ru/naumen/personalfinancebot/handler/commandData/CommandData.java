@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.handler.event;
+package ru.naumen.personalfinancebot.handler.commandData;
 
 import ru.naumen.personalfinancebot.bot.Bot;
 import ru.naumen.personalfinancebot.model.User;
@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Событие, вызываемое при выполнении пользователем какой-либо команды
  */
-public class HandleCommandEvent {
+public class CommandData {
     /**
      * Бот, который обрабатывает команду
      */
@@ -29,7 +29,7 @@ public class HandleCommandEvent {
      */
     private final List<String> args;
 
-    public HandleCommandEvent(Bot bot, User user, String commandName, List<String> args) {
+    public CommandData(Bot bot, User user, String commandName, List<String> args) {
         this.bot = bot;
         this.user = user;
         this.commandName = commandName;

@@ -5,6 +5,7 @@ import ru.naumen.personalfinancebot.bot.TelegramBot;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.configuration.TelegramBotConfiguration;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
+import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
@@ -21,19 +22,22 @@ public class Main {
                 System.getenv("DB_URL"),
                 System.getenv("DB_USERNAME"),
                 System.getenv("DB_PASSWORD"));
-        UserRepository userRepository = new HibernateUserRepository(hibernateConfiguration.getSessionFactory());
-        OperationRepository operationRepository = new HibernateOperationRepository(hibernateConfiguration.getSessionFactory());
-        CategoryRepository categoryRepository = new HibernateCategoryRepository(hibernateConfiguration.getSessionFactory());
+        UserRepository userRepository = new HibernateUserRepository();
+        OperationRepository operationRepository = new HibernateOperationRepository();
+        CategoryRepository categoryRepository = new HibernateCategoryRepository();
         FinanceBotHandler handler = new FinanceBotHandler(
                 userRepository,
                 operationRepository,
-                categoryRepository
+                categoryRepository,
+                hibernateConfiguration.getSessionFactory()
         );
         TelegramBotConfiguration configuration = new TelegramBotConfiguration();
+        TransactionManager transactionManager = new TransactionManager(hibernateConfiguration.getSessionFactory());
         Bot bot = new TelegramBot(
                 configuration,
                 handler,
-                userRepository
+                userRepository,
+                transactionManager
         );
         try {
             bot.startPooling();

@@ -1,6 +1,7 @@
 package ru.naumen.personalfinancebot.handler.command;
 
-import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
+import org.hibernate.Session;
+import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
 import ru.naumen.personalfinancebot.service.ArgumentParseService;
@@ -30,19 +31,19 @@ public class SetBalanceHandler implements CommandHandler {
      * Метод, вызываемый при получении команды
      */
     @Override
-    public void handleCommand(HandleCommandEvent event) {
+    public void handleCommand(CommandData commandData, Session session) {
         double amount;
         try {
-            amount = argumentParser.parseBalance(event.getArgs());
+            amount = argumentParser.parseBalance(commandData.getArgs());
         } catch (IllegalArgumentException e) {
-            event.getBot().sendMessage(event.getUser(),
+            commandData.getBot().sendMessage(commandData.getUser(),
                     "Команда введена неверно! Введите /set_balance <новый баланс>");
             return;
         }
 
-        event.getUser().setBalance(amount);
-        userRepository.saveUser(event.getUser());
-        event.getBot().sendMessage(event.getUser(), Message.SET_BALANCE_SUCCESSFULLY
+        commandData.getUser().setBalance(amount);
+        userRepository.saveUser(session, commandData.getUser());
+        commandData.getBot().sendMessage(commandData.getUser(), Message.SET_BALANCE_SUCCESSFULLY
                 .replace("{balance}", beautifyDouble(amount)));
 
     }
