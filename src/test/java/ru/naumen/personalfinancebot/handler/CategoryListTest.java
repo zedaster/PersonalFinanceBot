@@ -2,7 +2,10 @@ package ru.naumen.personalfinancebot.handler;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
@@ -22,16 +25,6 @@ import java.util.List;
  * Тесты на команды для вывода категорий
  */
 public class CategoryListTest {
-    /**
-     * Session factory для работы с сессиями в хранилищах
-     */
-    private static final SessionFactory sessionFactory;
-
-    // Инициализация статических полей перед использованием класса
-    static {
-        sessionFactory = new HibernateConfiguration().getSessionFactory();
-    }
-
     /**
      * Хранилище пользователей
      */
@@ -53,13 +46,19 @@ public class CategoryListTest {
      * Моковый пользователь. Пересоздается для каждого теста
      */
     private final User mockUser;
+
+    /**
+     * Менеджер транзакций
+     */
     private final TransactionManager transactionManager;
+
     /**
      * Моковый бот. Пересоздается для каждого теста.
      */
     private MockBot mockBot;
 
     public CategoryListTest() {
+        SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
         this.userRepository = new TestHibernateUserRepository();
         this.categoryRepository = new TestHibernateCategoryRepository();
         this.operationRepository = new HibernateOperationRepository();
@@ -69,14 +68,6 @@ public class CategoryListTest {
         this.mockUser = new User(1L, 100);
         transactionManager.produceTransaction(session -> this.userRepository.saveUser(session, this.mockUser));
 
-    }
-
-    /**
-     * Очистка стандартных категорий и закрытие sessionFactory после выполнения всех тестов в этом классе
-     */
-    @AfterClass
-    public static void finishTests() {
-        sessionFactory.close();
     }
 
     /**

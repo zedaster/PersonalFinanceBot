@@ -2,7 +2,10 @@ package ru.naumen.personalfinancebot.handler;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
@@ -34,15 +37,6 @@ public class AddCategoryTest {
     private static final String ADD_EXPENSE_COMMAND = "add_expense_category";
 
     /**
-     * Session factory для работы с сессиями в хранилищах
-     */
-    private static final SessionFactory sessionFactory;
-
-    static {
-        sessionFactory = new HibernateConfiguration().getSessionFactory();
-    }
-
-    /**
      * Хранилище пользователей
      */
     private final TestHibernateUserRepository userRepository;
@@ -59,6 +53,10 @@ public class AddCategoryTest {
      * Обработчик операций для бота
      */
     private final FinanceBotHandler botHandler;
+
+    /**
+     * Менеджер транзакций
+     */
     private final TransactionManager transactionManager;
     /**
      * Моковый бот
@@ -70,19 +68,12 @@ public class AddCategoryTest {
     private User testUser;
 
     public AddCategoryTest() {
+        SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
         this.userRepository = new TestHibernateUserRepository();
         this.categoryRepository = new TestHibernateCategoryRepository();
         this.operationRepository = new HibernateOperationRepository();
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, sessionFactory);
         this.transactionManager = new TransactionManager(sessionFactory);
-    }
-
-    /**
-     * Очистка стандартных значений и закрытие sessionFactory после выполнения всех тестов в этом классе
-     */
-    @AfterClass
-    public static void finishTests() {
-        sessionFactory.close();
     }
 
     @Before

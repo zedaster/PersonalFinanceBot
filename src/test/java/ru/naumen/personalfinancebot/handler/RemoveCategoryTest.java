@@ -2,7 +2,10 @@ package ru.naumen.personalfinancebot.handler;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
@@ -23,10 +26,6 @@ import java.util.Optional;
  * Класс для тестирования удаления пользовательских категорий
  */
 public class RemoveCategoryTest {
-    /**
-     * Session factory для работы с сессиями в хранилищах
-     */
-    private static final SessionFactory sessionFactory;
 
     /**
      * Команда для удаления категории дохода
@@ -38,55 +37,49 @@ public class RemoveCategoryTest {
      */
     private static final String REMOVE_EXPENSE_COMMAND = "remove_expense_category";
 
-    // Инициализация статических полей перед использованием класса
-    static {
-        sessionFactory = new HibernateConfiguration().getSessionFactory();
-    }
-
     /**
      * Хранилище пользователей
      */
     private final TestHibernateUserRepository userRepository;
+
     /**
      * Хранилище категорий
      * Данная реализация позволяет сделать полную очистку категорий после тестов
      */
     private final TestHibernateCategoryRepository categoryRepository;
+
     /**
      * Хранилище операций
      */
     private final OperationRepository operationRepository;
+
     /**
      * Обработчик команд
      */
     private final FinanceBotHandler botHandler;
+
     /**
-     *
+     * Менеджер транзакций
      */
     private final TransactionManager transactionManager;
+
     /**
      * Моковый пользователь. Пересоздается перед каждым тестом
      */
     private User mockUser;
+
     /**
      * Моковый бот. Пересоздается перед каждым тестом
      */
     private MockBot mockBot;
 
     public RemoveCategoryTest() {
+        SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
         userRepository = new TestHibernateUserRepository();
         categoryRepository = new TestHibernateCategoryRepository();
         operationRepository = new HibernateOperationRepository();
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, sessionFactory);
         transactionManager = new TransactionManager(sessionFactory);
-    }
-
-    /**
-     * Очистка стандартных значений и закрытие sessionFactory после выполнения всех тестов в этом классе
-     */
-    @AfterClass
-    public static void finishTests() {
-        sessionFactory.close();
     }
 
     /**
