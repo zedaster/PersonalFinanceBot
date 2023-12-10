@@ -54,7 +54,10 @@ public class OperationsTest {
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, sessionFactory);
     }
 
-    public User createUser(Session session) {
+    /**
+     * Создает пользователя для проведения тестов
+     */
+    private User createUser(Session session) {
         User user = new User(1L, this.BALANCE);
         this.userRepository.saveUser(session, user);
         return user;

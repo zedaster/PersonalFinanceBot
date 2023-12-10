@@ -26,7 +26,6 @@ public class SetBalanceTest {
     /**
      * Хранилище пользователей
      */
-
     private final UserRepository userRepository;
 
     /**
@@ -34,6 +33,9 @@ public class SetBalanceTest {
      */
     private final FinanceBotHandler botHandler;
 
+    /**
+     * Менедер транзакций
+     */
     private final TransactionManager transactionManager;
 
     public SetBalanceTest() {
