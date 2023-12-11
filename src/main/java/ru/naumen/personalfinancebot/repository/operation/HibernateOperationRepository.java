@@ -43,8 +43,8 @@ public class HibernateOperationRepository implements OperationRepository {
      */
     @Override
     public Map<String, Double> getOperationsSumByType(Session session, User user, int month, int year, CategoryType type) {
-        LocalDateTime startDate = LocalDateTime.of(year, month, 1, 0, 0);
-        LocalDateTime endDate = startDate.plusMonths(1);
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.plusMonths(1);
 
         final String hql = "SELECT cat.categoryName, sum (operation.payment) " +
                 "FROM Operation operation " +

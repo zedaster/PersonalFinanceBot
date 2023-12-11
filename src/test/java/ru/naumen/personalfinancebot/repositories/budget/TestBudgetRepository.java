@@ -1,17 +1,18 @@
 package ru.naumen.personalfinancebot.repositories.budget;
 
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
-import ru.naumen.personalfinancebot.models.Budget;
-import ru.naumen.personalfinancebot.models.CategoryType;
-import ru.naumen.personalfinancebot.models.User;
-import ru.naumen.personalfinancebot.repositories.user.HibernateUserRepository;
-import ru.naumen.personalfinancebot.repositories.user.UserRepository;
+import ru.naumen.personalfinancebot.model.Budget;
+import ru.naumen.personalfinancebot.model.CategoryType;
+import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
 import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
+import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
+import ru.naumen.personalfinancebot.repository.user.UserRepository;
 
 import java.time.YearMonth;
 import java.util.List;
@@ -24,34 +25,36 @@ import java.util.Random;
  */
 public class TestBudgetRepository {
     /**
-     * Session factory для работы с сессиями в хранилищах
-     */
-    private final static SessionFactory sessionFactory;
-
-    /**
      * Репозиторий модели данных {@link Budget}
      */
-    private final static BudgetRepository budgetRepository;
+    private final BudgetRepository budgetRepository;
 
     /**
      * Репозиторий модели данных {@link User}
      */
-    private final static UserRepository userRepository;
+    private final UserRepository userRepository;
 
+    /**
+     * Менеджер транзакций
+     */
+    private final TransactionManager transactionManager;
 
-    static {
-        sessionFactory = new HibernateConfiguration().getSessionFactory();
-        budgetRepository = new HibernateBudgetRepository(sessionFactory);
-        userRepository = new HibernateUserRepository(sessionFactory);
+    public TestBudgetRepository() {
+        SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
+        this.transactionManager = new TransactionManager(sessionFactory);
+        this.userRepository = new HibernateUserRepository();
+        this.budgetRepository = new HibernateBudgetRepository();
     }
 
     /**
      * Создает пользователя в Базе данных перед запуском тестов
      */
-    @BeforeClass
-    public static void createUser() {
-        User user = new User(1, 1);
-        userRepository.saveUser(user);
+    public User createUser(long id) {
+        User user = new User(id, 100_000);
+        this.transactionManager.produceTransaction(session -> {
+            userRepository.saveUser(session, user);
+        });
+        return user;
     }
 
     /**
@@ -63,19 +66,21 @@ public class TestBudgetRepository {
         double expense = 50_000, income = 70_000;
         budget.setExpectedSummary(CategoryType.EXPENSE, expense);
         budget.setExpectedSummary(CategoryType.INCOME, income);
-        User user = userRepository.getUserByTelegramChatId(1L).get();
+        User user = this.createUser(1L);
         budget.setUser(user);
         budget.setTargetDate(YearMonth.of(2023, 11));
-        budgetRepository.saveBudget(budget);
-        Budget budget1 = budgetRepository.getBudget(user, YearMonth.of(2023, 11)).get();
+        transactionManager.produceTransaction(session -> {
+            budgetRepository.saveBudget(session, budget);
+            Budget budget1 = budgetRepository.getBudget(session, user, YearMonth.of(2023, 11)).get();
 
-        Assert.assertEquals(budget1.getExpectedSummary(CategoryType.INCOME), budget.getExpectedSummary(CategoryType.INCOME), 0.0);
-        Assert.assertEquals(budget1.getExpectedSummary(CategoryType.EXPENSE), budget.getExpectedSummary(CategoryType.EXPENSE), 0.0);
+            Assert.assertEquals(budget1.getExpectedSummary(CategoryType.INCOME), budget.getExpectedSummary(CategoryType.INCOME), 0.0);
+            Assert.assertEquals(budget1.getExpectedSummary(CategoryType.EXPENSE), budget.getExpectedSummary(CategoryType.EXPENSE), 0.0);
 
-        YearMonth yearMonth = budget1.getTargetDate();
+            YearMonth yearMonth = budget1.getTargetDate();
 
-        Assert.assertEquals(2023, yearMonth.getYear(), 0);
-        Assert.assertEquals(11, yearMonth.getMonth().getValue(), 0);
+            Assert.assertEquals(2023, yearMonth.getYear(), 0);
+            Assert.assertEquals(11, yearMonth.getMonth().getValue(), 0);
+        });
     }
 
     /**
@@ -83,12 +88,12 @@ public class TestBudgetRepository {
      *
      * @param user Пользователь
      */
-    private void generateBudgetRange(User user) {
+    private void generateBudgetRange(Session session, User user) {
         List<Integer> months = List.of(1, 2, 3, 6, 7, 8, 10, 12);
         for (Integer month : months) {
-            budgetRepository.saveBudget(new Budget(user, getRandomPayment(), getRandomPayment(), YearMonth.of(2023, month)));
+            budgetRepository.saveBudget(session, new Budget(user, getRandomPayment(), getRandomPayment(), YearMonth.of(2023, month)));
         }
-        budgetRepository.saveBudget(new Budget(user, getRandomPayment(), getRandomPayment(), YearMonth.of(2024, 1)));
+        budgetRepository.saveBudget(session, new Budget(user, getRandomPayment(), getRandomPayment(), YearMonth.of(2024, 1)));
     }
 
     /**
@@ -97,8 +102,8 @@ public class TestBudgetRepository {
      * @param user            Пользователь
      * @param argumentContext Класс-контекст
      */
-    private void assertCorrectListBudgetSize(User user, TestArgumentContext argumentContext) {
-        List<Budget> budgets = budgetRepository.selectBudgetRange(user, argumentContext.getFrom(), argumentContext.getTo());
+    private void assertCorrectListBudgetSize(Session session, User user, TestArgumentContext argumentContext) {
+        List<Budget> budgets = budgetRepository.selectBudgetRange(session, user, argumentContext.getFrom(), argumentContext.getTo());
         Assert.assertEquals(argumentContext.getRangeExpectedSize(), budgets.size(), 0);
     }
 
@@ -107,7 +112,7 @@ public class TestBudgetRepository {
      */
     @Test
     public void testSelectBudgetRangeMethod() {
-        User user = userRepository.getUserByTelegramChatId(1L).get();
+        User user = this.createUser(2L);
         List<TestArgumentContext> argumentContextList = List.of(
                 new TestArgumentContext(YearMonth.of(2023, 1), YearMonth.of(2023, 2), 2),
                 new TestArgumentContext(YearMonth.of(2023, 8), YearMonth.of(2023, 10), 2),
@@ -115,10 +120,12 @@ public class TestBudgetRepository {
                 new TestArgumentContext(YearMonth.of(2023, 1), YearMonth.of(2023, 12), 8),
                 new TestArgumentContext(YearMonth.of(2023, 12), YearMonth.of(2024, 1), 2)
         );
-        generateBudgetRange(user);
-        for (TestArgumentContext argumentContext : argumentContextList) {
-            assertCorrectListBudgetSize(user, argumentContext);
-        }
+        transactionManager.produceTransaction(session -> {
+            generateBudgetRange(session, user);
+            for (TestArgumentContext argumentContext : argumentContextList) {
+                assertCorrectListBudgetSize(session, user, argumentContext);
+            }
+        });
     }
 
     /**

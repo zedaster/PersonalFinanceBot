@@ -1,7 +1,8 @@
 package ru.naumen.personalfinancebot.repository.fake;
 
-import ru.naumen.personalfinancebot.models.Budget;
-import ru.naumen.personalfinancebot.models.User;
+import org.hibernate.Session;
+import ru.naumen.personalfinancebot.model.Budget;
+import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
 
 import java.time.YearMonth;
@@ -22,7 +23,7 @@ public class FakeBudgetRepository implements BudgetRepository {
      * @param budget Бюджет
      */
     @Override
-    public void saveBudget(Budget budget) {
+    public void saveBudget(Session session, Budget budget) {
         budgets.put(new UserYearMonth(budget.getUser(), budget.getTargetDate()), budget);
     }
 
@@ -34,7 +35,7 @@ public class FakeBudgetRepository implements BudgetRepository {
      * @return Бюджет пользователя
      */
     @Override
-    public Optional<Budget> getBudget(User user, YearMonth yearMonth) {
+    public Optional<Budget> getBudget(Session session, User user, YearMonth yearMonth) {
         return Optional.ofNullable(budgets.get(new UserYearMonth(user, yearMonth)));
     }
 
@@ -47,7 +48,7 @@ public class FakeBudgetRepository implements BudgetRepository {
      * @return Список бюджетов
      */
     @Override
-    public List<Budget> selectBudgetRange(User user, YearMonth from, YearMonth to) {
+    public List<Budget> selectBudgetRange(Session session, User user, YearMonth from, YearMonth to) {
         if (from.isAfter(to)) {
             throw new IllegalArgumentException("From must be before to");
         }
@@ -69,7 +70,5 @@ public class FakeBudgetRepository implements BudgetRepository {
      * @param user
      * @param yearMonth
      */
-    private record UserYearMonth(User user, YearMonth yearMonth) {
-
-    }
+    private record UserYearMonth(User user, YearMonth yearMonth) {}
 }

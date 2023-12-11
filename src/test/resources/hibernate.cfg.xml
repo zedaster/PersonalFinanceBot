@@ -14,9 +14,9 @@
         <property name="current_session_context_class">thread</property>
 
         <!-- Hibernate mappings -->
-        <mapping class="ru.naumen.personalfinancebot.models.User" />
-        <mapping class="ru.naumen.personalfinancebot.models.Operation" />
-        <mapping class="ru.naumen.personalfinancebot.models.Category" />
-        <mapping class="ru.naumen.personalfinancebot.models.Budget" />
+        <mapping class="ru.naumen.personalfinancebot.model.User" />
+        <mapping class="ru.naumen.personalfinancebot.model.Operation" />
+        <mapping class="ru.naumen.personalfinancebot.model.Category" />
+        <mapping class="ru.naumen.personalfinancebot.model.Budget" />
     </session-factory>
 </hibernate-configuration>

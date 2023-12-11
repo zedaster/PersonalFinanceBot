@@ -1,8 +1,8 @@
 package ru.naumen.personalfinancebot.repository.fake;
 
-import ru.naumen.personalfinancebot.models.Category;
-import ru.naumen.personalfinancebot.models.Operation;
-import ru.naumen.personalfinancebot.models.User;
+import ru.naumen.personalfinancebot.model.Category;
+import ru.naumen.personalfinancebot.model.Operation;
+import ru.naumen.personalfinancebot.model.User;
 
 import java.time.LocalDate;
 

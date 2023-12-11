@@ -12,10 +12,12 @@ import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
-import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
-import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
+import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
+import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateCategoryRepository;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateUserRepository;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 
@@ -72,7 +74,13 @@ public class AddCategoryTest {
         this.userRepository = new TestHibernateUserRepository();
         this.categoryRepository = new TestHibernateCategoryRepository();
         this.operationRepository = new HibernateOperationRepository();
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, sessionFactory);
+        BudgetRepository budgetRepository = new HibernateBudgetRepository();
+        this.botHandler = new FinanceBotHandler(
+                userRepository,
+                operationRepository,
+                categoryRepository,
+                budgetRepository,
+                sessionFactory);
         this.transactionManager = new TransactionManager(sessionFactory);
     }
 

@@ -1,19 +1,18 @@
 package ru.naumen.personalfinancebot.repository.hibernate;
 
-import org.hibernate.SessionFactory;
-import ru.naumen.personalfinancebot.models.User;
+import org.hibernate.Session;
+import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
 
 public class TestHibernateBudgetRepository extends HibernateBudgetRepository {
 
-    private final TestHibernateTransactions testHibernateTransactions;
+    private final TestHibernateTransaction testHibernateTransactions;
 
-    public TestHibernateBudgetRepository(SessionFactory sessionFactory) {
-        super(sessionFactory);
-        this.testHibernateTransactions = new TestHibernateTransactions(User.class, sessionFactory);
+    public TestHibernateBudgetRepository() {
+        this.testHibernateTransactions = new TestHibernateTransaction(User.class);
     }
 
-    public void removeAll() {
-        this.testHibernateTransactions.removeAll();
+    public void removeAll(Session session) {
+        this.testHibernateTransactions.removeAll(session);
     }
 }

@@ -8,6 +8,8 @@ import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
+import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
+import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
@@ -44,7 +46,14 @@ public class SetBalanceTest {
         this.transactionManager = new TransactionManager(hibernateConfiguration.getSessionFactory());
         OperationRepository operationRepository = new HibernateOperationRepository();
         CategoryRepository categoryRepository = new HibernateCategoryRepository();
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, hibernateConfiguration.getSessionFactory());
+        BudgetRepository budgetRepository = new HibernateBudgetRepository();
+        this.botHandler = new FinanceBotHandler(
+                userRepository,
+                operationRepository,
+                categoryRepository,
+                budgetRepository,
+                hibernateConfiguration.getSessionFactory()
+        );
     }
 
     /**
@@ -103,7 +112,7 @@ public class SetBalanceTest {
                 "Ваш баланс изменен. Теперь он составляет 0",
                 "Ваш баланс изменен. Теперь он составляет 0",
                 "Ваш баланс изменен. Теперь он составляет 0",
-                "Ваш баланс изменен. Теперь он составляет 2147483647"
+                "Ваш баланс изменен. Теперь он составляет 2 147 483 647"
         );
         for (int i = 0; i < args.size(); i++) {
             String arg = args.get(i);
