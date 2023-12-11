@@ -2,7 +2,6 @@ package ru.naumen.personalfinancebot.model;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**

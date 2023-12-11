@@ -2,7 +2,6 @@ package ru.naumen.personalfinancebot.repository.budget;
 
 import com.sun.istack.Nullable;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import ru.naumen.personalfinancebot.model.Budget;
 import ru.naumen.personalfinancebot.model.User;
 

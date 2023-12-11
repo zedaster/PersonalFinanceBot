@@ -1,7 +1,8 @@
 package ru.naumen.personalfinancebot.repository.empty;
 
-import ru.naumen.personalfinancebot.models.Budget;
-import ru.naumen.personalfinancebot.models.User;
+import org.hibernate.Session;
+import ru.naumen.personalfinancebot.model.Budget;
+import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
 
 import java.time.YearMonth;
@@ -13,17 +14,17 @@ import java.util.Optional;
  */
 public class EmptyBudgetRepository implements BudgetRepository {
     @Override
-    public void saveBudget(Budget budget) {
+    public void saveBudget(Session session, Budget budget) {
         throw new RuntimeException("Budget repository shouldn't be touched");
     }
 
     @Override
-    public Optional<Budget> getBudget(User user, YearMonth yearMonth) {
+    public Optional<Budget> getBudget(Session session, User user, YearMonth yearMonth) {
         throw new RuntimeException("Budget repository shouldn't be touched");
     }
 
     @Override
-    public List<Budget> selectBudgetRange(User user, YearMonth from, YearMonth to) {
+    public List<Budget> selectBudgetRange(Session session, User user, YearMonth from, YearMonth to) {
         throw new RuntimeException("Budget repository shouldn't be touched");
     }
 }
