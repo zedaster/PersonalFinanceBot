@@ -1,10 +1,11 @@
 package ru.naumen.personalfinancebot.repository.fake;
 
-import ru.naumen.personalfinancebot.models.Category;
-import ru.naumen.personalfinancebot.models.CategoryType;
-import ru.naumen.personalfinancebot.models.Operation;
-import ru.naumen.personalfinancebot.models.User;
-import ru.naumen.personalfinancebot.repositories.operation.OperationRepository;
+import org.hibernate.Session;
+import ru.naumen.personalfinancebot.model.Category;
+import ru.naumen.personalfinancebot.model.CategoryType;
+import ru.naumen.personalfinancebot.model.Operation;
+import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -33,7 +34,7 @@ public class FakeOperationRepository implements OperationRepository {
      * @return совершённая операция
      */
     @Override
-    public Operation addOperation(User user, Category category, double payment) {
+    public Operation addOperation(Session session, User user, Category category, double payment) {
         FakeOperation operation = new FakeOperation(user, category, payment);
         return saveFakeOperation(user, category, operation);
     }
@@ -47,7 +48,7 @@ public class FakeOperationRepository implements OperationRepository {
      * @param createdAt Дата создания операции
      * @return совершённая операция
      */
-    public FakeOperation addOperation(User user, Category category, double payment, LocalDate createdAt) {
+    public FakeOperation addOperation(Session session, User user, Category category, double payment, LocalDate createdAt) {
         FakeOperation operation = new FakeOperation(user, category, payment, createdAt);
         return saveFakeOperation(user, category, operation);
     }
@@ -71,7 +72,7 @@ public class FakeOperationRepository implements OperationRepository {
      * @return Список операций или null, если запрашиваемые операции отсутствуют
      */
     @Override
-    public Map<String, Double> getOperationsSumByType(User user, int month, int year, CategoryType type) {
+    public Map<String, Double> getOperationsSumByType(Session session, User user, int month, int year, CategoryType type) {
         UserCategoryType userCategoryType = new UserCategoryType(user, type);
         Map<String, List<Operation>> groupedOperations = operations.get(userCategoryType)
                 .stream()
@@ -103,7 +104,7 @@ public class FakeOperationRepository implements OperationRepository {
      * @return Сумма операций
      */
     @Override
-    public double getCurrentUserPaymentSummary(User user, CategoryType type, YearMonth yearMonth) {
+    public double getCurrentUserPaymentSummary(Session session, User user, CategoryType type, YearMonth yearMonth) {
         UserCategoryType userCategoryType = new UserCategoryType(user, type);
         List<FakeOperation> fakeOperations = operations.get(userCategoryType);
         if (fakeOperations == null) {

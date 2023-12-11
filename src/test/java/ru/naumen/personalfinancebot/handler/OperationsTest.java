@@ -10,6 +10,8 @@ import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
+import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
+import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
@@ -40,6 +42,9 @@ public class OperationsTest {
      */
     private final FinanceBotHandler botHandler;
 
+    /**
+     * Менеджер транзакций
+     */
     private final TransactionManager transactionManager;
 
 
@@ -50,8 +55,8 @@ public class OperationsTest {
         this.userRepository = new HibernateUserRepository();
         this.categoryRepository = new HibernateCategoryRepository();
         OperationRepository operationRepository = new HibernateOperationRepository();
-
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, sessionFactory);
+        BudgetRepository budgetRepository = new HibernateBudgetRepository();
+        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, budgetRepository, sessionFactory);
     }
 
     /**

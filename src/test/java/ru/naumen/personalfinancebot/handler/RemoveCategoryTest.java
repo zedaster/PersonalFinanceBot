@@ -13,9 +13,11 @@ import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
-import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
-import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
+import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
+import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateCategoryRepository;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateUserRepository;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 
@@ -26,7 +28,6 @@ import java.util.Optional;
  * Класс для тестирования удаления пользовательских категорий
  */
 public class RemoveCategoryTest {
-
     /**
      * Команда для удаления категории дохода
      */
@@ -78,8 +79,15 @@ public class RemoveCategoryTest {
         userRepository = new TestHibernateUserRepository();
         categoryRepository = new TestHibernateCategoryRepository();
         operationRepository = new HibernateOperationRepository();
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, sessionFactory);
+        BudgetRepository budgetRepository = new HibernateBudgetRepository();
         transactionManager = new TransactionManager(sessionFactory);
+        this.botHandler = new FinanceBotHandler(
+                userRepository,
+                operationRepository,
+                categoryRepository,
+                budgetRepository,
+                sessionFactory
+        );
     }
 
     /**

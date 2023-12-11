@@ -1,74 +1,106 @@
 package ru.naumen.personalfinancebot.repositories.operation;
 
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.junit.Assert;
 import org.junit.Test;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
-import ru.naumen.personalfinancebot.models.Category;
-import ru.naumen.personalfinancebot.models.CategoryType;
-import ru.naumen.personalfinancebot.models.User;
-import ru.naumen.personalfinancebot.repositories.category.CategoryRepository;
-import ru.naumen.personalfinancebot.repositories.category.HibernateCategoryRepository;
-import ru.naumen.personalfinancebot.repositories.user.HibernateUserRepository;
-import ru.naumen.personalfinancebot.repositories.user.UserRepository;
+import ru.naumen.personalfinancebot.model.Category;
+import ru.naumen.personalfinancebot.model.CategoryType;
+import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.repository.TransactionManager;
+import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
+import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
+import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
+import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
+import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
+import ru.naumen.personalfinancebot.repository.user.UserRepository;
 
 import java.time.YearMonth;
 
 public class HibernateOperationRepositoryTest {
-    private static final int BALANCE = 100_000;
+    /**
+     * Баланс пользователя
+     */
+    private final int BALANCE = 100_000;
 
-    private final SessionFactory sessionFactory;
+    /**
+     * Репозиторий для работы с пользователем
+     */
     private final UserRepository userRepository;
+
+    /**
+     * Репозиторий для работы с операциями
+     */
     private final OperationRepository operationRepository;
+
+    /**
+     * Репозиторий для работы с катгоериями
+     */
     private final CategoryRepository categoryRepository;
 
+    /**
+     * Менеджер транзакций
+     */
+    private final TransactionManager transactionManager;
+
     public HibernateOperationRepositoryTest() {
-        this.sessionFactory = new HibernateConfiguration().getSessionFactory();
-        this.userRepository = new HibernateUserRepository(sessionFactory);
-        this.operationRepository = new HibernateOperationRepository(sessionFactory);
-        this.categoryRepository = new HibernateCategoryRepository(sessionFactory);
+        SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
+        this.transactionManager = new TransactionManager(sessionFactory);
+        this.userRepository = new HibernateUserRepository();
+        this.operationRepository = new HibernateOperationRepository();
+        this.categoryRepository = new HibernateCategoryRepository();
     }
 
-    public void createCategoriesAndOperations() throws CategoryRepository.CreatingExistingUserCategoryException, CategoryRepository.CreatingExistingStandardCategoryException {
+    /**
+     * Метод создает данные категорий и операций в базе данных
+     * @param session Сессия
+     */
+    public void createCategoriesAndOperations(Session session) {
         User user = new User(1, BALANCE);
-        this.userRepository.saveUser(user);
-        Category salary = this.categoryRepository.createUserCategory(user, CategoryType.INCOME, "Зарплата");
-        Category transfers = this.categoryRepository.createUserCategory(user, CategoryType.INCOME, "Перевод");
-        Category taxi = this.categoryRepository.createUserCategory(user, CategoryType.EXPENSE, "Такси");
-        Category shops = this.categoryRepository.createUserCategory(user, CategoryType.EXPENSE, "Продукты");
-        this.operationRepository.addOperation(user, salary, 100_000);
+        this.userRepository.saveUser(session, user);
+        Category salary, transfers, taxi, shops;
+        try {
+            salary = this.categoryRepository.createUserCategory(session, user, CategoryType.INCOME, "Зарплата");
+            transfers = this.categoryRepository.createUserCategory(session, user, CategoryType.INCOME, "Перевод");
+            taxi = this.categoryRepository.createUserCategory(session, user, CategoryType.EXPENSE, "Такси");
+            shops = this.categoryRepository.createUserCategory(session, user, CategoryType.EXPENSE, "Продукты");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        this.operationRepository.addOperation(session, user, salary, 100_000);
 
-        this.operationRepository.addOperation(user, transfers, 1_000);
-        this.operationRepository.addOperation(user, transfers, 300);
-        this.operationRepository.addOperation(user, transfers, 2_000);
+        this.operationRepository.addOperation(session, user, transfers, 1_000);
+        this.operationRepository.addOperation(session, user, transfers, 300);
+        this.operationRepository.addOperation(session, user, transfers, 2_000);
 
-        this.operationRepository.addOperation(user, taxi, 300);
-        this.operationRepository.addOperation(user, taxi, 150);
-        this.operationRepository.addOperation(user, taxi, 200);
-        this.operationRepository.addOperation(user, taxi, 170);
-        this.operationRepository.addOperation(user, taxi, 320);
-        this.operationRepository.addOperation(user, taxi, 450);
+        this.operationRepository.addOperation(session, user, taxi, 300);
+        this.operationRepository.addOperation(session, user, taxi, 150);
+        this.operationRepository.addOperation(session, user, taxi, 200);
+        this.operationRepository.addOperation(session, user, taxi, 170);
+        this.operationRepository.addOperation(session, user, taxi, 320);
+        this.operationRepository.addOperation(session, user, taxi, 450);
 
-        this.operationRepository.addOperation(user, shops, 700);
-        this.operationRepository.addOperation(user, shops, 470);
-        this.operationRepository.addOperation(user, shops, 560);
-        this.operationRepository.addOperation(user, shops, 1500);
-        this.operationRepository.addOperation(user, shops, 1200);
-        this.operationRepository.addOperation(user, shops, 1032);
+        this.operationRepository.addOperation(session, user, shops, 700);
+        this.operationRepository.addOperation(session, user, shops, 470);
+        this.operationRepository.addOperation(session, user, shops, 560);
+        this.operationRepository.addOperation(session, user, shops, 1500);
+        this.operationRepository.addOperation(session, user, shops, 1200);
+        this.operationRepository.addOperation(session, user, shops, 1032);
     }
 
     @Test
     public void getCurrentUserPaymentSummary() {
-        try {
-            createCategoriesAndOperations();
-        } catch (Exception ignored) {}
-        User user = this.userRepository.getUserByTelegramChatId(1L).get();
-        double expectedIncome = 103_300, expectedExpense = 7052;
-        YearMonth yearMonth = YearMonth.of(2023, 11);
-        double income = this.operationRepository.getCurrentUserPaymentSummary(user, CategoryType.INCOME, yearMonth);
+        transactionManager.produceTransaction(session -> {
+            createCategoriesAndOperations(session);
+            User user = this.userRepository.getUserByTelegramChatId(session,1L).get();
+            double expectedIncome = 103_300, expectedExpense = 7052;
+            YearMonth yearMonth = YearMonth.now();
+            double income = this.operationRepository.getCurrentUserPaymentSummary(session, user, CategoryType.INCOME, yearMonth);
 
-        double expense = this.operationRepository.getCurrentUserPaymentSummary(user, CategoryType.EXPENSE, yearMonth);
-        Assert.assertEquals(expectedIncome, income, 1e-1);
-        Assert.assertEquals(expectedExpense, expense, 1e-1);
+            double expense = this.operationRepository.getCurrentUserPaymentSummary(session, user, CategoryType.EXPENSE, yearMonth);
+            Assert.assertEquals(expectedIncome, income, 1e-1);
+            Assert.assertEquals(expectedExpense, expense, 1e-1);
+        });
     }
 }

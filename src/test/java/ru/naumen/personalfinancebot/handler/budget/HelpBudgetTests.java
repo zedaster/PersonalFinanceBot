@@ -4,9 +4,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
+import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
-import ru.naumen.personalfinancebot.handler.event.HandleCommandEvent;
-import ru.naumen.personalfinancebot.models.User;
+import ru.naumen.personalfinancebot.handler.commandData.CommandData;
+import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.empty.EmptyBudgetRepository;
 import ru.naumen.personalfinancebot.repository.empty.EmptyCategoryRepository;
 import ru.naumen.personalfinancebot.repository.empty.EmptyOperationRepository;
@@ -28,11 +29,12 @@ public class HelpBudgetTests {
                 new EmptyUserRepository(),
                 new EmptyOperationRepository(),
                 new EmptyCategoryRepository(),
-                new EmptyBudgetRepository()
+                new EmptyBudgetRepository(),
+                new HibernateConfiguration().getSessionFactory()
         );
         User user = new User(1L, 100);
-        HandleCommandEvent command = new HandleCommandEvent(mockBot, user, "budget_help", List.of());
-        handler.handleCommand(command);
+        CommandData command = new CommandData(mockBot, user, "budget_help", List.of());
+        handler.handleCommand(command, null);
 
         Assert.assertEquals(1, mockBot.getMessageQueueSize());
         MockMessage lastMessage = mockBot.poolMessageQueue();
