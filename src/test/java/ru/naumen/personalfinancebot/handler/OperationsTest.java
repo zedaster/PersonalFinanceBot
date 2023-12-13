@@ -40,6 +40,9 @@ public class OperationsTest {
      */
     private final FinanceBotHandler botHandler;
 
+    /**
+     * Менеджер транзакций
+     */
     private final TransactionManager transactionManager;
 
 
@@ -85,6 +88,49 @@ public class OperationsTest {
             Assert.assertEquals(
                     "Вы успешно добавили доход по источнику: Зарплата",
                     message.text()
+            );
+        });
+    }
+
+    /**
+     * Тест для добавления операции по категории, состоящей из нескольких слов
+     */
+    @Test
+    public void testCategoryOfManyWords() {
+        List<List<String>> argumentsList = List.of(
+                List.of("100", "Заработная", "плата"),
+                List.of("200", "Жилищно", "Коммунальные", "Услуги")
+        );
+        transactionManager.produceTransaction(session -> {
+            User user = createUser(session);
+            MockBot bot = new MockBot();
+
+            CommandData commandDataIncomeCategory = new CommandData(
+                    bot, user, "add_income_category", List.of("Заработная", "плата")
+            );
+            CommandData commandDataExpenseCategory = new CommandData(
+                    bot, user, "add_expense_category", List.of("Жилищно", "Коммунальные", "Услуги")
+            );
+
+            this.botHandler.handleCommand(commandDataIncomeCategory, session);
+            System.out.println(bot.poolMessageQueue().text());
+            this.botHandler.handleCommand(commandDataExpenseCategory, session);
+            bot.poolMessageQueue();
+
+            CommandData commandDataIncome = new CommandData(bot, user, "add_income", argumentsList.get(0));
+            this.botHandler.handleCommand(commandDataIncome, session);
+            MockMessage messageIncomeOperation = bot.poolMessageQueue();
+            Assert.assertEquals(100_100, user.getBalance(), 1e-10);
+            Assert.assertEquals(
+                    "Вы успешно добавили доход по источнику: Заработная плата", messageIncomeOperation.text()
+            );
+
+            CommandData commandDataExpense = new CommandData(bot, user, "add_expense", argumentsList.get(1));
+            this.botHandler.handleCommand(commandDataExpense, session);
+            MockMessage messageExpenseOperation = bot.poolMessageQueue();
+            Assert.assertEquals(99_900, user.getBalance(), 1e-10);
+            Assert.assertEquals(
+                    "Добавлен расход по категории: Жилищно коммунальные услуги", messageExpenseOperation.text()
             );
         });
     }
@@ -163,9 +209,7 @@ public class OperationsTest {
             User user = createUser(session);
             MockBot bot = new MockBot();
 
-            List<List<String>> argumentsList = List.of(
-                    List.of(), List.of("1аргумент"), List.of("1аргумент", "2аргумента", "3аргумента")
-            );
+            List<List<String>> argumentsList = List.of(List.of(), List.of("1аргумент"));
             String expected = "Данная команда принимает 2 аргумента: [payment - сумма] [категория расхода/дохода]";
             testPattern(session, "add_income", bot, expected, argumentsList, user);
             testPattern(session, "add_expense", bot, expected, argumentsList, user);
@@ -186,7 +230,7 @@ public class OperationsTest {
                     List.of("-1", "Зарплата"),
                     List.of(String.valueOf(Double.NEGATIVE_INFINITY), "Зарплата")
             );
-            String expected = "Ошибка! Аргумент [payment] должен быть больше 0";
+            String expected = "Сумма операции указана в неверном формате. Передайте корректное положительно число";
             testPattern(session, "add_income", bot, expected, argumentsList, user);
             testPattern(session, "add_expense", bot, expected, argumentsList, user);
             Assert.assertEquals(100_000, user.getBalance(), 1e-10);
@@ -205,7 +249,7 @@ public class OperationsTest {
                     List.of("неЧисло", "Зарплата"), List.of(".-1", "Зарплата"),
                     List.of("Опять не число", "Зарплата"), List.of("11111111111111111111.привет", "Зарплата")
             );
-            String expected = "Сумма операции указана в неверном формате.";
+            String expected = "Сумма операции указана в неверном формате. Передайте корректное положительно число";
             testPattern(session, "add_income", bot, expected, argumentsList, user);
             testPattern(session, "add_expense", bot, expected, argumentsList, user);
             Assert.assertEquals(100_000, user.getBalance(), 1e-10);

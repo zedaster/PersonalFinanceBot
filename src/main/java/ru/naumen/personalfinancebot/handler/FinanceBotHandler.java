@@ -43,8 +43,8 @@ public class FinanceBotHandler {
         commandHandlers = new HashMap<>();
         commandHandlers.put("start", new StartCommandHandler());
         commandHandlers.put("set_balance", new SetBalanceHandler(argumentParseService, userRepository));
-        commandHandlers.put("add_expense", new AddOperationHandler(CategoryType.EXPENSE, userRepository, categoryRepository, operationRepository));
-        commandHandlers.put("add_income", new AddOperationHandler(CategoryType.INCOME, userRepository, categoryRepository, operationRepository));
+        commandHandlers.put("add_expense", new AddOperationHandler(CategoryType.EXPENSE, userRepository, categoryRepository, operationRepository, argumentParseService));
+        commandHandlers.put("add_income", new AddOperationHandler(CategoryType.INCOME, userRepository, categoryRepository, operationRepository, argumentParseService));
         commandHandlers.put("add_income_category", new AddCategoryHandler(CategoryType.INCOME, categoryRepository,
                 argumentParseService));
         commandHandlers.put("add_expense_category", new AddCategoryHandler(CategoryType.EXPENSE, categoryRepository,
