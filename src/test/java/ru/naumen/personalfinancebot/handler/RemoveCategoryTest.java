@@ -30,12 +30,12 @@ public class RemoveCategoryTest {
     /**
      * Команда для удаления категории дохода
      */
-    private final String REMOVE_INCOME_COMMAND = "remove_income_category";
+    private static final String REMOVE_INCOME_COMMAND = "remove_income_category";
 
     /**
      * Команда для удаления категории расхода
      */
-    private final String REMOVE_EXPENSE_COMMAND = "remove_expense_category";
+    private static final String REMOVE_EXPENSE_COMMAND = "remove_expense_category";
 
     /**
      * Хранилище пользователей
