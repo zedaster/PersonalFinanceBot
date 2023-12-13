@@ -74,7 +74,7 @@ public class AddOperationHandler implements CommandHandler {
             commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_PAYMENT_ARG);
             return;
         } catch (IllegalArgumentException e) {
-            commandData.getBot().sendMessage(commandData.getUser(), Message.ILLEGAL_PAYMENT_ARGUMENT);
+            commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_CATEGORY_ARGUMENT_FORMAT);
             return;
         }
         double currentBalance = commandData.getUser().getBalance() + operation.getPayment();
@@ -101,7 +101,7 @@ public class AddOperationHandler implements CommandHandler {
             throws CategoryRepository.CategoryDoesNotExist {
         double payment = Double.parseDouble(args.get(0));
         if (payment <= 0) {
-            throw new IllegalArgumentException();
+            throw new NumberFormatException();
         }
         String categoryName = this.argumentParser.parseCategory(args.subList(1, args.size()));
         if (type == CategoryType.EXPENSE) {

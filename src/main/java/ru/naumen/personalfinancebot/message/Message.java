@@ -51,7 +51,7 @@ public class Message {
 
     public static final String SELF_REPORT_MESSAGE = "Подготовил отчёт по вашим расходам за указанный месяц:\n";
 
-    public static final String INCORRECT_PAYMENT_ARG = "Сумма операции указана в неверном формате.";
+    public static final String INCORRECT_PAYMENT_ARG = "Сумма операции указана в неверном формате. Передайте корректное положительно число";
 
     public static final String ILLEGAL_PAYMENT_ARGUMENT = "Ошибка! Аргумент [payment] должен быть больше 0";
 
