@@ -53,8 +53,6 @@ public class Message {
 
     public static final String INCORRECT_PAYMENT_ARG = "Сумма операции указана в неверном формате. Передайте корректное положительно число";
 
-    public static final String ILLEGAL_PAYMENT_ARGUMENT = "Ошибка! Аргумент [payment] должен быть больше 0";
-
     public static final String EXPENSES_NOT_EXIST = "К сожалению, данные по затратам отсутствуют";
 
     public static final String EXPENSE_REPORT_PATTERN = "{category}: {payment} руб.\n";

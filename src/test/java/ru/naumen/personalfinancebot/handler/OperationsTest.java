@@ -230,7 +230,7 @@ public class OperationsTest {
                     List.of("-1", "Зарплата"),
                     List.of(String.valueOf(Double.NEGATIVE_INFINITY), "Зарплата")
             );
-            String expected = "Ошибка! Аргумент [payment] должен быть больше 0";
+            String expected = "Сумма операции указана в неверном формате. Передайте корректное положительно число";
             testPattern(session, "add_income", bot, expected, argumentsList, user);
             testPattern(session, "add_expense", bot, expected, argumentsList, user);
             Assert.assertEquals(100_000, user.getBalance(), 1e-10);
@@ -249,7 +249,7 @@ public class OperationsTest {
                     List.of("неЧисло", "Зарплата"), List.of(".-1", "Зарплата"),
                     List.of("Опять не число", "Зарплата"), List.of("11111111111111111111.привет", "Зарплата")
             );
-            String expected = "Сумма операции указана в неверном формате.";
+            String expected = "Сумма операции указана в неверном формате. Передайте корректное положительно число";
             testPattern(session, "add_income", bot, expected, argumentsList, user);
             testPattern(session, "add_expense", bot, expected, argumentsList, user);
             Assert.assertEquals(100_000, user.getBalance(), 1e-10);
