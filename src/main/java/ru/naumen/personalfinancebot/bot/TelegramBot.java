@@ -20,17 +20,33 @@ import java.util.Optional;
  * Телеграм бот
  */
 public class TelegramBot extends TelegramLongPollingBot implements Bot {
+    /**
+     * Настройки для телеграм бота
+     */
     private final TelegramBotConfiguration configuration;
+
+    /**
+     * Класс-оработчик комманд
+     */
     private final FinanceBotHandler botHandler;
+
+    /**
+     * Репозиторий для работы с пользователем
+     */
     private final UserRepository userRepository;
+
+    /**
+     * Менеджер транзакций
+     */
     private final TransactionManager transactionManager;
 
-    public TelegramBot(
-            TelegramBotConfiguration configuration,
-            FinanceBotHandler botHandler,
-            UserRepository userRepository,
-            TransactionManager transactionManager
-    ) {
+    /**
+     * @param configuration      Настройки для телеграм бота
+     * @param botHandler         Класс-оработчик комманд
+     * @param userRepository     Репозиторий для работы с пользователем
+     * @param transactionManager Менеджер транзакций
+     */
+    public TelegramBot(TelegramBotConfiguration configuration, FinanceBotHandler botHandler, UserRepository userRepository, TransactionManager transactionManager) {
         super(configuration.getBotToken());
         this.configuration = configuration;
         this.botHandler = botHandler;
@@ -88,7 +104,7 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
             botsApi.registerBot(this);
             System.out.println("Telegram bot is pooling now...");
         } catch (TelegramApiException exception) {
-            throw new PoolingException(exception);
+            throw new PoolingException("При запуске Телеграм Бота произошла ошибка.", exception);
         }
     }
 

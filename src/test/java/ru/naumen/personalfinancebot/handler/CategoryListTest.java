@@ -16,6 +16,9 @@ import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
+import ru.naumen.personalfinancebot.repository.category.exceptions.CreatingExistingCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exceptions.CreatingExistingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exceptions.CreatingExistingUserCategoryException;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 
@@ -84,7 +87,7 @@ public class CategoryListTest {
                 categoryRepository.createStandardCategory(session, CategoryType.INCOME, "Standard income 2");
                 categoryRepository.createStandardCategory(session, CategoryType.EXPENSE, "Standard expense 1");
                 categoryRepository.createStandardCategory(session, CategoryType.EXPENSE, "Standard expense 2");
-            } catch (CategoryRepository.CreatingExistingCategoryException e) {
+            } catch (CreatingExistingCategoryException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -106,7 +109,7 @@ public class CategoryListTest {
      * нескольких (трех) категорий расходов.
      */
     @Test
-    public void showCoupleOfCategories() throws CategoryRepository.CreatingExistingCategoryException {
+    public void showCoupleOfCategories() throws CreatingExistingCategoryException {
         final String expectFullMsg = """
                 Все доступные вам категории доходов:
                 Стандартные:
@@ -324,8 +327,8 @@ public class CategoryListTest {
     }
 
     private void addUserCategories(Session session, User user, CategoryType type, String... names) throws
-            CategoryRepository.CreatingExistingUserCategoryException,
-            CategoryRepository.CreatingExistingStandardCategoryException {
+            CreatingExistingUserCategoryException,
+            CreatingExistingStandardCategoryException {
         for (String name : names) {
             this.categoryRepository.createUserCategory(session, user, type, name);
         }

@@ -30,11 +30,13 @@ public class FinanceBotHandler {
      */
     private final SessionFactory sessionFactory;
 
-    public FinanceBotHandler(
-            UserRepository userRepository,
-            OperationRepository operationRepository,
-            CategoryRepository categoryRepository, SessionFactory sessionFactory
-    ) {
+    /**
+     * @param userRepository      Репозиторий для работы с пользователем
+     * @param operationRepository Репозиторий для работы с операциями
+     * @param categoryRepository  Репозиторий для работы с категориями
+     * @param sessionFactory      Фабрика сессий
+     */
+    public FinanceBotHandler(UserRepository userRepository, OperationRepository operationRepository, CategoryRepository categoryRepository, SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
         ArgumentParseService argumentParseService = new ArgumentParseService();
         CategoryListService categoryListService = new CategoryListService(categoryRepository);
