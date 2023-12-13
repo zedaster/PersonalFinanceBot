@@ -15,9 +15,7 @@ import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
-import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
-import ru.naumen.personalfinancebot.repository.category.exceptions.CreatingExistingCategoryException;
-import ru.naumen.personalfinancebot.repository.category.exceptions.CreatingExistingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingStandardCategoryException;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 
@@ -78,12 +76,18 @@ public class AddCategoryTest {
         this.transactionManager = new TransactionManager(sessionFactory);
     }
 
+    /**
+     * Создание тестового бота и пользователя перед каждым тестом
+     */
     @Before
     public void beforeEachTest() {
         this.mockBot = new MockBot();
         transactionManager.produceTransaction(session -> this.testUser = createTestUser(session, 1));
     }
 
+    /**
+     * Очистка хранилищ пользователей и категорий после каждгого теста
+     */
     @After
     public void afterEachTest() {
         transactionManager.produceTransaction(session -> {
@@ -264,7 +268,7 @@ public class AddCategoryTest {
      * Тестирует, что пользовательская категория, которая существует как стандартная, не будет добавлена.
      */
     @Test
-    public void userAndStandardCategorySuppression() throws CreatingExistingCategoryException {
+    public void userAndStandardCategorySuppression() {
         transactionManager.produceTransaction(session -> {
             final CategoryType categoryType = CategoryType.INCOME;
             final String categoryName = "Зарплата";

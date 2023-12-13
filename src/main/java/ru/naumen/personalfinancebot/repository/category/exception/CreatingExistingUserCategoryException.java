@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.repository.category.exceptions;
+package ru.naumen.personalfinancebot.repository.category.exception;
 
 /**
  * Исключение, генерируемое при попытке создания пользовательской категории, если она уже
@@ -6,10 +6,9 @@ package ru.naumen.personalfinancebot.repository.category.exceptions;
  */
 public class CreatingExistingUserCategoryException extends CreatingExistingCategoryException {
     /**
-     * @param message      Сообщение ооб ошибке
      * @param categoryName Название категории
      */
-    public CreatingExistingUserCategoryException(String message, String categoryName) {
-        super(message, categoryName);
+    public CreatingExistingUserCategoryException(String categoryName) {
+        super(String.format("Уже существует пользовательская категория с названием '%s'", categoryName), categoryName);
     }
 }

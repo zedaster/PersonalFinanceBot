@@ -15,10 +15,9 @@ import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
-import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
-import ru.naumen.personalfinancebot.repository.category.exceptions.CreatingExistingCategoryException;
-import ru.naumen.personalfinancebot.repository.category.exceptions.CreatingExistingStandardCategoryException;
-import ru.naumen.personalfinancebot.repository.category.exceptions.CreatingExistingUserCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingUserCategoryException;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 
@@ -109,7 +108,7 @@ public class CategoryListTest {
      * нескольких (трех) категорий расходов.
      */
     @Test
-    public void showCoupleOfCategories() throws CreatingExistingCategoryException {
+    public void showCoupleOfCategories() {
         final String expectFullMsg = """
                 Все доступные вам категории доходов:
                 Стандартные:
@@ -326,6 +325,16 @@ public class CategoryListTest {
         });
     }
 
+    /**
+     * Метод добавляет несколько пользовательских категорий определенного типа сразу
+     *
+     * @param session Сессия
+     * @param user    Пользователь
+     * @param type    Типа категории
+     * @param names   Имена для новых категорий
+     * @throws CreatingExistingUserCategoryException     если какая-то из категорий уже существует как пользовательская
+     * @throws CreatingExistingStandardCategoryException если какая-то из категорий уже существует как стандартная
+     */
     private void addUserCategories(Session session, User user, CategoryType type, String... names) throws
             CreatingExistingUserCategoryException,
             CreatingExistingStandardCategoryException {
