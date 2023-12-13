@@ -4,6 +4,7 @@ import org.hibernate.Session;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.repository.category.exceptions.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -78,8 +79,7 @@ public interface CategoryRepository {
      *
      * @throws RemovingNonExistentCategoryException если такая категория не существует
      */
-    void removeUserCategoryByName(Session session, User user, CategoryType type, String categoryName) throws
-            RemovingNonExistentCategoryException;
+    void removeUserCategoryByName(Session session, User user, CategoryType type, String categoryName) throws RemovingNonExistentCategoryException;
 
     /**
      * Метод возвращает либо собственную категорию пользователя, либо стандартную.
@@ -90,65 +90,4 @@ public interface CategoryRepository {
      * @return Опциональный объект категории (пуст, если категория не найдена)
      */
     Optional<Category> getCategoryByName(Session session, User user, CategoryType type, String categoryName);
-
-    /**
-     * Исключение, генерируемое при попытке создания пользовательской категории, если она уже
-     * существует как пользовательская с таким же названием.
-     */
-    class CreatingExistingUserCategoryException extends CreatingExistingCategoryException {
-        public CreatingExistingUserCategoryException(String categoryName) {
-            super(categoryName);
-        }
-    }
-
-    /**
-     * Исключение, генерируемое при попытке создания стандартной или пользовательской категории, если уже есть
-     * стандартная категория с таким же названием.
-     */
-    class CreatingExistingStandardCategoryException extends CreatingExistingCategoryException {
-        public CreatingExistingStandardCategoryException(String categoryName) {
-            super(categoryName);
-        }
-    }
-
-    /**
-     * Абстрация для иссключений, связанных с созданием категории, которая уже существует
-     */
-    abstract class CreatingExistingCategoryException extends Exception {
-        /**
-         * Название категории, где произошло исключение.
-         */
-        private final String categoryName;
-
-        public CreatingExistingCategoryException(String categoryName) {
-            this.categoryName = categoryName;
-        }
-
-        /**
-         * Получает название категории, где произошло исключение.
-         */
-        public String getCategoryName() {
-            return categoryName;
-        }
-    }
-
-    /**
-     * Исключение, генерируемое при попытке удаления стандартной категории
-     */
-    class RemovingStandardCategoryException extends Exception {
-
-    }
-
-    /**
-     * Исключение, генерируемое при попытке удаления несуществующей категории
-     */
-    class RemovingNonExistentCategoryException extends Exception {
-
-    }
-
-    /**
-     * Исключение, выбрасываемое в случае, если категория не существует
-     */
-    class CategoryDoesNotExist extends Exception {
-    }
 }

@@ -8,6 +8,7 @@ import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.Operation;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
+import ru.naumen.personalfinancebot.repository.category.exceptions.CategoryDoesNotExist;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
 import ru.naumen.personalfinancebot.service.ArgumentParseService;
@@ -67,7 +68,7 @@ public class AddOperationHandler implements CommandHandler {
         Operation operation;
         try {
             operation = createOperationRecord(commandData.getUser(), commandData.getArgs(), categoryType, session);
-        } catch (CategoryRepository.CategoryDoesNotExist e) {
+        } catch (CategoryDoesNotExist e) {
             commandData.getBot().sendMessage(commandData.getUser(), Message.CATEGORY_DOES_NOT_EXISTS);
             return;
         } catch (NumberFormatException e) {
@@ -98,7 +99,7 @@ public class AddOperationHandler implements CommandHandler {
      * @return Совершенная операция
      */
     private Operation createOperationRecord(User user, List<String> args, CategoryType type, Session session)
-            throws CategoryRepository.CategoryDoesNotExist {
+            throws CategoryDoesNotExist {
         double payment = Double.parseDouble(args.get(0));
         if (payment <= 0) {
             throw new NumberFormatException();
@@ -111,7 +112,7 @@ public class AddOperationHandler implements CommandHandler {
         }
         Optional<Category> category = this.categoryRepository.getCategoryByName(session, user, type, categoryName);
         if (category.isEmpty()) {
-            throw new CategoryRepository.CategoryDoesNotExist();
+            throw new CategoryDoesNotExist("Пользователь не может добавить операцию по данной категории");
         }
         return this.operationRepository.addOperation(session, user, category.get(), payment);
     }

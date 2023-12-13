@@ -16,6 +16,8 @@ import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
+import ru.naumen.personalfinancebot.repository.category.exceptions.CreatingExistingCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exceptions.CreatingExistingStandardCategoryException;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 
@@ -262,7 +264,7 @@ public class AddCategoryTest {
      * Тестирует, что пользовательская категория, которая существует как стандартная, не будет добавлена.
      */
     @Test
-    public void userAndStandardCategorySuppression() throws CategoryRepository.CreatingExistingCategoryException {
+    public void userAndStandardCategorySuppression() throws CreatingExistingCategoryException {
         transactionManager.produceTransaction(session -> {
             final CategoryType categoryType = CategoryType.INCOME;
             final String categoryName = "Зарплата";
@@ -270,7 +272,7 @@ public class AddCategoryTest {
 
             try {
                 categoryRepository.createStandardCategory(session, categoryType, categoryName);
-            } catch (CategoryRepository.CreatingExistingStandardCategoryException e) {
+            } catch (CreatingExistingStandardCategoryException e) {
                 throw new RuntimeException(e);
             }
             CommandData command = new CommandData(this.mockBot, testUser, ADD_INCOME_COMMAND,

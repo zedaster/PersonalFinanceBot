@@ -12,6 +12,7 @@ import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepos
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
+import ru.naumen.personalfinancebot.bot.PoolingException;
 
 /**
  * Программа, запускающая Телеграм-бота
@@ -41,8 +42,8 @@ public class Main {
         );
         try {
             bot.startPooling();
-        } catch (Bot.PoolingException exception) {
-            System.out.println("Произошла ошибка при запуске бота: " + exception.getMessage());
+        } catch (PoolingException exception) {
+            System.out.println(exception.getMessage());
             exception.printStackTrace();
         }
     }

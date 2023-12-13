@@ -7,6 +7,10 @@ import org.hibernate.query.Query;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.repository.category.exceptions.CreatingExistingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exceptions.CreatingExistingUserCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exceptions.RemovingNonExistentCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exceptions.RemovingStandardCategoryException;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -27,7 +31,6 @@ public class HibernateCategoryRepository implements CategoryRepository {
      */
     @Override
     public List<Category> getUserCategoriesByType(Session session, @NotNull User user, CategoryType type) {
-        if (user == null) throw new IllegalArgumentException();
         return getCategoriesByType(session, user, type);
     }
 
@@ -59,9 +62,9 @@ public class HibernateCategoryRepository implements CategoryRepository {
 
         if (existingUserCategory.isPresent()) {
             if (existingUserCategory.get().isStandard()) {
-                throw new CreatingExistingStandardCategoryException(categoryName);
+                throw new CreatingExistingStandardCategoryException(String.format("Уже существует стандартная категория с названием %s", categoryName), categoryName);
             } else {
-                throw new CreatingExistingUserCategoryException(categoryName);
+                throw new CreatingExistingUserCategoryException(String.format("Уже существует пользовательская категория с названием %s", categoryName), categoryName);
             }
         }
 
@@ -84,7 +87,7 @@ public class HibernateCategoryRepository implements CategoryRepository {
     public Category createStandardCategory(Session session, CategoryType type, String categoryName)
             throws CreatingExistingStandardCategoryException {
         if (this.getStandardCategoryByName(session, type, categoryName).isPresent()) {
-            throw new CreatingExistingStandardCategoryException(categoryName);
+            throw new CreatingExistingStandardCategoryException(String.format("Уже существует стандартная категория с названием %s", categoryName), categoryName);
         }
 
         Category category = new Category();
@@ -107,7 +110,7 @@ public class HibernateCategoryRepository implements CategoryRepository {
             session.delete(category);
             return;
         }
-        throw new RemovingStandardCategoryException();
+        throw new RemovingStandardCategoryException(String.format("Удаление стандартной категории с названием %s", category.getCategoryName()));
     }
 
     /**
@@ -120,7 +123,7 @@ public class HibernateCategoryRepository implements CategoryRepository {
             throws RemovingNonExistentCategoryException {
         Optional<Category> category = getCategoryByName(session, user, type, categoryName);
         if (category.isEmpty() || category.get().isStandard()) {
-            throw new RemovingNonExistentCategoryException();
+            throw new RemovingNonExistentCategoryException(String.format("Удаление стандартной категории с названием %s", categoryName));
         }
         session.delete(category.get());
     }

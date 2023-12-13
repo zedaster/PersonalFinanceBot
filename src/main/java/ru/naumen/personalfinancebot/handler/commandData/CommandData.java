@@ -6,7 +6,7 @@ import ru.naumen.personalfinancebot.model.User;
 import java.util.List;
 
 /**
- * Событие, вызываемое при выполнении пользователем какой-либо команды
+ * Класс для хранения данных о команде, пользователе, аргументах
  */
 public class CommandData {
     /**
