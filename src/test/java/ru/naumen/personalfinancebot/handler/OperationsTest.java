@@ -19,6 +19,9 @@ import ru.naumen.personalfinancebot.repository.user.UserRepository;
 
 import java.util.List;
 
+/**
+ * Тесты для команд "/add_income", "/add_expense"
+ */
 public class OperationsTest {
     /**
      * Статическое поле для начального баланса

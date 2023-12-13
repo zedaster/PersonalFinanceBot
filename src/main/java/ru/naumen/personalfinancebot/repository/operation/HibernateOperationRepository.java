@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Репозиторий модели данных "Операция"
+ * Репозиторий модели данных "Операция" с использованием Hibernate
  */
 public class HibernateOperationRepository implements OperationRepository {
 

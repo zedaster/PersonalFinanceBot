@@ -5,8 +5,8 @@ import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
-import ru.naumen.personalfinancebot.repository.category.exceptions.CreatingExistingStandardCategoryException;
-import ru.naumen.personalfinancebot.repository.category.exceptions.CreatingExistingUserCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingUserCategoryException;
 import ru.naumen.personalfinancebot.service.ArgumentParseService;
 
 /**

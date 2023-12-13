@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.repository.category.exceptions;
+package ru.naumen.personalfinancebot.repository.category.exception;
 
 /**
  * Абстрация для иссключений, связанных с созданием категории, которая уже существует
@@ -14,6 +14,7 @@ public class CreatingExistingCategoryException extends Exception {
      * @param categoryName Название категории
      */
     CreatingExistingCategoryException(String message, String categoryName) {
+        super(message);
         this.categoryName = categoryName;
     }
 

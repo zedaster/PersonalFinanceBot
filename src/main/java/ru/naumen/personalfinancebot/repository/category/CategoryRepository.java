@@ -4,7 +4,10 @@ import org.hibernate.Session;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
-import ru.naumen.personalfinancebot.repository.category.exceptions.*;
+import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingUserCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.RemovingNonExistentCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.RemovingStandardCategoryException;
 
 import java.util.List;
 import java.util.Optional;
