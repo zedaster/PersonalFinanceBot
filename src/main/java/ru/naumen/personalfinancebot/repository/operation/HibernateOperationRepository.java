@@ -7,7 +7,6 @@ import ru.naumen.personalfinancebot.model.Operation;
 import ru.naumen.personalfinancebot.model.User;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -82,6 +81,9 @@ public class HibernateOperationRepository implements OperationRepository {
                 .setParameter("startDate", startDate)
                 .setParameter("endDate", endDate)
                 .uniqueResult();
+        if (paymentSummary == null) {
+            return 0.0;
+        }
         return (double) paymentSummary;
     }
 }
