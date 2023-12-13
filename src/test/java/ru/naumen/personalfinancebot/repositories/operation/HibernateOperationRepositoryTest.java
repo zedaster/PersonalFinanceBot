@@ -89,6 +89,9 @@ public class HibernateOperationRepositoryTest {
         this.operationRepository.addOperation(session, user, shops, 1032);
     }
 
+    /**
+     * Тест на корректный подсчет сумм операций
+     */
     @Test
     public void getCurrentUserPaymentSummary() {
         transactionManager.produceTransaction(session -> {
@@ -101,6 +104,24 @@ public class HibernateOperationRepositoryTest {
             double expense = this.operationRepository.getCurrentUserPaymentSummary(session, user, CategoryType.EXPENSE, yearMonth);
             Assert.assertEquals(expectedIncome, income, 1e-1);
             Assert.assertEquals(expectedExpense, expense, 1e-1);
+        });
+    }
+
+    /**
+     * Тестирует метод при условии что на данный момент нет никаких операций в базе данных
+     */
+    @Test
+    public void getCurrentUserPaymentSummaryIfNoOperations() {
+        transactionManager.produceTransaction(session -> {
+            User user = new User(2L, BALANCE);
+            this.userRepository.saveUser(session, user);
+
+            YearMonth yearMonth = YearMonth.now();
+            double income = this.operationRepository.getCurrentUserPaymentSummary(session, user, CategoryType.INCOME, yearMonth);
+            double expense = this.operationRepository.getCurrentUserPaymentSummary(session, user, CategoryType.EXPENSE, yearMonth);
+
+            Assert.assertEquals(0, income, 1e-10);
+            Assert.assertEquals(0, expense, 1e-10);
         });
     }
 }
