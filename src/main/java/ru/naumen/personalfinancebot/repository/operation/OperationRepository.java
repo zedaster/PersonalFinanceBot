@@ -6,6 +6,7 @@ import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.Operation;
 import ru.naumen.personalfinancebot.model.User;
 
+import java.time.YearMonth;
 import java.util.Map;
 
 /**
@@ -32,4 +33,13 @@ public interface OperationRepository {
      * @return Словарь с операциями
      */
     Map<String, Double> getOperationsSumByType(Session session, User user, int month, int year, CategoryType type);
+
+    /**
+     * Метод возвращает сумму операций пользователя указанного типа (расход/доход) за определённый месяц
+     * @param user Пользователь
+     * @param type Тип операции
+     * @param yearMonth Месяц, год
+     * @return Сумма операций
+     */
+    double getCurrentUserPaymentSummary(Session session, User user, CategoryType type, YearMonth yearMonth);
 }

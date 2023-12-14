@@ -1,7 +1,7 @@
 package ru.naumen.personalfinancebot.model;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.Objects;
 
 /**
@@ -42,13 +42,13 @@ public class Operation {
      * Время записи операции
      */
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private LocalDate createdAt;
 
     public Operation(User user, Category category, double payment) {
         this.user = user;
         this.category = category;
         this.payment = payment;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = LocalDate.now();
     }
 
     public Operation() {
@@ -100,7 +100,7 @@ public class Operation {
     /**
      * @return Время записи операции
      */
-    public LocalDateTime getCreatedAt() {
+    public LocalDate getCreatedAt() {
         return createdAt;
     }
 
