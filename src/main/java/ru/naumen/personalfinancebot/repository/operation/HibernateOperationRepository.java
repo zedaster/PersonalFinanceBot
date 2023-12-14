@@ -16,14 +16,6 @@ import java.util.Map;
  */
 public class HibernateOperationRepository implements OperationRepository {
 
-    /**
-     * Класс для добавления операции
-     *
-     * @param user     Пользователь, совершивший операцию
-     * @param category Категория дохода/расхода
-     * @param payment  Сумма
-     * @return совершённая операция
-     */
     @Override
     public Operation addOperation(Session session, User user, Category category, double payment) {
         Operation operation = new Operation(user, category, payment);
@@ -31,14 +23,6 @@ public class HibernateOperationRepository implements OperationRepository {
         return operation;
     }
 
-    /**
-     * Возвращает словарь с названием категории и суммой расходов этой категории за указанный год и месяц
-     *
-     * @param user  Пользователь
-     * @param month Месяц
-     * @param year  Год
-     * @return Список операций
-     */
     @Override
     public Map<String, Double> getOperationsSumByType(Session session, User user, int month, int year, CategoryType type) {
         LocalDateTime startDate = LocalDateTime.of(year, month, 1, 0, 0);

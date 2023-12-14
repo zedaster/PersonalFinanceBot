@@ -4,10 +4,9 @@ import org.hibernate.Session;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
-import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingStandardCategoryException;
-import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingUserCategoryException;
-import ru.naumen.personalfinancebot.repository.category.exception.RemovingNonExistentCategoryException;
-import ru.naumen.personalfinancebot.repository.category.exception.RemovingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.ExistingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.ExistingUserCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.NotExistingCategoryException;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,38 +50,30 @@ public interface CategoryRepository {
      * @param type         Тип категории: расход / доход
      * @param user         Пользователь
      * @return Созданная категория
-     * @throws CreatingExistingUserCategoryException     если пользовательская категория с таким типом и именем для этого юзера уже существует
-     * @throws CreatingExistingStandardCategoryException если существует стандартная категория с таким же названием
+     * @throws ExistingUserCategoryException     если пользовательская категория с таким типом и именем для этого юзера уже существует
+     * @throws ExistingStandardCategoryException если существует стандартная категория с таким же названием
      */
     Category createUserCategory(Session session, User user, CategoryType type, String categoryName)
-            throws CreatingExistingUserCategoryException, CreatingExistingStandardCategoryException;
+            throws ExistingUserCategoryException, ExistingStandardCategoryException;
 
     /**
-     * Cоздёт стандартную категорию, не относящуюся к пользователя
+     * Создаёт стандартную категорию, не относящуюся к пользователя
      *
      * @param categoryName Имя категории
      * @param type         Тип категории: расход / доход
+     * @throws ExistingStandardCategoryException если стандартная категория с таким типом и именем уже существует
      * @return Созданная категория
-     * @throws CreatingExistingStandardCategoryException если стандартная категория с таким типом и именем уже существует
      */
     Category createStandardCategory(Session session, CategoryType type, String categoryName)
-            throws CreatingExistingStandardCategoryException;
-
-    /**
-     * Удаляет категорию по ID.
-     * Удаление стандартных категорий технически невозможно
-     *
-     * @param id ID категории
-     * @throws RemovingStandardCategoryException если категория является стандартной
-     */
-    void removeCategoryById(Session session, Long id) throws RemovingStandardCategoryException;
+            throws ExistingStandardCategoryException;
 
     /**
      * Удаляет пользовательскую категорию по названию
      *
-     * @throws RemovingNonExistentCategoryException если такая категория не существует
+     * @throws NotExistingCategoryException если такая категория не существует
      */
-    void removeUserCategoryByName(Session session, User user, CategoryType type, String categoryName) throws RemovingNonExistentCategoryException;
+    void removeUserCategoryByName(Session session, User user, CategoryType type, String categoryName)
+            throws NotExistingCategoryException;
 
     /**
      * Метод возвращает либо собственную категорию пользователя, либо стандартную.

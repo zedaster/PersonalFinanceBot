@@ -5,8 +5,8 @@ import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
-import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingStandardCategoryException;
-import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingUserCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.ExistingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.ExistingUserCategoryException;
 import ru.naumen.personalfinancebot.service.ArgumentParseService;
 
 /**
@@ -52,13 +52,13 @@ public class AddCategoryHandler implements CommandHandler {
         String typeLabel = type.getPluralShowLabel();
         try {
             categoryRepository.createUserCategory(session, commandData.getUser(), type, categoryName);
-        } catch (CreatingExistingUserCategoryException e) {
+        } catch (ExistingUserCategoryException e) {
             String responseText = Message.USER_CATEGORY_ALREADY_EXISTS
                     .replace("{type}", typeLabel)
                     .replace("{name}", categoryName);
             commandData.getBot().sendMessage(commandData.getUser(), responseText);
             return;
-        } catch (CreatingExistingStandardCategoryException e) {
+        } catch (ExistingStandardCategoryException e) {
             String responseText = Message.STANDARD_CATEGORY_ALREADY_EXISTS
                     .replace("{type}", typeLabel)
                     .replace("{name}", categoryName);
