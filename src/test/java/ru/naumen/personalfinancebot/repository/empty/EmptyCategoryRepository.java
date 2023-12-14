@@ -24,22 +24,17 @@ public class EmptyCategoryRepository implements CategoryRepository {
     }
 
     @Override
-    public Category createUserCategory(Session session, User user, CategoryType type, String categoryName) throws CreatingExistingUserCategoryException, CreatingExistingStandardCategoryException {
+    public Category createUserCategory(Session session, User user, CategoryType type, String categoryName) {
         throw new RuntimeException("Category repository shouldn't be touched");
     }
 
     @Override
-    public Category createStandardCategory(Session session, CategoryType type, String categoryName) throws CreatingExistingStandardCategoryException {
+    public Category createStandardCategory(Session session, CategoryType type, String categoryName) {
         throw new RuntimeException("Category repository shouldn't be touched");
     }
 
     @Override
-    public void removeCategoryById(Session session, Long id) throws RemovingStandardCategoryException {
-        throw new RuntimeException("Category repository shouldn't be touched");
-    }
-
-    @Override
-    public void removeUserCategoryByName(Session session, User user, CategoryType type, String categoryName) throws RemovingNonExistentCategoryException {
+    public void removeUserCategoryByName(Session session, User user, CategoryType type, String categoryName) {
         throw new RuntimeException("Category repository shouldn't be touched");
     }
 

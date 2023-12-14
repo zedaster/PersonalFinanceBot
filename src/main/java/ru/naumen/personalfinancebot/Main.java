@@ -1,6 +1,7 @@
 package ru.naumen.personalfinancebot;
 
 import ru.naumen.personalfinancebot.bot.Bot;
+import ru.naumen.personalfinancebot.bot.PoolingException;
 import ru.naumen.personalfinancebot.bot.TelegramBot;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.configuration.TelegramBotConfiguration;
