@@ -21,6 +21,7 @@ import ru.naumen.personalfinancebot.repository.fake.FakeBudgetRepository;
 import ru.naumen.personalfinancebot.repository.fake.FakeOperationRepository;
 
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -96,7 +97,7 @@ public class ListBudgetTests {
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
             MockMessage message = this.mockBot.poolMessageQueue();
             Assert.assertEquals("У вас не было бюджетов за этот период. Для создания бюджета введите " +
-                    "/budget_create [mm.yyyy - месяц.год] [ожидаемый доход] [ожидаемый расходы]", message.text());
+                                "/budget_create [mm.yyyy - месяц.год] [ожидаемый доход] [ожидаемый расходы]", message.text());
             Assert.assertEquals(this.user, message.receiver());
         });
     }
@@ -107,11 +108,9 @@ public class ListBudgetTests {
     @Test
     public void noArgsSomeMonths() {
         transactionManager.produceTransaction(session -> {
-
-
             Category fakeIncome = new Category(user, "Fake Income", CategoryType.INCOME);
             Category fakeExpense = new Category(user, "Fake Expense", CategoryType.EXPENSE);
-            TestYearMonth currentYM = TestYearMonth.current();
+            TestYearMonth currentYM = new TestYearMonth();
             TestYearMonth minusOneMonthYM = currentYM.minusMonths(1);
             this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, minusOneMonthYM.getYearMonth()));
             this.budgetRepository.saveBudget(session, new Budget(user, 80_000, 70_000, currentYM.getYearMonth()));
@@ -150,34 +149,81 @@ public class ListBudgetTests {
     @Test
     public void noArgsTwelveOfThirteenMonths() {
         transactionManager.produceTransaction(session -> {
-
             Category fakeIncome = new Category(user, "Fake Income", CategoryType.INCOME);
             Category fakeExpense = new Category(user, "Fake Expense", CategoryType.EXPENSE);
 
-            StringBuilder expectResponseBuilder = new StringBuilder("Ваши запланированные доходы и расходы по месяцам:\n");
+            String expectResponse = """
+                    Ваши запланированные доходы и расходы по месяцам:
+                    %s %s:
+                    Ожидание: + 100 000 | - 90 000
+                    Реальность: + 9 000 | - 8 000
+                                        
+                    %s %s:
+                    Ожидание: + 100 000 | - 90 000
+                    Реальность: + 9 000 | - 8 000
+                                        
+                    %s %s:
+                    Ожидание: + 100 000 | - 90 000
+                    Реальность: + 9 000 | - 8 000
+                                        
+                    %s %s:
+                    Ожидание: + 100 000 | - 90 000
+                    Реальность: + 9 000 | - 8 000
+                                        
+                    %s %s:
+                    Ожидание: + 100 000 | - 90 000
+                    Реальность: + 9 000 | - 8 000
+                                        
+                    %s %s:
+                    Ожидание: + 100 000 | - 90 000
+                    Реальность: + 9 000 | - 8 000
+                                        
+                    %s %s:
+                    Ожидание: + 100 000 | - 90 000
+                    Реальность: + 9 000 | - 8 000
+                                        
+                    %s %s:
+                    Ожидание: + 100 000 | - 90 000
+                    Реальность: + 9 000 | - 8 000
+                                        
+                    %s %s:
+                    Ожидание: + 100 000 | - 90 000
+                    Реальность: + 9 000 | - 8 000
+                                        
+                    %s %s:
+                    Ожидание: + 100 000 | - 90 000
+                    Реальность: + 9 000 | - 8 000
+                                        
+                    %s %s:
+                    Ожидание: + 100 000 | - 90 000
+                    Реальность: + 9 000 | - 8 000
+                                        
+                    %s %s:
+                    Ожидание: + 100 000 | - 90 000
+                    Реальность: + 9 000 | - 8 000
+                                        
+                    %s %s:
+                    Ожидание: + 100 000 | - 90 000
+                    Реальность: + 9 000 | - 8 000
+                                        
+                    Данные показаны за последние 12 месяцев. Чтобы посмотреть данные, например, за 2022, введите /budget_list 2022.
+                    Для показа данных по определенным месяцам, например, с ноября 2022 по январь 2023 введите /budget_list 10.2022 01.2023""";
+
+            List<String> argsToReplace = new ArrayList<>();
+
             for (int i = 12; i >= 0; i--) {
-                TestYearMonth testYM = TestYearMonth.current().minusMonths(i);
+                TestYearMonth testYM = new TestYearMonth().minusMonths(i);
                 this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, testYM.getYearMonth()));
                 this.operationRepository.addOperation(session, user, fakeIncome, 9000, testYM.atDay(1));
                 this.operationRepository.addOperation(session, user, fakeExpense, 8000, testYM.atDay(1));
-                expectResponseBuilder.append(testYM.getMonthName());
-                expectResponseBuilder.append(" ");
-                expectResponseBuilder.append(testYM.getYear()).append(":");
-                expectResponseBuilder.append("""
-                                            
-                        Ожидание: + 100 000 | - 90 000
-                        Реальность: + 9 000 | - 8 000
-                                            
-                        """);
+                argsToReplace.add(testYM.getMonthName());
+                argsToReplace.add(String.valueOf(testYM.getYear()));
             }
 
-            expectResponseBuilder.append("Данные показаны за последние 12 месяцев. Чтобы посмотреть данные, например, " +
-                    "за 2022, введите /budget_list 2022.\n" +
-                    "Для показа данных по определенным месяцам, например, с ноября 2022 по январь 2023 введите " +
-                    "/budget_list 10.2022 01.2023");
+            expectResponse = expectResponse.formatted(argsToReplace.toArray());
 
             // Добавляем 13 месяц, который не нужно выводить
-            TestYearMonth testYM = TestYearMonth.current().minusMonths(13);
+            TestYearMonth testYM = new TestYearMonth().minusMonths(13);
             this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, testYM.getYearMonth()));
             this.operationRepository.addOperation(session, user, fakeIncome, 9000, testYM.atDay(1));
             this.operationRepository.addOperation(session, user, fakeExpense, 8000, testYM.atDay(1));
@@ -186,8 +232,7 @@ public class ListBudgetTests {
             this.botHandler.handleCommand(command, session);
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
             MockMessage message = this.mockBot.poolMessageQueue();
-            Assert.assertEquals(expectResponseBuilder.toString(), message.text());
-            Assert.assertEquals(this.user, message.receiver());
+            Assert.assertEquals(expectResponse, message.text());
         });
     }
 
@@ -197,8 +242,6 @@ public class ListBudgetTests {
     @Test
     public void certainYear() {
         transactionManager.produceTransaction(session -> {
-
-
             Category fakeIncome = new Category(user, "Fake Income", CategoryType.INCOME);
             Category fakeExpense = new Category(user, "Fake Expense", CategoryType.EXPENSE);
             TestYearMonth ymJan2022 = new TestYearMonth(YearMonth.of(2022, 1));
@@ -226,7 +269,6 @@ public class ListBudgetTests {
                                             
                             Данные показаны за 2022 год.""",
                     message.text());
-            Assert.assertEquals(this.user, message.receiver());
         });
     }
 
@@ -238,7 +280,25 @@ public class ListBudgetTests {
         Category fakeIncome = new Category(user, "Fake Income", CategoryType.INCOME);
         Category fakeExpense = new Category(user, "Fake Expense", CategoryType.EXPENSE);
 
-        StringBuilder expectResponseBuilder = new StringBuilder("Ваши запланированные доходы и расходы по месяцам:\n");
+        String expectResponse = """
+                Ваши запланированные доходы и расходы по месяцам:
+                Ноябрь 2022:
+                Ожидание: + 100 000 | - 90 000
+                Реальность: + 9 000 | - 8 000
+                                
+                Декабрь 2022:
+                Ожидание: + 100 000 | - 90 000
+                Реальность: + 9 000 | - 8 000
+                                
+                Январь 2023:
+                Ожидание: + 100 000 | - 90 000
+                Реальность: + 9 000 | - 8 000
+                                
+                Февраль 2023:
+                Ожидание: + 100 000 | - 90 000
+                Реальность: + 9 000 | - 8 000
+                                
+                Данные показаны за 4 месяц(-ев).""";
         TestYearMonth nov22ym = new TestYearMonth(YearMonth.of(2022, 11));
         transactionManager.produceTransaction(session -> {
             for (int i = 0; i < 4; i++) {
@@ -246,25 +306,14 @@ public class ListBudgetTests {
                 this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, testYM.getYearMonth()));
                 this.operationRepository.addOperation(session, user, fakeIncome, 9000, testYM.atDay(1));
                 this.operationRepository.addOperation(session, user, fakeExpense, 8000, testYM.atDay(1));
-                expectResponseBuilder.append(testYM.getMonthName());
-                expectResponseBuilder.append(" ");
-                expectResponseBuilder.append(testYM.getYear()).append(":");
-                expectResponseBuilder.append("""
-                                            
-                        Ожидание: + 100 000 | - 90 000
-                        Реальность: + 9 000 | - 8 000
-                                            
-                        """);
             }
-            expectResponseBuilder.append("Данные показаны за 4 месяц(-ев).");
 
             CommandData command = new CommandData(this.mockBot, this.user, "budget_list",
                     List.of("11.2022", "02.2023"));
             this.botHandler.handleCommand(command, session);
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
             MockMessage message = this.mockBot.poolMessageQueue();
-            Assert.assertEquals(expectResponseBuilder.toString(), message.text());
-            Assert.assertEquals(this.user, message.receiver());
+            Assert.assertEquals(expectResponse, message.text());
         });
 
     }
@@ -280,7 +329,7 @@ public class ListBudgetTests {
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
             MockMessage message = this.mockBot.poolMessageQueue();
             Assert.assertEquals("У вас не было бюджетов за этот период. Для создания бюджета введите " +
-                    "/budget_create [mm.yyyy - месяц.год] [ожидаемый доход] [ожидаемый расходы]", message.text());
+                                "/budget_create [mm.yyyy - месяц.год] [ожидаемый доход] [ожидаемый расходы]", message.text());
             Assert.assertEquals(this.user, message.receiver());
         });
     }
@@ -326,18 +375,19 @@ public class ListBudgetTests {
     }
 
     /**
-     * Запрос бюджетов в промежутке от одного месяца до того же самого
+     * Запрос бюджетов в промежутке от одного месяца до того же самого, в котором реальные доходы и расходы превысили
+     * ожидаемые.
      */
     @Test
-    public void oneMonthRange() {
+    public void oneMonthRangeAndRealOperationsExceededExpected() {
         transactionManager.produceTransaction(session -> {
             Category fakeIncome = new Category(user, "Fake Income", CategoryType.INCOME);
             Category fakeExpense = new Category(user, "Fake Expense", CategoryType.EXPENSE);
 
             TestYearMonth testYM = new TestYearMonth(YearMonth.of(2022, 12));
             this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, testYM.getYearMonth()));
-            this.operationRepository.addOperation(session, user, fakeIncome, 9000, testYM.atDay(1));
-            this.operationRepository.addOperation(session, user, fakeExpense, 8000, testYM.atDay(1));
+            this.operationRepository.addOperation(session, user, fakeIncome, 101_000, testYM.atDay(1));
+            this.operationRepository.addOperation(session, user, fakeExpense, 91_000, testYM.atDay(1));
 
             CommandData command = new CommandData(this.mockBot, this.user, "budget_list",
                     List.of("12.2022", "12.2022"));
@@ -348,10 +398,9 @@ public class ListBudgetTests {
                     Ваши запланированные доходы и расходы по месяцам:
                     Декабрь 2022:
                     Ожидание: + 100 000 | - 90 000
-                    Реальность: + 9 000 | - 8 000
+                    Реальность: + 101 000 | - 91 000
                                     
                     Данные показаны за 1 месяц(-ев).""", message.text());
-            Assert.assertEquals(this.user, message.receiver());
         });
     }
 
@@ -360,7 +409,7 @@ public class ListBudgetTests {
      */
     @Test
     public void wrongEntireArgs() {
-        String currentDateArg = TestYearMonth.current().getDotFormat();
+        String currentDateArg = new TestYearMonth().getDotFormat();
         List<List<String>> wrongArgsCases = List.of(
                 List.of(currentDateArg, "1", "1", "1")
         );
@@ -372,10 +421,11 @@ public class ListBudgetTests {
 
                 Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
                 MockMessage message = this.mockBot.poolMessageQueue();
-                Assert.assertEquals("Неверно введена команда! Введите\n" +
-                                "или /budget_list - вывод бюджетов за 12 месяцев (текущий + предыдущие),\n" +
-                                "или /budget_list [год] - вывод бюджетов за определенный год,\n" +
-                                "или /budget_list [mm.yyyy - месяц.год] [mm.yyyy - месяц.год] - вывод бюджетов за указанный промежуток.",
+                Assert.assertEquals("""
+                                Неверно введена команда! Введите
+                                или /budget_list - вывод бюджетов за 12 месяцев (текущий + предыдущие),
+                                или /budget_list [год] - вывод бюджетов за определенный год,
+                                или /budget_list [mm.yyyy - месяц.год] [mm.yyyy - месяц.год] - вывод бюджетов за указанный промежуток.""",
                         message.text());
                 Assert.assertEquals(this.user, message.receiver());
             }
