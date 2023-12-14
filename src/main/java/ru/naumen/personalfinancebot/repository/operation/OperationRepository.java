@@ -42,4 +42,12 @@ public interface OperationRepository {
      * @return Сумма операций
      */
     double getCurrentUserPaymentSummary(Session session, User user, CategoryType type, YearMonth yearMonth);
+
+    /**
+     * Возвращает средние месячные общие доходы и расходы по всем пользователям
+     *
+     * @param yearMonth Год-месяц, за который выдаются данные
+     * @return Словарь<Тип, Сумма> или null, если нет данных
+     */
+    Map<CategoryType, Double> getEstimateSummary(Session session, YearMonth yearMonth);
 }

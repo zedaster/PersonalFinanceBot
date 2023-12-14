@@ -51,6 +51,13 @@ public class Operation {
         this.createdAt = LocalDate.now();
     }
 
+    public Operation(User user, Category category, double payment, LocalDate createdAt) {
+        this.user = user;
+        this.category = category;
+        this.payment = payment;
+        this.createdAt = createdAt;
+    }
+
     public Operation() {
 
     }
