@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.handler;
+package ru.naumen.personalfinancebot.handler.command;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
+import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
@@ -42,15 +43,13 @@ public class AddCategoryTest {
      * Хранилище пользователей
      */
     private final TestHibernateUserRepository userRepository;
+
     /**
      * Хранилище категорий
      * Данная реализация позволяет сделать полную очистку категорий после тестов
      */
     private final TestHibernateCategoryRepository categoryRepository;
-    /**
-     * Хранилище операций
-     */
-    private final OperationRepository operationRepository;
+
     /**
      * Обработчик операций для бота
      */
@@ -60,10 +59,12 @@ public class AddCategoryTest {
      * Менеджер транзакций
      */
     private final TransactionManager transactionManager;
+
     /**
      * Моковый бот
      */
     private MockBot mockBot;
+
     /**
      * Тестируемый пользователь
      */
@@ -73,7 +74,7 @@ public class AddCategoryTest {
         SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
         this.userRepository = new TestHibernateUserRepository();
         this.categoryRepository = new TestHibernateCategoryRepository();
-        this.operationRepository = new HibernateOperationRepository();
+        OperationRepository operationRepository = new HibernateOperationRepository();
         BudgetRepository budgetRepository = new HibernateBudgetRepository();
         this.botHandler = new FinanceBotHandler(
                 userRepository,
@@ -81,7 +82,6 @@ public class AddCategoryTest {
                 categoryRepository,
                 budgetRepository,
                 sessionFactory);
-        OperationRepository operationRepository = new HibernateOperationRepository();
         this.transactionManager = new TransactionManager(sessionFactory);
     }
 

@@ -68,8 +68,8 @@ public class SingleBudgetHandler implements CommandHandler {
                 session,
                 commandData.getUser(), CategoryType.EXPENSE, currentMonthYear
         );
-        double incomeLeft = expectIncome - realIncome;
-        double expensesLeft = expectExpenses - realExpenses;
+        double incomeLeft = Math.max(0, expectIncome - realIncome);
+        double expensesLeft = Math.max(0, expectExpenses - realExpenses);
         double balance = commandData.getUser().getBalance();
 
         commandData.getBot().sendMessage(commandData.getUser(), Message.CURRENT_BUDGET

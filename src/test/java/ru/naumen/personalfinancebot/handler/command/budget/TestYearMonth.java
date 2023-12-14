@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.handler.budget;
+package ru.naumen.personalfinancebot.handler.command.budget;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -42,10 +42,10 @@ public class TestYearMonth {
     }
 
     /**
-     * Возвращает новый экземпляр TestYearMonth текущего месяца и года
+     * Создает тестовый месяц-год с текущим значением
      */
-    public static TestYearMonth current() {
-        return new TestYearMonth(YearMonth.now());
+    public TestYearMonth() {
+        this(YearMonth.now());
     }
 
     /**

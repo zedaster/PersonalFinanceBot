@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.handler;
+package ru.naumen.personalfinancebot.handler.command;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -9,6 +9,7 @@ import org.junit.Test;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
+import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
@@ -50,11 +51,6 @@ public class RemoveCategoryTest {
     private final TestHibernateCategoryRepository categoryRepository;
 
     /**
-     * Хранилище операций
-     */
-    private final OperationRepository operationRepository;
-
-    /**
      * Обработчик команд
      */
     private final FinanceBotHandler botHandler;
@@ -78,7 +74,7 @@ public class RemoveCategoryTest {
         SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
         userRepository = new TestHibernateUserRepository();
         categoryRepository = new TestHibernateCategoryRepository();
-        operationRepository = new HibernateOperationRepository();
+        OperationRepository operationRepository = new HibernateOperationRepository();
         BudgetRepository budgetRepository = new HibernateBudgetRepository();
         transactionManager = new TransactionManager(sessionFactory);
         this.botHandler = new FinanceBotHandler(

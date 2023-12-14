@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.handler.budget;
+package ru.naumen.personalfinancebot.handler.command.budget;
 
 import org.junit.Assert;
 import org.junit.Test;

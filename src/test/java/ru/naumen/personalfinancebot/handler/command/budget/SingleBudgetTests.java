@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.handler.budget;
+package ru.naumen.personalfinancebot.handler.command.budget;
 
 import org.hibernate.SessionFactory;
 import org.junit.Assert;
@@ -88,11 +88,12 @@ public class SingleBudgetTests {
 
     /**
      * Проверка вывода существующего бюджета при отсутствующих операциях
+     * И отправление итогового сообщения нужному пользователю.
      */
     @Test
     public void existingBudgetNoOperations() {
         transactionManager.produceTransaction(session -> {
-            TestYearMonth testYearMonth = TestYearMonth.current();
+            TestYearMonth testYearMonth = new TestYearMonth();
             Budget budget = new Budget(this.user, 100_000, 90_000, testYearMonth.getYearMonth());
             this.budgetRepository.saveBudget(session, budget);
             CommandData command = new CommandData(this.mockBot, this.user, "budget", List.of());
@@ -122,7 +123,7 @@ public class SingleBudgetTests {
     @Test
     public void existingBudgetAndOperations() {
         transactionManager.produceTransaction(session -> {
-            TestYearMonth testYearMonth = TestYearMonth.current();
+            TestYearMonth testYearMonth = new TestYearMonth();
 
             Budget budget = new Budget(this.user, 100_000, 90_000, testYearMonth.getYearMonth());
             this.budgetRepository.saveBudget(session, budget);
@@ -147,7 +148,40 @@ public class SingleBudgetTests {
                 Еще осталось на траты: 89 000""".formatted(
                     testYearMonth.getMonthName(),
                     testYearMonth.getYear()), message.text());
-            Assert.assertEquals(this.user, message.receiver());
+        });
+    }
+
+    /**
+     * Тестирует случай, когда реальный доход и расход превысил ожидаемые
+     */
+    @Test
+    public void realOperationsExceededExpected() {
+        transactionManager.produceTransaction(session -> {
+            TestYearMonth testYearMonth = new TestYearMonth();
+
+            Budget budget = new Budget(this.user, 100_000, 90_000, testYearMonth.getYearMonth());
+            this.budgetRepository.saveBudget(session, budget);
+            Category fakeIncomeCategory = new Category(this.user, "Fake", CategoryType.INCOME);
+            Category fakeExpenseCategory = new Category(this.user, "Fake", CategoryType.EXPENSE);
+            this.operationRepository.addOperation(session, this.user, fakeIncomeCategory, 101_000);
+            this.operationRepository.addOperation(session, this.user, fakeExpenseCategory, 91_000);
+
+            CommandData command = new CommandData(this.mockBot, this.user, "budget", List.of());
+            this.botHandler.handleCommand(command, session);
+
+            Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
+            MockMessage message = this.mockBot.poolMessageQueue();
+            Assert.assertEquals("""
+                    Бюджет на %s %d:
+                    Ожидаемые доходы: 100 000
+                    Ожидаемые расходы: 90 000
+                    Текущие доходы: 101 000
+                    Текущие расходы: 91 000
+                    Текущий баланс: 100
+                    Нужно еще заработать: 0
+                    Еще осталось на траты: 0""".formatted(
+                    testYearMonth.getMonthName(),
+                    testYearMonth.getYear()), message.text());
         });
     }
 
@@ -162,7 +196,7 @@ public class SingleBudgetTests {
             CommandData command = new CommandData(this.mockBot, this.user, "budget", List.of());
             this.botHandler.handleCommand(command, session);
 
-            TestYearMonth testYM = TestYearMonth.current();
+            TestYearMonth testYM = new TestYearMonth();
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
             MockMessage message = this.mockBot.poolMessageQueue();
             Assert.assertEquals("""

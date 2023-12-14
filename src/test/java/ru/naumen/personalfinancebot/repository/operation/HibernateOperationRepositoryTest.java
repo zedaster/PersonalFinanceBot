@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.repositories.operation;
+package ru.naumen.personalfinancebot.repository.operation;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -11,13 +11,14 @@ import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
-import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
-import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
 
 import java.time.YearMonth;
 
+/**
+ * Тестирует класс {@link HibernateOperationRepository}
+ */
 public class HibernateOperationRepositoryTest {
     /**
      * Баланс пользователя
