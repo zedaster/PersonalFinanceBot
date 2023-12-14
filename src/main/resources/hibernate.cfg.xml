@@ -1,0 +1,21 @@
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <!-- JDBC Database connection settings -->
+        <property name="dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+        <property name="connection.driver_class">org.postgresql.Driver</property>
+        <!-- url, username, password настраиваются через переменные окружения
+        DATABASE_URL, DATABASE_USERNAME,  DATABASE_PASSWORD -->
+        <property name="connection.pool_size">1</property>
+        <property name="show_sql">false</property>
+        <property name="hbm2ddl.auto">update</property>
+        <property name="current_session_context_class">thread</property>
+
+        <!-- Hibernate mappings -->
+        <mapping class="ru.naumen.personalfinancebot.model.User"/>
+        <mapping class="ru.naumen.personalfinancebot.model.Operation"/>
+        <mapping class="ru.naumen.personalfinancebot.model.Category"/>
+    </session-factory>
+</hibernate-configuration>
