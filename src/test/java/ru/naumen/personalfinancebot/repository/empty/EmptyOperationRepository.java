@@ -29,4 +29,9 @@ public class EmptyOperationRepository implements OperationRepository {
     public double getCurrentUserPaymentSummary(Session session, User user, CategoryType type, YearMonth yearMonth) {
         throw new RuntimeException("Operation repository shouldn't be touched");
     }
+
+    @Override
+    public Map<CategoryType, Double> getEstimateSummary(Session session, YearMonth yearMonth) {
+        throw new RuntimeException("Operation repository shouldn't be touched");
+    }
 }

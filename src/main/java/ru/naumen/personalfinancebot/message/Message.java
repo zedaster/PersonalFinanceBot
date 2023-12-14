@@ -269,4 +269,22 @@ public class Message {
             Текущий баланс: {balance}
             Нужно еще заработать: {income_left}
             Еще осталось на траты: {expenses_left}""";
+
+    public static final String DATA_NOT_EXISTS = "На заданный промежуток данные отсутствуют.";
+
+    public static final String CURRENT_DATA_NOT_EXISTS = "На этот месяц данные отсутствуют.";
+
+    public static final String ESTIMATE_REPORT_INCORRECT_ARGUMENT_COUNT = """
+            Команда "/estimate_report" не принимает аргументов, либо принимает Месяц и Год в формате "MM.YYYY".
+            Например, "/estimate_report" или "/estimate_report 12.2023".""";
+
+    public static final String ESTIMATE_REPORT_CURRENT = """
+            Подготовил отчет по средним доходам и расходам пользователей за текущий месяц:
+            Расходы: {expenses}
+            Доходы: {income}""";
+
+    public static final String ESTIMATE_REPORT_DATED = """
+            Подготовил отчет по средним доходам и расходам пользователей за {month} {year}:
+            Расходы: {expenses}
+            Доходы: {income}""";
 }

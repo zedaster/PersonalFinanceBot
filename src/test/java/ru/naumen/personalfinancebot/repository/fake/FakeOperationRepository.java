@@ -118,6 +118,19 @@ public class FakeOperationRepository implements OperationRepository {
                 .sum();
     }
 
+
+    @Override
+    public Map<CategoryType, Double> getEstimateSummary(Session session, YearMonth yearMonth) {
+        return null;
+    }
+
+    /**
+     * Удалает все сохраненные операции
+     */
+    public void removeAll() {
+        this.operations.clear();
+    }
+
     /**
      * Запись, содержащая в себе пользователя и тип категории. Необходима для группировки операций
      *

@@ -24,11 +24,28 @@ public class OutputFormatService {
     /**
      * Форматирует double в красивую строку.
      * Если число целое, то вернет его без дробной части.
+     * <br>
      * Т.е. 1000.0 будет выведено как 1000,
      * а 1000.99 будет выведено как 1000.99
      */
     public String formatDouble(double d) {
         return doubleFormatter.format(d);
+    }
+
+    /**
+     * Форматирует double в красивую строку.
+     * Если число целое, то вернет его без дробной части.
+     * <br>
+     * Т.е. 1000.0 будет выведено как 1000,
+     * а 1000.99 будет выведено как 1000.99.
+     * <br>
+     * Если d будет null, тогда будет выведено defaultValue
+     */
+    public String formatDouble(Double d, String defaultValue) {
+        if (d == null) {
+            return defaultValue;
+        }
+        return formatDouble(d);
     }
 
     /**

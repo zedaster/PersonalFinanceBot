@@ -4,6 +4,8 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import ru.naumen.personalfinancebot.handler.command.*;
 import ru.naumen.personalfinancebot.handler.command.budget.*;
+import ru.naumen.personalfinancebot.handler.command.report.EstimateReportHandler;
+import ru.naumen.personalfinancebot.handler.command.report.ReportExpensesHandler;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
@@ -44,7 +46,7 @@ public class FinanceBotHandler {
         ArgumentParseService argumentParseService = new ArgumentParseService();
         OutputFormatService outputFormatService = new OutputFormatService();
         CategoryListService categoryListService = new CategoryListService(categoryRepository);
-        ReportService reportService = new ReportService(operationRepository);
+        ReportService reportService = new ReportService(operationRepository, outputFormatService);
 
         commandHandlers = new HashMap<>();
         commandHandlers.put("start", new StartCommandHandler());
@@ -80,6 +82,8 @@ public class FinanceBotHandler {
                 argumentParseService, outputFormatService, CategoryType.EXPENSE));
         commandHandlers.put("budget_list", new ListBudgetHandler(budgetRepository, operationRepository,
                 argumentParseService, outputFormatService));
+
+        commandHandlers.put("estimate_report", new EstimateReportHandler(argumentParseService, reportService));
     }
 
     /**

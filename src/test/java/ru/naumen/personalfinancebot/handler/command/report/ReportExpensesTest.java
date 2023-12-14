@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.handler.command;
+package ru.naumen.personalfinancebot.handler.command.report;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -7,6 +7,7 @@ import org.junit.Test;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
+import ru.naumen.personalfinancebot.handler.command.CommandHandler;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
@@ -18,6 +19,7 @@ import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepos
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
+import ru.naumen.personalfinancebot.service.OutputFormatService;
 import ru.naumen.personalfinancebot.service.ReportService;
 
 import java.time.YearMonth;
@@ -27,7 +29,7 @@ import java.util.List;
 /**
  * Класс для тестирования команды "/report_expense"
  */
-public class ReportExpensesHandlerTest {
+public class ReportExpensesTest {
     /**
      * Фабрика сессии к БД
      */
@@ -40,6 +42,7 @@ public class ReportExpensesHandlerTest {
      * Сервис для подготовки отчётов
      */
     private final ReportService reportService;
+
     /**
      * Обработчик команды "/report_expense"
      */
@@ -58,12 +61,12 @@ public class ReportExpensesHandlerTest {
      */
     private final TransactionManager transactionManager;
 
-    public ReportExpensesHandlerTest() {
+    public ReportExpensesTest() {
         this.sessionFactory = new HibernateConfiguration().getSessionFactory();
         this.operationRepository = new HibernateOperationRepository();
         this.userRepository = new HibernateUserRepository();
         this.categoryRepository = new HibernateCategoryRepository();
-        this.reportService = new ReportService(this.operationRepository);
+        this.reportService = new ReportService(this.operationRepository, new OutputFormatService());
         this.reportExpenseHandler = new ReportExpensesHandler(this.reportService);
         this.transactionManager = new TransactionManager(this.sessionFactory);
     }
