@@ -7,10 +7,9 @@ import org.hibernate.query.Query;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
-import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingStandardCategoryException;
-import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingUserCategoryException;
-import ru.naumen.personalfinancebot.repository.category.exception.RemovingNonExistentCategoryException;
-import ru.naumen.personalfinancebot.repository.category.exception.RemovingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.ExistingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.ExistingUserCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.NotExistingCategoryException;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -25,49 +24,26 @@ import java.util.Optional;
  */
 public class HibernateCategoryRepository implements CategoryRepository {
 
-    /**
-     * Возвращает все категории указанного типа для указанного пользователя.
-     *
-     * @param user Пользователь
-     * @param type Тип категорий
-     * @return Список из запрошенных категорий
-     */
     @Override
     public List<Category> getUserCategoriesByType(Session session, @NotNull User user, CategoryType type) {
         return getCategoriesByType(session, user, type);
     }
 
-    /**
-     * Возвращает все стандартные категории указанного типа
-     *
-     * @param type Тип категорий
-     * @return Список из запрошенных категорий
-     */
     @Override
     public List<Category> getStandardCategoriesByType(Session session, CategoryType type) {
         return getCategoriesByType(session, null, type);
     }
 
-    /**
-     * Создаёт категорию, которую добавил пользователь
-     *
-     * @param user         Пользователь
-     * @param categoryName Имя категории
-     * @param type         Тип категории: расход / доход
-     * @return Категория
-     * @throws CreatingExistingUserCategoryException     если пользовательская категория с таким типом и именем для этого юзера уже существует
-     * @throws CreatingExistingStandardCategoryException если существует стандартная категория с таким же названием
-     */
     @Override
     public Category createUserCategory(Session session, User user, CategoryType type, String categoryName) throws
-            CreatingExistingStandardCategoryException, CreatingExistingUserCategoryException {
+            ExistingStandardCategoryException, ExistingUserCategoryException {
         Optional<Category> existingUserCategory = this.getCategoryByName(session, user, type, categoryName);
 
         if (existingUserCategory.isPresent()) {
             if (existingUserCategory.get().isStandard()) {
-                throw new CreatingExistingStandardCategoryException(categoryName);
+                throw new ExistingStandardCategoryException(categoryName);
             } else {
-                throw new CreatingExistingUserCategoryException(categoryName);
+                throw new ExistingUserCategoryException(categoryName);
             }
         }
 
@@ -78,19 +54,11 @@ public class HibernateCategoryRepository implements CategoryRepository {
         return createCategory(session, category);
     }
 
-    /**
-     * Создает стандартную категорию, не относящуюся к пользователю.
-     *
-     * @param categoryName Имя категории
-     * @param type         Тип категории
-     * @return Категория
-     * @throws CreatingExistingStandardCategoryException если стандартная категория с таким типом и именем уже существует
-     */
     @Override
     public Category createStandardCategory(Session session, CategoryType type, String categoryName)
-            throws CreatingExistingStandardCategoryException {
+            throws ExistingStandardCategoryException {
         if (this.getStandardCategoryByName(session, type, categoryName).isPresent()) {
-            throw new CreatingExistingStandardCategoryException(categoryName);
+            throw new ExistingStandardCategoryException(categoryName);
         }
 
         Category category = new Category();
@@ -99,46 +67,15 @@ public class HibernateCategoryRepository implements CategoryRepository {
         return createCategory(session, category);
     }
 
-    /**
-     * Удаляет категорию по ID
-     *
-     * @param id ID категории
-     * @throws RemovingStandardCategoryException если категория является стандартной
-     */
-    @Override
-    public void removeCategoryById(Session session, Long id) throws RemovingStandardCategoryException {
-        Category category = session.get(Category.class, id);
-        boolean isRemovingSuccessful = category == null || (!category.isStandard());
-        if (isRemovingSuccessful) {
-            session.delete(category);
-            return;
-        }
-        throw new RemovingStandardCategoryException(category.getCategoryName());
-    }
-
-    /**
-     * Удаляет пользовательскую категорию по названию
-     *
-     * @param categoryName - название категории
-     * @throws RemovingNonExistentCategoryException если такая персональная категория не существует
-     */
     public void removeUserCategoryByName(Session session, User user, CategoryType type, String categoryName)
-            throws RemovingNonExistentCategoryException {
+            throws NotExistingCategoryException {
         Optional<Category> category = getCategoryByName(session, user, type, categoryName);
         if (category.isEmpty() || category.get().isStandard()) {
-            throw new RemovingNonExistentCategoryException(categoryName);
+            throw new NotExistingCategoryException(categoryName);
         }
         session.delete(category.get());
     }
 
-    /**
-     * Метод возвращает либо собственную категорию пользователя, либо стандартную.
-     *
-     * @param user         Пользователь или null (при null доступны только стандартные категории)
-     * @param categoryName Название категории
-     * @param type         Тип категории
-     * @return Опциональный объект категории (пуст, если категория не найдена)
-     */
     @Override
     public Optional<Category> getCategoryByName(Session session, @Nullable User user, CategoryType type, String categoryName) {
         Query<Category> resultQuery;

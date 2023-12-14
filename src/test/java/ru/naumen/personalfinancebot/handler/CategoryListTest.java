@@ -15,9 +15,8 @@ import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
-import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingCategoryException;
-import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingStandardCategoryException;
-import ru.naumen.personalfinancebot.repository.category.exception.CreatingExistingUserCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.ExistingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.ExistingUserCategoryException;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 
@@ -31,19 +30,18 @@ public class CategoryListTest {
      * Хранилище пользователей
      */
     private final TestHibernateUserRepository userRepository;
+
     /**
      * Хранилище категорий
      * Данная реализация позволяет сделать полную очистку категорий после тестов
      */
     private final TestHibernateCategoryRepository categoryRepository;
-    /**
-     * Хранилище операций
-     */
-    private final OperationRepository operationRepository;
+
     /**
      * Обработчик команд для бота
      */
     private final FinanceBotHandler botHandler;
+
     /**
      * Моковый пользователь. Пересоздается для каждого теста
      */
@@ -63,7 +61,7 @@ public class CategoryListTest {
         SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
         this.userRepository = new TestHibernateUserRepository();
         this.categoryRepository = new TestHibernateCategoryRepository();
-        this.operationRepository = new HibernateOperationRepository();
+        OperationRepository operationRepository = new HibernateOperationRepository();
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, sessionFactory);
         this.transactionManager = new TransactionManager(sessionFactory);
 
@@ -86,7 +84,7 @@ public class CategoryListTest {
                 categoryRepository.createStandardCategory(session, CategoryType.INCOME, "Standard income 2");
                 categoryRepository.createStandardCategory(session, CategoryType.EXPENSE, "Standard expense 1");
                 categoryRepository.createStandardCategory(session, CategoryType.EXPENSE, "Standard expense 2");
-            } catch (CreatingExistingCategoryException e) {
+            } catch (ExistingStandardCategoryException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -332,12 +330,12 @@ public class CategoryListTest {
      * @param user    Пользователь
      * @param type    Типа категории
      * @param names   Имена для новых категорий
-     * @throws CreatingExistingUserCategoryException     если какая-то из категорий уже существует как пользовательская
-     * @throws CreatingExistingStandardCategoryException если какая-то из категорий уже существует как стандартная
+     * @throws ExistingUserCategoryException     если какая-то из категорий уже существует как пользовательская
+     * @throws ExistingStandardCategoryException если какая-то из категорий уже существует как стандартная
      */
     private void addUserCategories(Session session, User user, CategoryType type, String... names) throws
-            CreatingExistingUserCategoryException,
-            CreatingExistingStandardCategoryException {
+            ExistingUserCategoryException,
+            ExistingStandardCategoryException {
         for (String name : names) {
             this.categoryRepository.createUserCategory(session, user, type, name);
         }

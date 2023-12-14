@@ -13,10 +13,6 @@ import java.util.Optional;
  * Реализация хранилища пользователей в БД с помощью библиотеки Hibernate
  */
 public class HibernateUserRepository implements UserRepository {
-
-    /**
-     * Получает пользователя из БД по chat id из telegram.
-     */
     @Override
     public Optional<User> getUserByTelegramChatId(Session session, Long chatId) {
         CriteriaBuilder cb = session.getCriteriaBuilder();
@@ -28,17 +24,11 @@ public class HibernateUserRepository implements UserRepository {
         return query.getResultStream().findFirst();
     }
 
-    /**
-     * Сохраняет пользователя в БД
-     */
     @Override
     public void saveUser(Session session, User user) {
         session.saveOrUpdate(user);
     }
 
-    /**
-     * Удаляет пользователя с таким id из БД
-     */
     @Override
     public void removeUserById(Session session, long id) {
         User user = session.get(User.class, id);
