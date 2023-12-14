@@ -29,17 +29,12 @@ public class OperationsTest {
     /**
      * Статическое поле для начального баланса
      */
-    private final double BALANCE = 100_000;
+    private static final double BALANCE = 100_000;
 
     /**
      * Репозиторий для работы с пользователем
      */
     private final UserRepository userRepository;
-
-    /**
-     * Репозиторий для работы с категориями
-     */
-    private final CategoryRepository categoryRepository;
 
     /**
      * Обработчик операций в боте
@@ -57,7 +52,7 @@ public class OperationsTest {
         this.transactionManager = new TransactionManager(hibernateConfiguration.getSessionFactory());
         SessionFactory sessionFactory = hibernateConfiguration.getSessionFactory();
         this.userRepository = new HibernateUserRepository();
-        this.categoryRepository = new HibernateCategoryRepository();
+        CategoryRepository categoryRepository = new HibernateCategoryRepository();
         OperationRepository operationRepository = new HibernateOperationRepository();
         BudgetRepository budgetRepository = new HibernateBudgetRepository();
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, budgetRepository, sessionFactory);

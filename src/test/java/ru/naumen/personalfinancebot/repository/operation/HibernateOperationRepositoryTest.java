@@ -16,6 +16,9 @@ import ru.naumen.personalfinancebot.repository.user.UserRepository;
 
 import java.time.YearMonth;
 
+/**
+ * Тестирует класс {@link HibernateOperationRepository}
+ */
 public class HibernateOperationRepositoryTest {
     /**
      * Баланс пользователя

@@ -51,11 +51,6 @@ public class RemoveCategoryTest {
     private final TestHibernateCategoryRepository categoryRepository;
 
     /**
-     * Хранилище операций
-     */
-    private final OperationRepository operationRepository;
-
-    /**
      * Обработчик команд
      */
     private final FinanceBotHandler botHandler;
@@ -79,7 +74,7 @@ public class RemoveCategoryTest {
         SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
         userRepository = new TestHibernateUserRepository();
         categoryRepository = new TestHibernateCategoryRepository();
-        operationRepository = new HibernateOperationRepository();
+        OperationRepository operationRepository = new HibernateOperationRepository();
         BudgetRepository budgetRepository = new HibernateBudgetRepository();
         transactionManager = new TransactionManager(sessionFactory);
         this.botHandler = new FinanceBotHandler(
