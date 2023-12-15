@@ -210,7 +210,7 @@ public class EditBudgetTests {
      */
     @Test
     public void wrongAmountArgs() {
-        String[] wrongAmountArgs = new String[]{"0", "-100"};
+        String[] wrongAmountArgs = new String[]{"0", "-100", "NaN"};
         TestYearMonth currentYM = new TestYearMonth();
         transactionManager.produceTransaction(session -> {
             for (String wrongAmount : wrongAmountArgs) {
