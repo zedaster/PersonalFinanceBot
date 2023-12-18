@@ -8,7 +8,8 @@ import ru.naumen.personalfinancebot.model.Budget;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
 import ru.naumen.personalfinancebot.service.ArgumentParseService;
-import ru.naumen.personalfinancebot.service.OutputFormatService;
+import ru.naumen.personalfinancebot.service.OutputMonthFormatService;
+import ru.naumen.personalfinancebot.service.OutputNumberFormatService;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
@@ -29,9 +30,14 @@ public class EditBudgetHandler implements CommandHandler {
     private final ArgumentParseService argumentParser;
 
     /**
-     * Сервис, который приводит данные для вывода к нужному формату
+     * Сервис, который форматирует числа
      */
-    private final OutputFormatService outputFormatter;
+    private final OutputNumberFormatService numberFormatService;
+
+    /**
+     * Сервис, который форматирует месяц к русскому названию
+     */
+    private final OutputMonthFormatService monthFormatService;
 
     /**
      * Тип, значение которого нужно изменить в записи бюджета
@@ -41,15 +47,17 @@ public class EditBudgetHandler implements CommandHandler {
     /**
      * @param budgetRepository Репозиторий для работы с бюджетом
      * @param argumentParser   Сервис, который парсит аргументы
-     * @param outputFormatter  Сервис, который приводит данные для вывода к нужному формату
+     * @param numberFormatService Сервис, который форматирует числа
+     * @param monthFormatService Сервис, который форматирует месяц к русскому названию
      * @param type             Тип, значение которого нужно изменить в записи бюджета
      */
     public EditBudgetHandler(
-            BudgetRepository budgetRepository, ArgumentParseService argumentParser, OutputFormatService outputFormatter,
+            BudgetRepository budgetRepository, ArgumentParseService argumentParser, OutputNumberFormatService numberFormatService, OutputMonthFormatService monthFormatService,
             CategoryType type) {
         this.budgetRepository = budgetRepository;
         this.argumentParser = argumentParser;
-        this.outputFormatter = outputFormatter;
+        this.numberFormatService = numberFormatService;
+        this.monthFormatService = monthFormatService;
         this.type = type;
     }
 
@@ -77,7 +85,6 @@ public class EditBudgetHandler implements CommandHandler {
             return;
         }
 
-
         if (yearMonth.isBefore(YearMonth.now())) {
             commandData.getBot().sendMessage(commandData.getUser(), Message.CANT_EDIT_OLD_BUDGET);
             return;
@@ -88,18 +95,23 @@ public class EditBudgetHandler implements CommandHandler {
             commandData.getBot().sendMessage(commandData.getUser(), Message.BUDGET_NOT_FOUND);
             return;
         }
-        budget.get().setExpectedSummary(this.type, amount);
+
+        switch (this.type) {
+            case INCOME -> budget.get().setIncome(amount);
+            case EXPENSE -> budget.get().setExpense(amount);
+        }
+
         this.budgetRepository.saveBudget(session, budget.get());
 
-        double expectIncome = budget.get().getExpectedSummary(CategoryType.INCOME);
-        double expectExpenses = budget.get().getExpectedSummary(CategoryType.EXPENSE);
+        double expectIncome = budget.get().getIncome();
+        double expectExpenses = budget.get().getExpense();
         commandData.getBot().sendMessage(
                 commandData.getUser(),
                 Message.BUDGET_EDITED.formatted(
-                        outputFormatter.formatRuMonthName(yearMonth.getMonth()),
+                        monthFormatService.formatRuMonthName(yearMonth.getMonth()),
                         String.valueOf(yearMonth.getYear()),
-                        outputFormatter.formatDouble(expectIncome),
-                        outputFormatter.formatDouble(expectExpenses)
+                        numberFormatService.formatDouble(expectIncome),
+                        numberFormatService.formatDouble(expectExpenses)
                 )
         );
     }

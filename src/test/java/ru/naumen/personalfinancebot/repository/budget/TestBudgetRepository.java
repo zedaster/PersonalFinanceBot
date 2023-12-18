@@ -6,7 +6,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.model.Budget;
-import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
@@ -62,8 +61,8 @@ public class TestBudgetRepository {
     public void saveAndGetBudget() {
         Budget budget = new Budget();
         double expense = 50_000, income = 70_000;
-        budget.setExpectedSummary(CategoryType.EXPENSE, expense);
-        budget.setExpectedSummary(CategoryType.INCOME, income);
+        budget.setExpense(expense);
+        budget.setIncome(income);
         User user = this.createUser(1L);
         budget.setUser(user);
         budget.setTargetDate(YearMonth.of(2023, 11));
@@ -71,8 +70,8 @@ public class TestBudgetRepository {
             budgetRepository.saveBudget(session, budget);
             Budget budget1 = budgetRepository.getBudget(session, user, YearMonth.of(2023, 11)).get();
 
-            Assert.assertEquals(budget1.getExpectedSummary(CategoryType.INCOME), budget.getExpectedSummary(CategoryType.INCOME), 0.0);
-            Assert.assertEquals(budget1.getExpectedSummary(CategoryType.EXPENSE), budget.getExpectedSummary(CategoryType.EXPENSE), 0.0);
+            Assert.assertEquals(budget1.getIncome(), budget.getIncome(), 0.0);
+            Assert.assertEquals(budget1.getExpense(), budget.getExpense(), 0.0);
 
             YearMonth yearMonth = budget1.getTargetDate();
 

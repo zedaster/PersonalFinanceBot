@@ -9,7 +9,8 @@ import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 import ru.naumen.personalfinancebot.service.ArgumentParseService;
-import ru.naumen.personalfinancebot.service.OutputFormatService;
+import ru.naumen.personalfinancebot.service.OutputMonthFormatService;
+import ru.naumen.personalfinancebot.service.OutputNumberFormatService;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
@@ -36,21 +37,28 @@ public class ListBudgetHandler implements CommandHandler {
     private final ArgumentParseService argumentParser;
 
     /**
-     * Сервис, который приводит данные для вывода к нужному формату
+     * Сервис, который форматирует числа
      */
-    private final OutputFormatService outputFormatter;
+    private final OutputNumberFormatService numberFormatService;
+
+    /**
+     * Сервис, который форматирует месяц к русскому названию
+     */
+    private final OutputMonthFormatService monthFormatService;
 
     /**
      * @param budgetRepository    Репозиторий для работы с бюджетом
      * @param operationRepository Репозиторий для работы с операциями
      * @param argumentParser      Сервис, который парсит аргументы
-     * @param outputFormatter     Сервис, который приводит данные для вывода к нужному формату
+     * @param numberFormatService Сервис, который форматирует числа
+     * @param monthFormatService  Сервис, который форматирует месяц к русскому названию
      */
-    public ListBudgetHandler(BudgetRepository budgetRepository, OperationRepository operationRepository, ArgumentParseService argumentParser, OutputFormatService outputFormatter) {
+    public ListBudgetHandler(BudgetRepository budgetRepository, OperationRepository operationRepository, ArgumentParseService argumentParser, OutputNumberFormatService numberFormatService, OutputMonthFormatService monthFormatService) {
         this.budgetRepository = budgetRepository;
         this.operationRepository = operationRepository;
         this.argumentParser = argumentParser;
-        this.outputFormatter = outputFormatter;
+        this.numberFormatService = numberFormatService;
+        this.monthFormatService = monthFormatService;
     }
 
     @Override
@@ -106,20 +114,20 @@ public class ListBudgetHandler implements CommandHandler {
         resultReplyMessage.append("\n");
         for (Budget budget : budgets) {
             YearMonth targetYearMonth = budget.getTargetDate();
-            double expectIncome = budget.getExpectedSummary(CategoryType.INCOME);
-            double expectExpenses = budget.getExpectedSummary(CategoryType.EXPENSE);
+            double expectIncome = budget.getIncome();
+            double expectExpenses = budget.getExpense();
             double realIncome = this.operationRepository
                     .getCurrentUserPaymentSummary(session, commandData.getUser(), CategoryType.INCOME, targetYearMonth);
             double realExpenses = this.operationRepository
                     .getCurrentUserPaymentSummary(session, commandData.getUser(), CategoryType.EXPENSE, targetYearMonth);
 
             resultReplyMessage.append(Message.BUDGET_LIST_ELEMENT.formatted(
-                            outputFormatter.formatRuMonthName(targetYearMonth.getMonth()),
-                            String.valueOf(targetYearMonth.getYear()),
-                            outputFormatter.formatDouble(expectIncome),
-                            outputFormatter.formatDouble(expectExpenses),
-                            outputFormatter.formatDouble(realIncome),
-                            outputFormatter.formatDouble(realExpenses))
+                    monthFormatService.formatRuMonthName(targetYearMonth.getMonth()),
+                    String.valueOf(targetYearMonth.getYear()),
+                    numberFormatService.formatDouble(expectIncome),
+                    numberFormatService.formatDouble(expectExpenses),
+                    numberFormatService.formatDouble(realIncome),
+                    numberFormatService.formatDouble(realExpenses))
             );
             resultReplyMessage.append("\n\n");
         }

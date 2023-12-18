@@ -91,35 +91,33 @@ public class Budget {
     }
 
     /**
-     * Устанавливает ожидаемую сумма дохода/расхода
-     *
-     * @param type    Расход/Доход
-     * @param summary Сумма
+     * Устанавливает ожидаемый расход
+     * @param expense Сумма расходов
      */
-    public void setExpectedSummary(CategoryType type, double summary) {
-        switch (type) {
-            case INCOME -> this.income = summary;
-            case EXPENSE -> this.expense = summary;
-            default -> throw new IllegalArgumentException();
-        }
+    public void setExpense(double expense) {
+        this.expense = expense;
     }
 
     /**
-     * Возвращает ожидаемую сумму дохода/расхода
-     *
-     * @param type Расход/Доход
-     * @return Сумма расхода/дохода
+     * @return Ожидаемый расход
      */
-    public double getExpectedSummary(CategoryType type) {
-        switch (type) {
-            case INCOME -> {
-                return this.income;
-            }
-            case EXPENSE -> {
-                return this.expense;
-            }
-            default -> throw new IllegalArgumentException();
-        }
+    public double getExpense() {
+        return this.expense;
+    }
+
+    /**
+     * Устанавливает ожидаемый доход
+     * @param income Сумма доходов
+     */
+    public void setIncome(double income) {
+        this.income = income;
+    }
+
+    /**
+     * @return Ожидаемый расход
+     */
+    public double getIncome() {
+        return this.income;
     }
 
     /**

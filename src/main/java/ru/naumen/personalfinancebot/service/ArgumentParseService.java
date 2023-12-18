@@ -26,7 +26,7 @@ public class ArgumentParseService {
         String parsedString = args.get(0);
         double amount = Double.parseDouble(parsedString.replace(",", "."));
         if (amount < 0) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Баланс не может быть отрицательным.");
         }
         return amount;
     }
@@ -120,7 +120,7 @@ public class ArgumentParseService {
     public int parseYear(String argument) throws NumberFormatException {
         int year = Integer.parseInt(argument);
         if (year < 0 || year > 3000) {
-            throw new NumberFormatException();
+            throw new NumberFormatException("Год не может выходить за пределы диапазона [0, 3000].");
         }
         return year;
     }

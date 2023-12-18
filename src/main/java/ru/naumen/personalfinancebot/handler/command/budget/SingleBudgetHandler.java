@@ -8,7 +8,8 @@ import ru.naumen.personalfinancebot.model.Budget;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
-import ru.naumen.personalfinancebot.service.OutputFormatService;
+import ru.naumen.personalfinancebot.service.OutputMonthFormatService;
+import ru.naumen.personalfinancebot.service.OutputNumberFormatService;
 
 import java.time.YearMonth;
 import java.util.Optional;
@@ -28,19 +29,26 @@ public class SingleBudgetHandler implements CommandHandler {
     private final OperationRepository operationRepository;
 
     /**
-     * Сервис, который приводит данные для вывода к нужному формату
+     * Сервис, который форматирует числа
      */
-    private final OutputFormatService outputFormatter;
+    private final OutputNumberFormatService numberFormatService;
+
+    /**
+     * Сервис, который форматирует месяц к русскому названию
+     */
+    private final OutputMonthFormatService monthFormatService;
 
     /**
      * @param budgetRepository    Репозиторий для работы с бюджетом
      * @param operationRepository Репозиторий для работы с операциями
-     * @param outputFormatter     Сервис, который приводит данные для вывода к нужному формату
+     * @param numberFormatService Сервис, который форматирует числа
+     * @param monthFormatService Сервис, который форматирует месяц к русскому названию
      */
-    public SingleBudgetHandler(BudgetRepository budgetRepository, OperationRepository operationRepository, OutputFormatService outputFormatter) {
+    public SingleBudgetHandler(BudgetRepository budgetRepository, OperationRepository operationRepository, OutputNumberFormatService numberFormatService, OutputMonthFormatService monthFormatService) {
         this.budgetRepository = budgetRepository;
         this.operationRepository = operationRepository;
-        this.outputFormatter = outputFormatter;
+        this.numberFormatService = numberFormatService;
+        this.monthFormatService = monthFormatService;
     }
 
     @Override
@@ -51,14 +59,14 @@ public class SingleBudgetHandler implements CommandHandler {
             commandData.getBot().sendMessage(
                     commandData.getUser(),
                     Message.CURRENT_BUDGET_NOT_EXISTS.formatted(
-                            outputFormatter.formatRuMonthName(currentMonthYear.getMonth()),
+                            monthFormatService.formatRuMonthName(currentMonthYear.getMonth()),
                             String.valueOf(currentMonthYear.getYear()))
             );
             return;
         }
 
-        double expectIncome = budget.get().getExpectedSummary(CategoryType.INCOME);
-        double expectExpenses = budget.get().getExpectedSummary(CategoryType.EXPENSE);
+        double expectIncome = budget.get().getIncome();
+        double expectExpenses = budget.get().getExpense();
         double realIncome = this.operationRepository.getCurrentUserPaymentSummary(
                 session,
                 commandData.getUser(), CategoryType.INCOME, currentMonthYear
@@ -74,14 +82,14 @@ public class SingleBudgetHandler implements CommandHandler {
         commandData.getBot().sendMessage(
                 commandData.getUser(),
                 Message.CURRENT_BUDGET.formatted(
-                        outputFormatter.formatRuMonthName(currentMonthYear.getMonth()),
+                        monthFormatService.formatRuMonthName(currentMonthYear.getMonth()),
                         String.valueOf(currentMonthYear.getYear()),
-                        outputFormatter.formatDouble(expectIncome),
-                        outputFormatter.formatDouble(expectExpenses),
-                        outputFormatter.formatDouble(realIncome),
-                        outputFormatter.formatDouble(realExpenses),
-                        outputFormatter.formatDouble(balance),
-                        outputFormatter.formatDouble(incomeLeft),
-                        outputFormatter.formatDouble(expensesLeft)));
+                        numberFormatService.formatDouble(expectIncome),
+                        numberFormatService.formatDouble(expectExpenses),
+                        numberFormatService.formatDouble(realIncome),
+                        numberFormatService.formatDouble(realExpenses),
+                        numberFormatService.formatDouble(balance),
+                        numberFormatService.formatDouble(incomeLeft),
+                        numberFormatService.formatDouble(expensesLeft)));
     }
 }

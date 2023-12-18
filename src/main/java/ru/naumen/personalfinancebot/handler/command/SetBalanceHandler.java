@@ -5,7 +5,7 @@ import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
 import ru.naumen.personalfinancebot.service.ArgumentParseService;
-import ru.naumen.personalfinancebot.service.OutputFormatService;
+import ru.naumen.personalfinancebot.service.OutputNumberFormatService;
 
 /**
  * Обработчик команды для установки баланса
@@ -21,17 +21,17 @@ public class SetBalanceHandler implements CommandHandler {
     /**
      * Сервис, который приводит данные для вывода к нужному формату
      */
-    private final OutputFormatService outputFormatter;
+    private final OutputNumberFormatService numberFormatService;
 
     /**
      * Хранилище пользователей
      */
     private final UserRepository userRepository;
 
-    public SetBalanceHandler(ArgumentParseService argumentParser, OutputFormatService outputFormatter,
+    public SetBalanceHandler(ArgumentParseService argumentParser, OutputNumberFormatService numberFormatService,
                              UserRepository userRepository) {
         this.argumentParser = argumentParser;
-        this.outputFormatter = outputFormatter;
+        this.numberFormatService = numberFormatService;
         this.userRepository = userRepository;
     }
 
@@ -50,7 +50,7 @@ public class SetBalanceHandler implements CommandHandler {
         userRepository.saveUser(session, commandData.getUser());
         commandData.getBot().sendMessage(
                 commandData.getUser(),
-                Message.SET_BALANCE_SUCCESSFULLY.formatted(this.outputFormatter.formatDouble(amount))
+                Message.SET_BALANCE_SUCCESSFULLY.formatted(this.numberFormatService.formatDouble(amount))
         );
     }
 }

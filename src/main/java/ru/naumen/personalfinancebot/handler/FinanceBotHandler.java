@@ -11,10 +11,7 @@ import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
-import ru.naumen.personalfinancebot.service.ArgumentParseService;
-import ru.naumen.personalfinancebot.service.CategoryListService;
-import ru.naumen.personalfinancebot.service.OutputFormatService;
-import ru.naumen.personalfinancebot.service.ReportService;
+import ru.naumen.personalfinancebot.service.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,13 +39,15 @@ public class FinanceBotHandler {
     public FinanceBotHandler(UserRepository userRepository, OperationRepository operationRepository, CategoryRepository categoryRepository, BudgetRepository budgetRepository, SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
         ArgumentParseService argumentParseService = new ArgumentParseService();
-        OutputFormatService outputFormatService = new OutputFormatService();
+//        OutputFormatService outputFormatService = new OutputFormatService();
+        OutputNumberFormatService numberFormatService = new OutputNumberFormatService();
+        OutputMonthFormatService monthFormatService = new OutputMonthFormatService();
         CategoryListService categoryListService = new CategoryListService(categoryRepository);
         ReportService reportService = new ReportService(operationRepository);
 
         commandHandlers = new HashMap<>();
         commandHandlers.put("start", new StartCommandHandler());
-        commandHandlers.put("set_balance", new SetBalanceHandler(argumentParseService, outputFormatService,
+        commandHandlers.put("set_balance", new SetBalanceHandler(argumentParseService, numberFormatService,
                 userRepository));
         commandHandlers.put("add_expense", new AddOperationHandler(CategoryType.EXPENSE, userRepository,
                 categoryRepository, operationRepository, argumentParseService));
@@ -70,16 +69,16 @@ public class FinanceBotHandler {
         commandHandlers.put("report_expense", new ReportExpensesHandler(reportService));
 
         commandHandlers.put("budget", new SingleBudgetHandler(budgetRepository, operationRepository,
-                outputFormatService));
+                numberFormatService, monthFormatService));
         commandHandlers.put("budget_help", new HelpBudgetHandler());
         commandHandlers.put("budget_create", new CreateBudgetHandler(budgetRepository, operationRepository,
-                argumentParseService, outputFormatService));
+                argumentParseService, numberFormatService, monthFormatService));
         commandHandlers.put("budget_set_income", new EditBudgetHandler(budgetRepository,
-                argumentParseService, outputFormatService, CategoryType.INCOME));
+                argumentParseService, numberFormatService, monthFormatService, CategoryType.INCOME));
         commandHandlers.put("budget_set_expenses", new EditBudgetHandler(budgetRepository,
-                argumentParseService, outputFormatService, CategoryType.EXPENSE));
+                argumentParseService, numberFormatService, monthFormatService, CategoryType.EXPENSE));
         commandHandlers.put("budget_list", new ListBudgetHandler(budgetRepository, operationRepository,
-                argumentParseService, outputFormatService));
+                argumentParseService, numberFormatService, monthFormatService));
     }
 
     /**
