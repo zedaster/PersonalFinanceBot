@@ -9,7 +9,7 @@ public interface Bot {
     /**
      * Запуск бота
      */
-    void startPooling() throws PollingException;
+    void startPooling() throws PoolingException;
 
     /**
      * Отправка текстового сообщения определенному пользователю

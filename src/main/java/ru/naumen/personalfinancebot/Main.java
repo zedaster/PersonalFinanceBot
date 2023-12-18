@@ -1,7 +1,7 @@
 package ru.naumen.personalfinancebot;
 
 import ru.naumen.personalfinancebot.bot.Bot;
-import ru.naumen.personalfinancebot.bot.PollingException;
+import ru.naumen.personalfinancebot.bot.PoolingException;
 import ru.naumen.personalfinancebot.bot.TelegramBot;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.configuration.TelegramBotConfiguration;
@@ -45,7 +45,7 @@ public class Main {
         );
         try {
             bot.startPooling();
-        } catch (PollingException exception) {
+        } catch (PoolingException exception) {
             System.out.println(exception.getMessage());
             exception.printStackTrace();
         }

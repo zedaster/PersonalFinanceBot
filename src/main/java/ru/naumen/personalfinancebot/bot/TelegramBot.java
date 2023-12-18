@@ -100,13 +100,13 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
      * Запуск бота
      */
     @Override
-    public void startPooling() throws PollingException {
+    public void startPooling() throws PoolingException {
         try {
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
             botsApi.registerBot(this);
             System.out.println("Telegram bot is pooling now...");
         } catch (TelegramApiException exception) {
-            throw new PollingException(POLLING_EXCEPTION, exception);
+            throw new PoolingException(POLLING_EXCEPTION, exception);
         }
     }
 
