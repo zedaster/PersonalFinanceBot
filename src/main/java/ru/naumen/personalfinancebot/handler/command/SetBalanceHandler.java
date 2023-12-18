@@ -4,7 +4,7 @@ import org.hibernate.Session;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
-import ru.naumen.personalfinancebot.service.ArgumentParseService;
+import ru.naumen.personalfinancebot.service.NumberParseService;
 import ru.naumen.personalfinancebot.service.OutputNumberFormatService;
 
 /**
@@ -14,9 +14,9 @@ import ru.naumen.personalfinancebot.service.OutputNumberFormatService;
  */
 public class SetBalanceHandler implements CommandHandler {
     /**
-     * Сервис, который парсит аргументы
+     * Сервис, который парсит числа
      */
-    private final ArgumentParseService argumentParser;
+    private final NumberParseService numberParseService;
 
     /**
      * Сервис, который приводит данные для вывода к нужному формату
@@ -28,9 +28,9 @@ public class SetBalanceHandler implements CommandHandler {
      */
     private final UserRepository userRepository;
 
-    public SetBalanceHandler(ArgumentParseService argumentParser, OutputNumberFormatService numberFormatService,
+    public SetBalanceHandler(NumberParseService numberParseService, OutputNumberFormatService numberFormatService,
                              UserRepository userRepository) {
-        this.argumentParser = argumentParser;
+        this.numberParseService = numberParseService;
         this.numberFormatService = numberFormatService;
         this.userRepository = userRepository;
     }
@@ -39,7 +39,7 @@ public class SetBalanceHandler implements CommandHandler {
     public void handleCommand(CommandData commandData, Session session) {
         double amount;
         try {
-            amount = argumentParser.parseBalance(commandData.getArgs());
+            amount = numberParseService.parseBalance(commandData.getArgs());
         } catch (IllegalArgumentException e) {
             commandData.getBot().sendMessage(commandData.getUser(),
                     "Команда введена неверно! Введите /set_balance <новый баланс>");

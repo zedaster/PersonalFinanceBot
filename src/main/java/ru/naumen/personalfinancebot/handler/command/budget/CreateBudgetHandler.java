@@ -9,7 +9,8 @@ import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
-import ru.naumen.personalfinancebot.service.ArgumentParseService;
+import ru.naumen.personalfinancebot.service.DateParseService;
+import ru.naumen.personalfinancebot.service.NumberParseService;
 import ru.naumen.personalfinancebot.service.OutputMonthFormatService;
 import ru.naumen.personalfinancebot.service.OutputNumberFormatService;
 
@@ -31,9 +32,14 @@ public class CreateBudgetHandler implements CommandHandler {
     private final OperationRepository operationRepository;
 
     /**
-     * Сервис, который парсит аргументы
+     * Сервис, который парсит дату
      */
-    private final ArgumentParseService argumentParseService;
+    private final DateParseService dateParseService;
+
+    /**
+     * Сервис, который парсит числа
+     */
+    private final NumberParseService numberParseService;
 
     /**
      * Сервис, который форматирует числа
@@ -47,18 +53,20 @@ public class CreateBudgetHandler implements CommandHandler {
 
 
     /**
-     * @param budgetRepository     Репозиторий для работы с бюджетом
-     * @param operationRepository  Репозиторий для работы с операциями
-     * @param argumentParseService Сервис, который парсит аргументы
-     * @param numberFormatService  Сервис, который форматирует числа
-     * @param monthFormatService   Сервис, который форматирует месяц к русскому названию
+     * @param budgetRepository    Репозиторий для работы с бюджетом
+     * @param operationRepository Репозиторий для работы с операциями
+     * @param dateParseService    Сервис, который парсит дату
+     * @param numberParseService  Сервис, который парсит числа
+     * @param numberFormatService Сервис, который форматирует числа
+     * @param monthFormatService  Сервис, который форматирует месяц к русскому названию
      */
     public CreateBudgetHandler(BudgetRepository budgetRepository, OperationRepository operationRepository,
-                               ArgumentParseService argumentParseService, OutputNumberFormatService numberFormatService,
-                               OutputMonthFormatService monthFormatService) {
+                               DateParseService dateParseService, NumberParseService numberParseService,
+                               OutputNumberFormatService numberFormatService, OutputMonthFormatService monthFormatService) {
         this.budgetRepository = budgetRepository;
         this.operationRepository = operationRepository;
-        this.argumentParseService = argumentParseService;
+        this.dateParseService = dateParseService;
+        this.numberParseService = numberParseService;
         this.numberFormatService = numberFormatService;
         this.monthFormatService = monthFormatService;
     }
@@ -72,7 +80,7 @@ public class CreateBudgetHandler implements CommandHandler {
 
         YearMonth yearMonth;
         try {
-            yearMonth = this.argumentParseService.parseYearMonth(commandData.getArgs().get(0));
+            yearMonth = this.dateParseService.parseYearMonth(commandData.getArgs().get(0));
         } catch (DateTimeParseException e) {
             commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_BUDGET_YEAR_MONTH);
             return;
@@ -86,8 +94,8 @@ public class CreateBudgetHandler implements CommandHandler {
         double expectedIncome;
         double expectedExpenses;
         try {
-            expectedIncome = this.argumentParseService.parsePositiveDouble(commandData.getArgs().get(1));
-            expectedExpenses = this.argumentParseService.parsePositiveDouble(commandData.getArgs().get(2));
+            expectedIncome = this.numberParseService.parsePositiveDouble(commandData.getArgs().get(1));
+            expectedExpenses = this.numberParseService.parsePositiveDouble(commandData.getArgs().get(2));
         } catch (NumberFormatException e) {
             commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_BUDGET_NUMBER_ARG);
             return;

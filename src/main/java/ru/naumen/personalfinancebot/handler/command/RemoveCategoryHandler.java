@@ -6,7 +6,7 @@ import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repository.category.exception.NotExistingCategoryException;
-import ru.naumen.personalfinancebot.service.ArgumentParseService;
+import ru.naumen.personalfinancebot.service.CategoryParseService;
 
 /**
  * Обработчик команд для удаления пользовательской категории определенного типа
@@ -25,14 +25,14 @@ public class RemoveCategoryHandler implements CommandHandler {
     private final CategoryType categoryType;
 
     /**
-     * Сервис, который парсит аргументы
+     * Сервис, который парсит категорию
      */
-    private final ArgumentParseService argumentParser;
+    private final CategoryParseService categoryParseService;
 
-    public RemoveCategoryHandler(CategoryType categoryType, CategoryRepository categoryRepository, ArgumentParseService argumentParser) {
+    public RemoveCategoryHandler(CategoryType categoryType, CategoryRepository categoryRepository, CategoryParseService categoryParseService) {
         this.categoryRepository = categoryRepository;
         this.categoryType = categoryType;
-        this.argumentParser = argumentParser;
+        this.categoryParseService = categoryParseService;
     }
 
     @Override
@@ -40,7 +40,7 @@ public class RemoveCategoryHandler implements CommandHandler {
         String typeLabel = categoryType.getPluralShowLabel();
         String categoryName;
         try {
-            categoryName = argumentParser.parseCategory(commandData.getArgs());
+            categoryName = categoryParseService.parseCategory(commandData.getArgs());
         } catch (IllegalArgumentException ex) {
             commandData.getBot().sendMessage(commandData.getUser(), ex.getMessage());
             return;

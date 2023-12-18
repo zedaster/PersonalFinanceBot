@@ -8,7 +8,7 @@ import ru.naumen.personalfinancebot.model.Budget;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
-import ru.naumen.personalfinancebot.service.ArgumentParseService;
+import ru.naumen.personalfinancebot.service.DateParseService;
 import ru.naumen.personalfinancebot.service.OutputMonthFormatService;
 import ru.naumen.personalfinancebot.service.OutputNumberFormatService;
 
@@ -32,9 +32,9 @@ public class ListBudgetHandler implements CommandHandler {
     private final OperationRepository operationRepository;
 
     /**
-     * Сервис, который парсит аргументы
+     * Сервис, который парсит дату
      */
-    private final ArgumentParseService argumentParser;
+    private final DateParseService dateParseService;
 
     /**
      * Сервис, который форматирует числа
@@ -49,14 +49,14 @@ public class ListBudgetHandler implements CommandHandler {
     /**
      * @param budgetRepository    Репозиторий для работы с бюджетом
      * @param operationRepository Репозиторий для работы с операциями
-     * @param argumentParser      Сервис, который парсит аргументы
+     * @param dateParseService    Сервис, который парсит дату
      * @param numberFormatService Сервис, который форматирует числа
      * @param monthFormatService  Сервис, который форматирует месяц к русскому названию
      */
-    public ListBudgetHandler(BudgetRepository budgetRepository, OperationRepository operationRepository, ArgumentParseService argumentParser, OutputNumberFormatService numberFormatService, OutputMonthFormatService monthFormatService) {
+    public ListBudgetHandler(BudgetRepository budgetRepository, OperationRepository operationRepository, DateParseService dateParseService, OutputNumberFormatService numberFormatService, OutputMonthFormatService monthFormatService) {
         this.budgetRepository = budgetRepository;
         this.operationRepository = operationRepository;
-        this.argumentParser = argumentParser;
+        this.dateParseService = dateParseService;
         this.numberFormatService = numberFormatService;
         this.monthFormatService = monthFormatService;
     }
@@ -73,7 +73,7 @@ public class ListBudgetHandler implements CommandHandler {
         } else if (arguments.size() == 1) {
             int year;
             try {
-                year = argumentParser.parseYear(arguments.get(0));
+                year = dateParseService.parseYear(arguments.get(0));
             } catch (NumberFormatException e) {
                 commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_BUDGET_YEAR_ARG);
                 return;
@@ -83,8 +83,8 @@ public class ListBudgetHandler implements CommandHandler {
             postfixMessage = Message.BUDGET_LIST_YEAR_POSTFIX.formatted(String.valueOf(year));
         } else if (arguments.size() == 2) {
             try {
-                from = argumentParser.parseYearMonth(arguments.get(0));
-                to = argumentParser.parseYearMonth(arguments.get(1));
+                from = dateParseService.parseYearMonth(arguments.get(0));
+                to = dateParseService.parseYearMonth(arguments.get(1));
             } catch (DateTimeParseException e) {
                 commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_BUDGET_YEAR_MONTH);
                 return;

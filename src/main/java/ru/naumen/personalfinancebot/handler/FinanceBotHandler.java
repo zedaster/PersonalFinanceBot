@@ -38,8 +38,9 @@ public class FinanceBotHandler {
      */
     public FinanceBotHandler(UserRepository userRepository, OperationRepository operationRepository, CategoryRepository categoryRepository, BudgetRepository budgetRepository, SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
-        ArgumentParseService argumentParseService = new ArgumentParseService();
-//        OutputFormatService outputFormatService = new OutputFormatService();
+        CategoryParseService categoryParseService = new CategoryParseService();
+        DateParseService dateParseService = new DateParseService();
+        NumberParseService numberParseService = new NumberParseService();
         OutputNumberFormatService numberFormatService = new OutputNumberFormatService();
         OutputMonthFormatService monthFormatService = new OutputMonthFormatService();
         CategoryListService categoryListService = new CategoryListService(categoryRepository);
@@ -47,20 +48,20 @@ public class FinanceBotHandler {
 
         commandHandlers = new HashMap<>();
         commandHandlers.put("start", new StartCommandHandler());
-        commandHandlers.put("set_balance", new SetBalanceHandler(argumentParseService, numberFormatService,
+        commandHandlers.put("set_balance", new SetBalanceHandler(numberParseService, numberFormatService,
                 userRepository));
         commandHandlers.put("add_expense", new AddOperationHandler(CategoryType.EXPENSE, userRepository,
-                categoryRepository, operationRepository, argumentParseService));
+                categoryRepository, operationRepository, categoryParseService));
         commandHandlers.put("add_income", new AddOperationHandler(CategoryType.INCOME, userRepository,
-                categoryRepository, operationRepository, argumentParseService));
+                categoryRepository, operationRepository, categoryParseService));
         commandHandlers.put("add_income_category", new AddCategoryHandler(CategoryType.INCOME, categoryRepository,
-                argumentParseService));
+                categoryParseService));
         commandHandlers.put("add_expense_category", new AddCategoryHandler(CategoryType.EXPENSE, categoryRepository,
-                argumentParseService));
+                categoryParseService));
         commandHandlers.put("remove_income_category", new RemoveCategoryHandler(CategoryType.INCOME,
-                categoryRepository, argumentParseService));
+                categoryRepository, categoryParseService));
         commandHandlers.put("remove_expense_category", new RemoveCategoryHandler(CategoryType.EXPENSE,
-                categoryRepository, argumentParseService));
+                categoryRepository, categoryParseService));
         commandHandlers.put("list_categories", new FullListCategoriesHandler(categoryListService));
         commandHandlers.put("list_income_categories", new SingleListCategoriesHandler(CategoryType.INCOME,
                 categoryListService));
@@ -72,13 +73,13 @@ public class FinanceBotHandler {
                 numberFormatService, monthFormatService));
         commandHandlers.put("budget_help", new HelpBudgetHandler());
         commandHandlers.put("budget_create", new CreateBudgetHandler(budgetRepository, operationRepository,
-                argumentParseService, numberFormatService, monthFormatService));
-        commandHandlers.put("budget_set_income", new EditBudgetHandler(budgetRepository,
-                argumentParseService, numberFormatService, monthFormatService, CategoryType.INCOME));
-        commandHandlers.put("budget_set_expenses", new EditBudgetHandler(budgetRepository,
-                argumentParseService, numberFormatService, monthFormatService, CategoryType.EXPENSE));
+                dateParseService, numberParseService, numberFormatService, monthFormatService));
+        commandHandlers.put("budget_set_income", new EditBudgetHandler(budgetRepository, numberParseService,
+                dateParseService, numberFormatService, monthFormatService, CategoryType.INCOME));
+        commandHandlers.put("budget_set_expenses", new EditBudgetHandler(budgetRepository, numberParseService,
+                dateParseService, numberFormatService, monthFormatService, CategoryType.EXPENSE));
         commandHandlers.put("budget_list", new ListBudgetHandler(budgetRepository, operationRepository,
-                argumentParseService, numberFormatService, monthFormatService));
+                dateParseService, numberFormatService, monthFormatService));
     }
 
     /**

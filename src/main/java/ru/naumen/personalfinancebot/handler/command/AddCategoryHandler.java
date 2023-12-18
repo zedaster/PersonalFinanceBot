@@ -7,7 +7,7 @@ import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repository.category.exception.ExistingStandardCategoryException;
 import ru.naumen.personalfinancebot.repository.category.exception.ExistingUserCategoryException;
-import ru.naumen.personalfinancebot.service.ArgumentParseService;
+import ru.naumen.personalfinancebot.service.CategoryParseService;
 
 /**
  * Обработчик команд для добавления пользовательской категории определенного типа
@@ -26,21 +26,21 @@ public class AddCategoryHandler implements CommandHandler {
     private final CategoryRepository categoryRepository;
 
     /**
-     * Сервис, который парсит аргументы
+     * Сервис, который парсит категорию
      */
-    private final ArgumentParseService argumentParser;
+    private final CategoryParseService categoryParseService;
 
-    public AddCategoryHandler(CategoryType type, CategoryRepository categoryRepository, ArgumentParseService argumentParser) {
+    public AddCategoryHandler(CategoryType type, CategoryRepository categoryRepository, CategoryParseService categoryParseService) {
         this.type = type;
         this.categoryRepository = categoryRepository;
-        this.argumentParser = argumentParser;
+        this.categoryParseService = categoryParseService;
     }
 
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         String categoryName;
         try {
-            categoryName = argumentParser.parseCategory(commandData.getArgs());
+            categoryName = categoryParseService.parseCategory(commandData.getArgs());
         } catch (IllegalArgumentException ex) {
             commandData.getBot().sendMessage(commandData.getUser(), ex.getMessage());
             return;

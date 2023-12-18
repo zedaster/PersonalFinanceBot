@@ -11,7 +11,7 @@ import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repository.category.exception.NotExistingCategoryException;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
-import ru.naumen.personalfinancebot.service.ArgumentParseService;
+import ru.naumen.personalfinancebot.service.CategoryParseService;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,18 +42,18 @@ public class AddOperationHandler implements CommandHandler {
      */
     private final OperationRepository operationRepository;
 
-    /**
-     * Сервис, который парсит аргументы
-     */
-    private final ArgumentParseService argumentParser;
+    /***/
+    private final CategoryParseService categoryParseService;
+
 
     public AddOperationHandler(CategoryType categoryType, UserRepository userRepository,
-                               CategoryRepository categoryRepository, OperationRepository operationRepository, ArgumentParseService argumentParser) {
+                               CategoryRepository categoryRepository, OperationRepository operationRepository,
+                               CategoryParseService categoryParseService) {
         this.categoryType = categoryType;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.operationRepository = operationRepository;
-        this.argumentParser = argumentParser;
+        this.categoryParseService = categoryParseService;
     }
 
     @Override
@@ -101,7 +101,7 @@ public class AddOperationHandler implements CommandHandler {
         if (payment <= 0) {
             throw new NumberFormatException();
         }
-        String categoryName = this.argumentParser.parseCategory(args.subList(1, args.size()));
+        String categoryName = this.categoryParseService.parseCategory(args.subList(1, args.size()));
         if (type == CategoryType.EXPENSE) {
             payment = -Math.abs(payment);
         } else if (type == CategoryType.INCOME) {

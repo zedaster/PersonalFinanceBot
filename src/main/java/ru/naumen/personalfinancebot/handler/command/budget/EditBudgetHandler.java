@@ -7,7 +7,8 @@ import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.Budget;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
-import ru.naumen.personalfinancebot.service.ArgumentParseService;
+import ru.naumen.personalfinancebot.service.DateParseService;
+import ru.naumen.personalfinancebot.service.NumberParseService;
 import ru.naumen.personalfinancebot.service.OutputMonthFormatService;
 import ru.naumen.personalfinancebot.service.OutputNumberFormatService;
 
@@ -25,9 +26,14 @@ public class EditBudgetHandler implements CommandHandler {
     private final BudgetRepository budgetRepository;
 
     /**
-     * Сервис, который парсит аргументы
+     * Сервис, который парсит числа
      */
-    private final ArgumentParseService argumentParser;
+    private final NumberParseService numberParseService;
+
+    /**
+     * Сервис, который парсит дату
+     */
+    private final DateParseService dateParseService;
 
     /**
      * Сервис, который форматирует числа
@@ -45,17 +51,20 @@ public class EditBudgetHandler implements CommandHandler {
     private final CategoryType type;
 
     /**
-     * @param budgetRepository Репозиторий для работы с бюджетом
-     * @param argumentParser   Сервис, который парсит аргументы
+     * @param budgetRepository    Репозиторий для работы с бюджетом
+     * @param numberParseService  Сервис, который парсит числа
+     * @param dateParseService    Сервис, который парсит дату
      * @param numberFormatService Сервис, который форматирует числа
-     * @param monthFormatService Сервис, который форматирует месяц к русскому названию
-     * @param type             Тип, значение которого нужно изменить в записи бюджета
+     * @param monthFormatService  Сервис, который форматирует месяц к русскому названию
+     * @param type                Тип, значение которого нужно изменить в записи бюджета
      */
     public EditBudgetHandler(
-            BudgetRepository budgetRepository, ArgumentParseService argumentParser, OutputNumberFormatService numberFormatService, OutputMonthFormatService monthFormatService,
-            CategoryType type) {
+            BudgetRepository budgetRepository, NumberParseService numberParseService,
+            DateParseService dateParseService, OutputNumberFormatService numberFormatService,
+            OutputMonthFormatService monthFormatService, CategoryType type) {
         this.budgetRepository = budgetRepository;
-        this.argumentParser = argumentParser;
+        this.numberParseService = numberParseService;
+        this.dateParseService = dateParseService;
         this.numberFormatService = numberFormatService;
         this.monthFormatService = monthFormatService;
         this.type = type;
@@ -68,10 +77,10 @@ public class EditBudgetHandler implements CommandHandler {
         double amount;
         try {
             if (argsCount == 1) {
-                amount = this.argumentParser.parsePositiveDouble(commandData.getArgs().get(0));
+                amount = this.numberParseService.parsePositiveDouble(commandData.getArgs().get(0));
             } else if (argsCount == 2) {
-                yearMonth = this.argumentParser.parseYearMonth(commandData.getArgs().get(0));
-                amount = this.argumentParser.parsePositiveDouble(commandData.getArgs().get(1));
+                yearMonth = this.dateParseService.parseYearMonth(commandData.getArgs().get(0));
+                amount = this.numberParseService.parsePositiveDouble(commandData.getArgs().get(1));
             } else {
                 commandData.getBot().sendMessage(commandData.getUser(),
                         Message.INCORRECT_EDIT_BUDGET_ENTIRE_ARGS);
