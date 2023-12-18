@@ -1,6 +1,7 @@
 package ru.naumen.personalfinancebot.handler.command.budget;
 
 import org.hibernate.SessionFactory;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,12 +14,12 @@ import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
-import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
-import ru.naumen.personalfinancebot.repository.empty.EmptyCategoryRepository;
-import ru.naumen.personalfinancebot.repository.empty.EmptyUserRepository;
-import ru.naumen.personalfinancebot.repository.fake.FakeBudgetRepository;
-import ru.naumen.personalfinancebot.repository.fake.FakeOperationRepository;
-import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
+import ru.naumen.personalfinancebot.repository.category.exception.ExistingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.ExistingUserCategoryException;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateBudgetRepository;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateCategoryRepository;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateOperationRepository;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateUserRepository;
 
 import java.util.List;
 
@@ -32,24 +33,34 @@ public class CreateBudgetTest {
     private final TransactionManager transactionManager;
 
     /**
-     * Экземпляр класс фейковой реализации бота
-     */
-    private MockBot mockBot;
-
-    /**
      * Обработчик операций бота
      */
-    private FinanceBotHandler botHandler;
+    private final FinanceBotHandler botHandler;
+
+    /**
+     * Хранилище пользователей
+     */
+    private final TestHibernateUserRepository userRepository;
+
+    /**
+     * Хранилище категорий
+     */
+    private final TestHibernateCategoryRepository categoryRepository;
 
     /**
      * Хранилище бюджетов
      */
-    private BudgetRepository budgetRepository;
+    private final TestHibernateBudgetRepository budgetRepository;
 
     /**
      * Хранилище опреаций
      */
-    private OperationRepository operationRepository;
+    private final TestHibernateOperationRepository operationRepository;
+
+    /**
+     * Экземпляр класс фейковой реализации бота
+     */
+    private MockBot mockBot;
 
     /**
      * Пользователь
@@ -59,6 +70,15 @@ public class CreateBudgetTest {
     public CreateBudgetTest() {
         SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
         this.transactionManager = new TransactionManager(sessionFactory);
+        this.userRepository = new TestHibernateUserRepository();
+        this.categoryRepository = new TestHibernateCategoryRepository();
+        this.operationRepository = new TestHibernateOperationRepository();
+        this.budgetRepository = new TestHibernateBudgetRepository();
+        this.botHandler = new FinanceBotHandler(
+                this.userRepository,
+                this.operationRepository,
+                this.categoryRepository,
+                this.budgetRepository);
     }
 
     /**
@@ -66,15 +86,24 @@ public class CreateBudgetTest {
      */
     @Before
     public void initVariables() {
-        this.budgetRepository = new FakeBudgetRepository();
-        this.operationRepository = new FakeOperationRepository();
         this.mockBot = new MockBot();
-        this.botHandler = new FinanceBotHandler(
-                new EmptyUserRepository(),
-                this.operationRepository,
-                new EmptyCategoryRepository(),
-                this.budgetRepository);
         this.user = new User(1, 100);
+        this.transactionManager.produceTransaction(session -> {
+            this.userRepository.saveUser(session, this.user);
+        });
+    }
+
+    /**
+     * Очистка репозиториев после каждого теста
+     */
+    @After
+    public void clearRepositories() {
+        this.transactionManager.produceTransaction(session -> {
+            this.budgetRepository.removeAll(session);
+            this.operationRepository.removeAll(session);
+            this.categoryRepository.removeAll(session);
+            this.userRepository.removeAll(session);
+        });
     }
 
     /**
@@ -110,10 +139,18 @@ public class CreateBudgetTest {
     public void currentMonthAndOperations() {
 
         TestYearMonth currentYM = new TestYearMonth();
-        Category fakeIncomeCategory = new Category(this.user, "Fake Income", CategoryType.INCOME);
-        Category fakeExpenseCategory = new Category(this.user, "Fake Expenses", CategoryType.EXPENSE);
-
         transactionManager.produceTransaction(session -> {
+            Category fakeIncomeCategory;
+            Category fakeExpenseCategory;
+            try {
+                fakeIncomeCategory = this.categoryRepository
+                        .createUserCategory(session, this.user, CategoryType.INCOME, "Fake Income");
+                fakeExpenseCategory = this.categoryRepository
+                        .createUserCategory(session, this.user, CategoryType.EXPENSE, "Fake Expenses");
+
+            } catch (ExistingStandardCategoryException | ExistingUserCategoryException e) {
+                throw new RuntimeException(e);
+            }
             this.operationRepository.addOperation(session, this.user, fakeIncomeCategory, 7000);
             this.operationRepository.addOperation(session, this.user, fakeExpenseCategory, 6000);
             CommandData command = new CommandData(this.mockBot, this.user,
@@ -245,7 +282,7 @@ public class CreateBudgetTest {
                 Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
                 MockMessage message = this.mockBot.poolMessageQueue();
                 Assert.assertEquals("Неверно введена команда! Введите " +
-                        "/budget_create [mm.yyyy - месяц.год] [ожидаемый доход] [ожидаемый расходы]", message.text());
+                                    "/budget_create [mm.yyyy - месяц.год] [ожидаемый доход] [ожидаемый расходы]", message.text());
                 Assert.assertEquals(this.user, message.receiver());
             }
         });

@@ -1,6 +1,7 @@
 package ru.naumen.personalfinancebot.handler.command.budget;
 
 import org.hibernate.SessionFactory;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,12 +15,12 @@ import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
-import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
-import ru.naumen.personalfinancebot.repository.empty.EmptyCategoryRepository;
-import ru.naumen.personalfinancebot.repository.empty.EmptyUserRepository;
-import ru.naumen.personalfinancebot.repository.fake.FakeBudgetRepository;
-import ru.naumen.personalfinancebot.repository.fake.FakeOperationRepository;
-import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
+import ru.naumen.personalfinancebot.repository.category.exception.ExistingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.category.exception.ExistingUserCategoryException;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateBudgetRepository;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateCategoryRepository;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateOperationRepository;
+import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateUserRepository;
 
 import java.time.YearMonth;
 import java.util.List;
@@ -34,24 +35,44 @@ public class SingleBudgetTest {
     private final TransactionManager transactionManager;
 
     /**
-     * Экземпляр класс фейковой реализации бота
-     */
-    private MockBot mockBot;
-
-    /**
      * Обработчик операций бота
      */
-    private FinanceBotHandler botHandler;
+    private final FinanceBotHandler botHandler;
+
+    /**
+     * Хранилище пользователей
+     */
+    private final TestHibernateUserRepository userRepository;
+
+    /**
+     * Хранилище категорий
+     */
+    private final TestHibernateCategoryRepository categoryRepository;
 
     /**
      * Хранилище операций
      */
-    private OperationRepository operationRepository;
+    private final TestHibernateOperationRepository operationRepository;
 
     /**
      * Хранилище бюджетов
      */
-    private BudgetRepository budgetRepository;
+    private final TestHibernateBudgetRepository budgetRepository;
+
+    /**
+     * Фейковая категория доходов
+     */
+    private Category fakeIncomeCategory;
+
+    /**
+     * Фейковая категория расходов
+     */
+    private Category fakeExpenseCategory;
+
+    /**
+     * Экземпляр класс фейковой реализации бота
+     */
+    private MockBot mockBot;
 
     /**
      * Пользователь
@@ -61,6 +82,15 @@ public class SingleBudgetTest {
     public SingleBudgetTest() {
         SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
         this.transactionManager = new TransactionManager(sessionFactory);
+        this.userRepository = new TestHibernateUserRepository();
+        this.categoryRepository = new TestHibernateCategoryRepository();
+        this.operationRepository = new TestHibernateOperationRepository();
+        this.budgetRepository = new TestHibernateBudgetRepository();
+        this.botHandler = new FinanceBotHandler(
+                this.userRepository,
+                this.operationRepository,
+                this.categoryRepository,
+                this.budgetRepository);
     }
 
     /**
@@ -68,15 +98,25 @@ public class SingleBudgetTest {
      */
     @Before
     public void initVariables() {
-        this.operationRepository = new FakeOperationRepository();
-        this.budgetRepository = new FakeBudgetRepository();
         this.mockBot = new MockBot();
-        this.botHandler = new FinanceBotHandler(
-                new EmptyUserRepository(),
-                this.operationRepository,
-                new EmptyCategoryRepository(),
-                this.budgetRepository);
         this.user = new User(1, 100);
+        this.transactionManager.produceTransaction(session -> {
+            this.userRepository.saveUser(session, this.user);
+        });
+        addFakeStandardCategories();
+    }
+
+    /**
+     * Очистка репозиториев после каждого теста
+     */
+    @After
+    public void clearRepositories() {
+        this.transactionManager.produceTransaction(session -> {
+            this.budgetRepository.removeAll(session);
+            this.operationRepository.removeAll(session);
+            this.categoryRepository.removeAll(session);
+            this.userRepository.removeAll(session);
+        });
     }
 
     /**
@@ -120,8 +160,7 @@ public class SingleBudgetTest {
 
             Budget budget = new Budget(this.user, 100_000, 90_000, testYearMonth.getYearMonth());
             this.budgetRepository.saveBudget(session, budget);
-            Category fakeIncomeCategory = new Category(this.user, "Fake", CategoryType.INCOME);
-            Category fakeExpenseCategory = new Category(this.user, "Fake", CategoryType.EXPENSE);
+
             this.operationRepository.addOperation(session, this.user, fakeIncomeCategory, 3000);
             this.operationRepository.addOperation(session, this.user, fakeExpenseCategory, 1000);
 
@@ -154,8 +193,7 @@ public class SingleBudgetTest {
 
             Budget budget = new Budget(this.user, 100_000, 90_000, testYearMonth.getYearMonth());
             this.budgetRepository.saveBudget(session, budget);
-            Category fakeIncomeCategory = new Category(this.user, "Fake", CategoryType.INCOME);
-            Category fakeExpenseCategory = new Category(this.user, "Fake", CategoryType.EXPENSE);
+
             this.operationRepository.addOperation(session, this.user, fakeIncomeCategory, 101_000);
             this.operationRepository.addOperation(session, this.user, fakeExpenseCategory, 91_000);
 
@@ -195,6 +233,22 @@ public class SingleBudgetTest {
             Assert.assertEquals("""
                 Бюджет на %s %d отсутствует""".formatted(testYM.getMonthName(), testYM.getYear()), message.text());
             Assert.assertEquals(this.user, message.receiver());
+        });
+    }
+
+    /**
+     * Создает стандартные категории для тестов
+     */
+    private void addFakeStandardCategories() {
+        transactionManager.produceTransaction(session -> {
+            try {
+                this.fakeIncomeCategory = this.categoryRepository
+                        .createUserCategory(session, this.user, CategoryType.INCOME, "Fake");
+                this.fakeExpenseCategory = this.categoryRepository
+                        .createUserCategory(session, this.user, CategoryType.EXPENSE, "Fake");
+            } catch (ExistingStandardCategoryException | ExistingUserCategoryException e) {
+                throw new RuntimeException(e);
+            }
         });
     }
 }

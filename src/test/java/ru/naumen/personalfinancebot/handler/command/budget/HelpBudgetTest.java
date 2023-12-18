@@ -7,10 +7,6 @@ import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.User;
-import ru.naumen.personalfinancebot.repository.empty.EmptyBudgetRepository;
-import ru.naumen.personalfinancebot.repository.empty.EmptyCategoryRepository;
-import ru.naumen.personalfinancebot.repository.empty.EmptyOperationRepository;
-import ru.naumen.personalfinancebot.repository.empty.EmptyUserRepository;
 
 import java.util.List;
 
@@ -24,11 +20,7 @@ public class HelpBudgetTest {
     @Test
     public void testBudgetHelpCommand() {
         MockBot mockBot = new MockBot();
-        FinanceBotHandler handler = new FinanceBotHandler(
-                new EmptyUserRepository(),
-                new EmptyOperationRepository(),
-                new EmptyCategoryRepository(),
-                new EmptyBudgetRepository());
+        FinanceBotHandler handler = new FinanceBotHandler(null, null, null, null);
         User user = new User(1L, 100);
         CommandData command = new CommandData(mockBot, user, "budget_help", List.of());
         handler.handleCommand(command, null);
