@@ -56,14 +56,6 @@ public class HibernateOperationRepository implements OperationRepository {
         return result;
     }
 
-    /**
-     * Метод возвращает сумму операций пользователя указанного типа (расход/доход) за определённый месяц
-     *
-     * @param user      Пользователь
-     * @param type      Тип операции
-     * @param yearMonth Месяц, год
-     * @return Сумма операций
-     */
     @Override
     public double getCurrentUserPaymentSummary(Session session, User user, CategoryType type, YearMonth yearMonth) {
         LocalDate startDate = LocalDate.of(yearMonth.getYear(), yearMonth.getMonth(), 1);
