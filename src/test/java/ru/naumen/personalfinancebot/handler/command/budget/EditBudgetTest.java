@@ -20,13 +20,26 @@ import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
 import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
+import ru.naumen.personalfinancebot.service.InputDateFormatService;
+import ru.naumen.personalfinancebot.service.OutputMonthFormatService;
 
+import java.time.YearMonth;
 import java.util.List;
 
 /**
  * Тесты для команд "/budget_set_{"expenses" / "income"}"
  */
 public class EditBudgetTest {
+    /**
+     * Сервис для форматирования дат, которые передаются в команду
+     */
+    private final InputDateFormatService inputFormatter = new InputDateFormatService();
+
+    /**
+     * Сервис для форматирования названия месяца, которое ожидается на выходе
+     */
+    private final OutputMonthFormatService monthFormatter = new OutputMonthFormatService();
+
     /**
      * Менеджер транзакций
      */
@@ -110,10 +123,10 @@ public class EditBudgetTest {
     @Test
     public void editExpensesCurrentBudget() {
         transactionManager.produceTransaction(session -> {
-            TestYearMonth currentYM = new TestYearMonth();
-            this.budgetRepository.saveBudget(session, new Budget(this.user, 100_000, 90_000, currentYM.getYearMonth()));
+            YearMonth currentYM = YearMonth.now();
+            this.budgetRepository.saveBudget(session, new Budget(this.user, 100_000, 90_000, currentYM));
             CommandData command = new CommandData(this.mockBot, this.user,
-                    "budget_set_expenses", List.of(currentYM.getDotFormat(), "120000"));
+                    "budget_set_expenses", List.of(inputFormatter.formatYearMonth(currentYM), "120000"));
             this.botHandler.handleCommand(command, session);
 
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
@@ -122,7 +135,7 @@ public class EditBudgetTest {
                     Бюджет на %s %d изменен:
                     Ожидаемые доходы: 100 000
                     Ожидаемые расходы: 120 000""".formatted(
-                    currentYM.getMonthName(),
+                    monthFormatter.formatRuMonthName(currentYM.getMonth()),
                     currentYM.getYear()), message.text());
             Assert.assertEquals(this.user, message.receiver());
         });
@@ -134,10 +147,10 @@ public class EditBudgetTest {
     @Test
     public void editIncomeCurrentBudget() {
         transactionManager.produceTransaction(session -> {
-            TestYearMonth currentYM = new TestYearMonth();
-            this.budgetRepository.saveBudget(session, new Budget(this.user, 100_000, 90_000, currentYM.getYearMonth()));
+            YearMonth currentYM = YearMonth.now();
+            this.budgetRepository.saveBudget(session, new Budget(this.user, 100_000, 90_000, currentYM));
             CommandData command = new CommandData(this.mockBot, this.user,
-                    "budget_set_income", List.of(currentYM.getDotFormat(), "150000"));
+                    "budget_set_income", List.of(inputFormatter.formatYearMonth(currentYM), "150000"));
             this.botHandler.handleCommand(command, session);
 
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
@@ -146,7 +159,7 @@ public class EditBudgetTest {
                     Бюджет на %s %d изменен:
                     Ожидаемые доходы: 150 000
                     Ожидаемые расходы: 90 000""".formatted(
-                    currentYM.getMonthName(),
+                    monthFormatter.formatRuMonthName(currentYM.getMonth()),
                     currentYM.getYear()), message.text());
         });
     }
@@ -157,10 +170,10 @@ public class EditBudgetTest {
     @Test
     public void editFutureBudget() {
         transactionManager.produceTransaction(session -> {
-            TestYearMonth futureYM = new TestYearMonth().plusMonths(1);
-            this.budgetRepository.saveBudget(session, new Budget(this.user, 100_000, 90_000, futureYM.getYearMonth()));
+            YearMonth futureYM = YearMonth.now().plusMonths(1);
+            this.budgetRepository.saveBudget(session, new Budget(this.user, 100_000, 90_000, futureYM));
             CommandData command = new CommandData(this.mockBot, this.user,
-                    "budget_set_income", List.of(futureYM.getDotFormat(), "200000"));
+                    "budget_set_income", List.of(inputFormatter.formatYearMonth(futureYM), "200000"));
             this.botHandler.handleCommand(command, session);
 
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
@@ -169,7 +182,7 @@ public class EditBudgetTest {
                     Бюджет на %s %d изменен:
                     Ожидаемые доходы: 200 000
                     Ожидаемые расходы: 90 000""".formatted(
-                    futureYM.getMonthName(),
+                    monthFormatter.formatRuMonthName(futureYM.getMonth()),
                     futureYM.getYear()), message.text());
         });
     }
@@ -180,10 +193,10 @@ public class EditBudgetTest {
     @Test
     public void editOldBudget() {
         transactionManager.produceTransaction(session -> {
-            TestYearMonth futureYM = new TestYearMonth().minusMonths(1);
-            this.budgetRepository.saveBudget(session, new Budget(this.user, 100_000, 90_000, futureYM.getYearMonth()));
+            YearMonth futureYM = YearMonth.now().minusMonths(1);
+            this.budgetRepository.saveBudget(session, new Budget(this.user, 100_000, 90_000, futureYM));
             CommandData command = new CommandData(this.mockBot, this.user,
-                    "budget_set_income", List.of(futureYM.getDotFormat(), "200000"));
+                    "budget_set_income", List.of(inputFormatter.formatYearMonth(futureYM), "200000"));
             this.botHandler.handleCommand(command, session);
 
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
@@ -199,9 +212,9 @@ public class EditBudgetTest {
     @Test
     public void editNonExistentBudget() {
         transactionManager.produceTransaction(session -> {
-            TestYearMonth currentYM = new TestYearMonth();
+            YearMonth currentYM = YearMonth.now();
             CommandData command = new CommandData(this.mockBot, this.user,
-                    "budget_set_expenses", List.of(currentYM.getDotFormat(), "1000"));
+                    "budget_set_expenses", List.of(inputFormatter.formatYearMonth(currentYM), "1000"));
             this.botHandler.handleCommand(command, session);
 
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
@@ -239,11 +252,11 @@ public class EditBudgetTest {
     @Test
     public void wrongAmountArgs() {
         String[] wrongAmountArgs = new String[]{"0", "-100", "NaN"};
-        TestYearMonth currentYM = new TestYearMonth();
+        YearMonth currentYM = YearMonth.now();
         transactionManager.produceTransaction(session -> {
             for (String wrongAmount : wrongAmountArgs) {
                 CommandData command = new CommandData(this.mockBot, this.user,
-                        "budget_set_expenses", List.of(currentYM.getDotFormat(), wrongAmount));
+                        "budget_set_expenses", List.of(inputFormatter.formatYearMonth(currentYM), wrongAmount));
                 this.botHandler.handleCommand(command, session);
 
                 Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
@@ -259,7 +272,7 @@ public class EditBudgetTest {
      */
     @Test
     public void wrongEntireArgs() {
-        String currentDateArg = new TestYearMonth().getDotFormat();
+        String currentDateArg = inputFormatter.formatYearMonth((YearMonth.now()));
         List<List<String>> wrongArgsCases = List.of(
                 List.of(),
                 List.of(currentDateArg, "1", "1", "1")

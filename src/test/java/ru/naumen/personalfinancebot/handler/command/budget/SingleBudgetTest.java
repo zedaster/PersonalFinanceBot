@@ -19,6 +19,8 @@ import ru.naumen.personalfinancebot.repository.category.exception.ExistingStanda
 import ru.naumen.personalfinancebot.repository.category.exception.ExistingUserCategoryException;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
+import ru.naumen.personalfinancebot.service.InputDateFormatService;
+import ru.naumen.personalfinancebot.service.OutputMonthFormatService;
 
 import java.time.YearMonth;
 import java.util.List;
@@ -27,6 +29,16 @@ import java.util.List;
  * Тесты для команды "/budget"
  */
 public class SingleBudgetTest {
+    /**
+     * Сервис для форматирования дат, которые передаются в команду
+     */
+    private final InputDateFormatService inputFormatter = new InputDateFormatService();
+
+    /**
+     * Сервис для форматирования названия месяца, которое ожидается на выходе
+     */
+    private final OutputMonthFormatService monthFormatter = new OutputMonthFormatService();
+
     /**
      * Менеджер транзакций
      */
@@ -121,8 +133,8 @@ public class SingleBudgetTest {
     @Test
     public void existingBudgetNoOperations() {
         transactionManager.produceTransaction(session -> {
-            TestYearMonth testYearMonth = new TestYearMonth();
-            Budget budget = new Budget(this.user, 100_000, 90_000, testYearMonth.getYearMonth());
+            YearMonth testYearMonth = YearMonth.now();
+            Budget budget = new Budget(this.user, 100_000, 90_000, testYearMonth);
             this.budgetRepository.saveBudget(session, budget);
             CommandData command = new CommandData(this.mockBot, this.user, "budget", List.of());
             this.botHandler.handleCommand(command, session);
@@ -138,7 +150,7 @@ public class SingleBudgetTest {
                         Текущий баланс: 100
                         Нужно еще заработать: 100 000
                         Еще осталось на траты: 90 000""".formatted(
-                            testYearMonth.getMonthName(),
+                            monthFormatter.formatRuMonthName(testYearMonth.getMonth()),
                             testYearMonth.getYear()),
                     message.text());
             Assert.assertEquals(this.user, message.receiver());
@@ -151,9 +163,9 @@ public class SingleBudgetTest {
     @Test
     public void existingBudgetAndOperations() {
         transactionManager.produceTransaction(session -> {
-            TestYearMonth testYearMonth = new TestYearMonth();
+            YearMonth testYearMonth = YearMonth.now();
 
-            Budget budget = new Budget(this.user, 100_000, 90_000, testYearMonth.getYearMonth());
+            Budget budget = new Budget(this.user, 100_000, 90_000, testYearMonth);
             this.budgetRepository.saveBudget(session, budget);
 
             this.operationRepository.addOperation(session, this.user, fakeIncomeCategory, 3000);
@@ -173,7 +185,7 @@ public class SingleBudgetTest {
                 Текущий баланс: 100
                 Нужно еще заработать: 97 000
                 Еще осталось на траты: 89 000""".formatted(
-                    testYearMonth.getMonthName(),
+                    monthFormatter.formatRuMonthName(testYearMonth.getMonth()),
                     testYearMonth.getYear()), message.text());
         });
     }
@@ -184,9 +196,9 @@ public class SingleBudgetTest {
     @Test
     public void realOperationsExceededExpected() {
         transactionManager.produceTransaction(session -> {
-            TestYearMonth testYearMonth = new TestYearMonth();
+            YearMonth testYearMonth = YearMonth.now();
 
-            Budget budget = new Budget(this.user, 100_000, 90_000, testYearMonth.getYearMonth());
+            Budget budget = new Budget(this.user, 100_000, 90_000, testYearMonth);
             this.budgetRepository.saveBudget(session, budget);
 
             this.operationRepository.addOperation(session, this.user, fakeIncomeCategory, 101_000);
@@ -206,7 +218,7 @@ public class SingleBudgetTest {
                     Текущий баланс: 100
                     Нужно еще заработать: 0
                     Еще осталось на траты: 0""".formatted(
-                    testYearMonth.getMonthName(),
+                    monthFormatter.formatRuMonthName(testYearMonth.getMonth()),
                     testYearMonth.getYear()), message.text());
         });
     }
@@ -222,11 +234,11 @@ public class SingleBudgetTest {
             CommandData command = new CommandData(this.mockBot, this.user, "budget", List.of());
             this.botHandler.handleCommand(command, session);
 
-            TestYearMonth testYM = new TestYearMonth();
+            YearMonth testYM = YearMonth.now();
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
             MockMessage message = this.mockBot.poolMessageQueue();
             Assert.assertEquals("""
-                Бюджет на %s %d отсутствует""".formatted(testYM.getMonthName(), testYM.getYear()), message.text());
+                    Бюджет на %s %d отсутствует""".formatted(monthFormatter.formatRuMonthName(testYM.getMonth()), testYM.getYear()), message.text());
             Assert.assertEquals(this.user, message.receiver());
         });
     }

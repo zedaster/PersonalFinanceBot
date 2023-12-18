@@ -20,6 +20,8 @@ import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
 import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
+import ru.naumen.personalfinancebot.service.InputDateFormatService;
+import ru.naumen.personalfinancebot.service.OutputMonthFormatService;
 
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -29,6 +31,16 @@ import java.util.List;
  * Тесты для обработки команды "/budget_list"
  */
 public class ListBudgetTest {
+    /**
+     * Сервис для форматирования дат, которые передаются в команду
+     */
+    private final InputDateFormatService inputFormatter = new InputDateFormatService();
+
+    /**
+     * Сервис для форматирования названия месяца, которое ожидается на выходе
+     */
+    private final OutputMonthFormatService monthFormatter = new OutputMonthFormatService();
+    
     /**
      * Менеджер транзакций
      */
@@ -121,38 +133,38 @@ public class ListBudgetTest {
      */
     @Test
     public void noArgsSomeMonths() {
-        TestYearMonth currentYM = new TestYearMonth();
-        TestYearMonth minusOneMonthYM = currentYM.minusMonths(1);
+        YearMonth currentYM = YearMonth.now();
+        YearMonth minusOneMonthYM = currentYM.minusMonths(1);
 
         Mockito.doReturn(9000d).when(this.operationRepository).getCurrentUserPaymentSummary(
                 Mockito.any(Session.class),
                 Mockito.any(User.class),
                 Mockito.eq(CategoryType.INCOME),
-                Mockito.eq(minusOneMonthYM.getYearMonth())
+                Mockito.eq(minusOneMonthYM)
         );
         Mockito.doReturn(8000d).when(this.operationRepository).getCurrentUserPaymentSummary(
                 Mockito.any(Session.class),
                 Mockito.any(User.class),
                 Mockito.eq(CategoryType.EXPENSE),
-                Mockito.eq(minusOneMonthYM.getYearMonth())
+                Mockito.eq(minusOneMonthYM)
         );
 
         Mockito.doReturn(7000d).when(this.operationRepository).getCurrentUserPaymentSummary(
                 Mockito.any(Session.class),
                 Mockito.any(User.class),
                 Mockito.eq(CategoryType.INCOME),
-                Mockito.eq(currentYM.getYearMonth())
+                Mockito.eq(currentYM)
         );
         Mockito.doReturn(6000d).when(this.operationRepository).getCurrentUserPaymentSummary(
                 Mockito.any(Session.class),
                 Mockito.any(User.class),
                 Mockito.eq(CategoryType.EXPENSE),
-                Mockito.eq(currentYM.getYearMonth())
+                Mockito.eq(currentYM)
         );
 
         transactionManager.produceTransaction(session -> {
-            this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, minusOneMonthYM.getYearMonth()));
-            this.budgetRepository.saveBudget(session, new Budget(user, 80_000, 70_000, currentYM.getYearMonth()));
+            this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, minusOneMonthYM));
+            this.budgetRepository.saveBudget(session, new Budget(user, 80_000, 70_000, currentYM));
 
             CommandData command = new CommandData(this.mockBot, this.user, "budget_list", List.of());
             this.botHandler.handleCommand(command, session);
@@ -170,7 +182,7 @@ public class ListBudgetTest {
                                             
                             Данные показаны за последние 12 месяцев. Чтобы посмотреть данные, например, за 2022, введите /budget_list 2022.
                             Для показа данных по определенным месяцам, например, с ноября 2022 по январь 2023 введите /budget_list 10.2022 01.2023"""
-                            .formatted(minusOneMonthYM.getMonthName(), minusOneMonthYM.getYear(), currentYM.getMonthName(),
+                            .formatted(monthFormatter.formatRuMonthName(minusOneMonthYM.getMonth()), minusOneMonthYM.getYear(), monthFormatter.formatRuMonthName(currentYM.getMonth()),
                                     currentYM.getYear()),
                     message.text());
             Assert.assertEquals(this.user, message.receiver());
@@ -243,22 +255,22 @@ public class ListBudgetTest {
 
             List<String> argsToReplace = new ArrayList<>();
             for (int i = 13; i >= 0; i--) {
-                TestYearMonth testYM = new TestYearMonth().minusMonths(i);
-                this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, testYM.getYearMonth()));
+                YearMonth testYM = YearMonth.now().minusMonths(i);
+                this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, testYM));
                 Mockito.doReturn(9000d).when(this.operationRepository).getCurrentUserPaymentSummary(
                         Mockito.eq(session),
                         Mockito.eq(user),
                         Mockito.eq(CategoryType.INCOME),
-                        Mockito.eq(testYM.getYearMonth())
+                        Mockito.eq(testYM)
                 );
                 Mockito.doReturn(8000d).when(this.operationRepository).getCurrentUserPaymentSummary(
                         Mockito.eq(session),
                         Mockito.eq(user),
                         Mockito.eq(CategoryType.EXPENSE),
-                        Mockito.eq(testYM.getYearMonth())
+                        Mockito.eq(testYM)
                 );
                 if (i != 13) {
-                    argsToReplace.add(testYM.getMonthName());
+                    argsToReplace.add(monthFormatter.formatRuMonthName(testYM.getMonth()));
                     argsToReplace.add(String.valueOf(testYM.getYear()));
                 }
             }
@@ -278,35 +290,35 @@ public class ListBudgetTest {
     @Test
     public void certainYear() {
         transactionManager.produceTransaction(session -> {
-            TestYearMonth ymJan2022 = new TestYearMonth(YearMonth.of(2022, 1));
-            TestYearMonth ymFeb2022 = new TestYearMonth(YearMonth.of(2022, 2));
+            YearMonth ymJan2022 = YearMonth.of(2022, 1);
+            YearMonth ymFeb2022 = YearMonth.of(2022, 2);
 
-            this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, ymJan2022.getYearMonth()));
-            this.budgetRepository.saveBudget(session, new Budget(user, 80_000, 70_000, ymFeb2022.getYearMonth()));
+            this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, ymJan2022));
+            this.budgetRepository.saveBudget(session, new Budget(user, 80_000, 70_000, ymFeb2022));
 
             Mockito.doReturn(9000d).when(this.operationRepository).getCurrentUserPaymentSummary(
                     Mockito.eq(session),
                     Mockito.eq(user),
                     Mockito.eq(CategoryType.INCOME),
-                    Mockito.eq(ymJan2022.getYearMonth())
+                    Mockito.eq(ymJan2022)
             );
             Mockito.doReturn(8000d).when(this.operationRepository).getCurrentUserPaymentSummary(
                     Mockito.eq(session),
                     Mockito.eq(user),
                     Mockito.eq(CategoryType.EXPENSE),
-                    Mockito.eq(ymJan2022.getYearMonth())
+                    Mockito.eq(ymJan2022)
             );
             Mockito.doReturn(7000d).when(this.operationRepository).getCurrentUserPaymentSummary(
                     Mockito.eq(session),
                     Mockito.eq(user),
                     Mockito.eq(CategoryType.INCOME),
-                    Mockito.eq(ymFeb2022.getYearMonth())
+                    Mockito.eq(ymFeb2022)
             );
             Mockito.doReturn(6000d).when(this.operationRepository).getCurrentUserPaymentSummary(
                     Mockito.eq(session),
                     Mockito.eq(user),
                     Mockito.eq(CategoryType.EXPENSE),
-                    Mockito.eq(ymFeb2022.getYearMonth())
+                    Mockito.eq(ymFeb2022)
             );
 
             CommandData command = new CommandData(this.mockBot, this.user, "budget_list", List.of("2022"));
@@ -352,22 +364,22 @@ public class ListBudgetTest {
                 Реальность: + 9 000 | - 8 000
 
                 Данные показаны за 4 месяц(-ев).""";
-        TestYearMonth nov22ym = new TestYearMonth(YearMonth.of(2022, 11));
+        YearMonth nov22ym = YearMonth.of(2022, 11);
         transactionManager.produceTransaction(session -> {
             for (int i = 0; i < 4; i++) {
-                TestYearMonth testYM = nov22ym.plusMonths(i);
-                this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, testYM.getYearMonth()));
+                YearMonth testYM = nov22ym.plusMonths(i);
+                this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, testYM));
                 Mockito.doReturn(9000d).when(this.operationRepository).getCurrentUserPaymentSummary(
                         Mockito.eq(session),
                         Mockito.eq(user),
                         Mockito.eq(CategoryType.INCOME),
-                        Mockito.eq(testYM.getYearMonth())
+                        Mockito.eq(testYM)
                 );
                 Mockito.doReturn(8000d).when(this.operationRepository).getCurrentUserPaymentSummary(
                         Mockito.eq(session),
                         Mockito.eq(user),
                         Mockito.eq(CategoryType.EXPENSE),
-                        Mockito.eq(testYM.getYearMonth())
+                        Mockito.eq(testYM)
                 );
             }
 
@@ -444,20 +456,20 @@ public class ListBudgetTest {
     @Test
     public void oneMonthRangeAndRealOperationsExceededExpected() {
         transactionManager.produceTransaction(session -> {
-            TestYearMonth testYM = new TestYearMonth(YearMonth.of(2022, 12));
-            this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, testYM.getYearMonth()));
+            YearMonth testYM = YearMonth.of(2022, 12);
+            this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, testYM));
 
             Mockito.doReturn(101_000d).when(this.operationRepository).getCurrentUserPaymentSummary(
                     Mockito.eq(session),
                     Mockito.eq(user),
                     Mockito.eq(CategoryType.INCOME),
-                    Mockito.eq(testYM.getYearMonth())
+                    Mockito.eq(testYM)
             );
             Mockito.doReturn(91_000d).when(this.operationRepository).getCurrentUserPaymentSummary(
                     Mockito.eq(session),
                     Mockito.eq(user),
                     Mockito.eq(CategoryType.EXPENSE),
-                    Mockito.eq(testYM.getYearMonth())
+                    Mockito.eq(testYM)
             );
 
             CommandData command = new CommandData(this.mockBot, this.user, "budget_list",
@@ -480,7 +492,7 @@ public class ListBudgetTest {
      */
     @Test
     public void wrongEntireArgs() {
-        String currentDateArg = new TestYearMonth().getDotFormat();
+        String currentDateArg = inputFormatter.formatYearMonth(YearMonth.now());
         List<List<String>> wrongArgsCases = List.of(
                 List.of(currentDateArg, "1", "1", "1")
         );
