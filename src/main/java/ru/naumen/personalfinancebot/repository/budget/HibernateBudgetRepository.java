@@ -13,24 +13,16 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Реализация интерфейса {@link BudgetRepository}
+ * Репозиторий для работы с моделью даднных {@link Budget}
+ */
 public class HibernateBudgetRepository implements BudgetRepository {
-    /**
-     * Сохраняет бюджет в БД
-     *
-     * @param budget Бюджет
-     */
     @Override
     public void saveBudget(Session session, Budget budget) {
         session.save(budget);
     }
 
-    /**
-     * Возвращает бюджет пользователя за Месяц-Год
-     *
-     * @param user      Пользователь
-     * @param yearMonth Месяц-Год
-     * @return Бюджет пользователя
-     */
     @Override
     public Optional<Budget> getBudget(Session session, User user, @Nullable YearMonth yearMonth) {
         if (yearMonth == null) {
@@ -54,14 +46,6 @@ public class HibernateBudgetRepository implements BudgetRepository {
         return session.createQuery(criteriaQuery).uniqueResultOptional();
     }
 
-    /**
-     * Возвращает список бюджетов для пользователя, за заданный промежуток
-     *
-     * @param user Пользователь
-     * @param from Месяц-Год начала диапазона
-     * @param to   Месяц-Год конца диапазона
-     * @return Список бюджетов
-     */
     @Override
     public List<Budget> selectBudgetRange(Session session, User user, YearMonth from, YearMonth to) {
         LocalDate startDate = LocalDate.of(from.getYear(), from.getMonth(), 1);

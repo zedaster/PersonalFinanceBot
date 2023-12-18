@@ -2,23 +2,15 @@ package ru.naumen.personalfinancebot.service;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.time.Month;
-import java.time.format.TextStyle;
-import java.util.Locale;
 
 /**
- * Сервис форматирование данных для вывода
+ * Сервис для форматирования чисел
  */
-public class OutputFormatService {
-    /**
-     * Форматировщик для double
-     * Он убирает дробную часть при ее отсутствии
-     * И разделяет пробелами разряды числа
-     */
+public class OutputNumberFormatService {
     private final DecimalFormat doubleFormatter;
 
-    public OutputFormatService() {
-        doubleFormatter = createDoubleFormatter();
+    public OutputNumberFormatService() {
+        this.doubleFormatter = this.createDoubleFormatter();
     }
 
     /**
@@ -29,16 +21,6 @@ public class OutputFormatService {
      */
     public String formatDouble(double d) {
         return doubleFormatter.format(d);
-    }
-
-    /**
-     * Выводит русское название месяца с заглавной буквы.
-     * Например, "Январь" или "Февраль"
-     */
-    public String formatRuMonthName(Month month) {
-        Locale loc = Locale.forLanguageTag("ru");
-        String name = month.getDisplayName(TextStyle.FULL_STANDALONE, loc);
-        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
     }
 
     /**

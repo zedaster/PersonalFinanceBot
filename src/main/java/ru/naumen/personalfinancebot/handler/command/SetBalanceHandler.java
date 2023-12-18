@@ -2,10 +2,9 @@ package ru.naumen.personalfinancebot.handler.command;
 
 import org.hibernate.Session;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
-import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
-import ru.naumen.personalfinancebot.service.ArgumentParseService;
-import ru.naumen.personalfinancebot.service.OutputFormatService;
+import ru.naumen.personalfinancebot.service.NumberParseService;
+import ru.naumen.personalfinancebot.service.OutputNumberFormatService;
 
 /**
  * Обработчик команды для установки баланса
@@ -14,35 +13,37 @@ import ru.naumen.personalfinancebot.service.OutputFormatService;
  */
 public class SetBalanceHandler implements CommandHandler {
     /**
-     * Сервис, который парсит аргументы
+     * Сообщение для команды /set_balance
      */
-    private final ArgumentParseService argumentParser;
+    private static final String SET_BALANCE_SUCCESSFULLY = "Ваш баланс изменен. Теперь он составляет %s";
+
+    /**
+     * Сервис, который парсит числа
+     */
+    private final NumberParseService numberParseService;
 
     /**
      * Сервис, который приводит данные для вывода к нужному формату
      */
-    private final OutputFormatService outputFormatter;
+    private final OutputNumberFormatService numberFormatService;
 
     /**
      * Хранилище пользователей
      */
     private final UserRepository userRepository;
 
-    public SetBalanceHandler(ArgumentParseService argumentParser, OutputFormatService outputFormatter,
+    public SetBalanceHandler(NumberParseService numberParseService, OutputNumberFormatService numberFormatService,
                              UserRepository userRepository) {
-        this.argumentParser = argumentParser;
-        this.outputFormatter = outputFormatter;
+        this.numberParseService = numberParseService;
+        this.numberFormatService = numberFormatService;
         this.userRepository = userRepository;
     }
 
-    /**
-     * Метод, вызываемый при получении команды
-     */
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         double amount;
         try {
-            amount = argumentParser.parseBalance(commandData.getArgs());
+            amount = numberParseService.parseBalance(commandData.getArgs());
         } catch (IllegalArgumentException e) {
             commandData.getBot().sendMessage(commandData.getUser(),
                     "Команда введена неверно! Введите /set_balance <новый баланс>");
@@ -51,8 +52,9 @@ public class SetBalanceHandler implements CommandHandler {
 
         commandData.getUser().setBalance(amount);
         userRepository.saveUser(session, commandData.getUser());
-        commandData.getBot().sendMessage(commandData.getUser(), Message.SET_BALANCE_SUCCESSFULLY
-                .replace("{balance}", this.outputFormatter.formatDouble(amount)));
-
+        commandData.getBot().sendMessage(
+                commandData.getUser(),
+                SET_BALANCE_SUCCESSFULLY.formatted(this.numberFormatService.formatDouble(amount))
+        );
     }
 }

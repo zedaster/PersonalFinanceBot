@@ -81,9 +81,7 @@ public class RemoveCategoryTest {
                 userRepository,
                 operationRepository,
                 categoryRepository,
-                budgetRepository,
-                sessionFactory
-        );
+                budgetRepository);
     }
 
     /**

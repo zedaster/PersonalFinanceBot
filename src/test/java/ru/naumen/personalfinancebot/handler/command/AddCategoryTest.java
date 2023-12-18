@@ -80,8 +80,7 @@ public class AddCategoryTest {
                 userRepository,
                 operationRepository,
                 categoryRepository,
-                budgetRepository,
-                sessionFactory);
+                budgetRepository);
         this.transactionManager = new TransactionManager(sessionFactory);
     }
 

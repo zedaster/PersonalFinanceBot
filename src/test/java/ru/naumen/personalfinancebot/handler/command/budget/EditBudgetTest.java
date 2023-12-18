@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Тесты для команд "/budget_set_{"expenses" / "income"}"
  */
-public class EditBudgetTests {
+public class EditBudgetTest {
     /**
      * Фабрика сессий
      */
@@ -54,7 +54,7 @@ public class EditBudgetTests {
      */
     private User user;
 
-    public EditBudgetTests() {
+    public EditBudgetTest() {
         this.sessionFactory = new HibernateConfiguration().getSessionFactory();
         this.transactionManager = new TransactionManager(this.sessionFactory);
     }
@@ -70,9 +70,7 @@ public class EditBudgetTests {
                 new EmptyUserRepository(),
                 new EmptyOperationRepository(),
                 new EmptyCategoryRepository(),
-                this.budgetRepository,
-                this.sessionFactory
-        );
+                this.budgetRepository);
         this.user = new User(1, 100);
     }
 

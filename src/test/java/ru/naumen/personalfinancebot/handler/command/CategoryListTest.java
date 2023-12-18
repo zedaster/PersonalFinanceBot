@@ -66,7 +66,7 @@ public class CategoryListTest {
         this.categoryRepository = new TestHibernateCategoryRepository();
         OperationRepository operationRepository = new HibernateOperationRepository();
         BudgetRepository budgetRepository = new HibernateBudgetRepository();
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, budgetRepository, sessionFactory);
+        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, budgetRepository);
         this.transactionManager = new TransactionManager(sessionFactory);
 
         this.mockUser = new User(1L, 100);

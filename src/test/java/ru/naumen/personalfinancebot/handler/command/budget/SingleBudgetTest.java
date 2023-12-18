@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * Тесты для команды "/budget"
  */
-public class SingleBudgetTests {
+public class SingleBudgetTest {
     /**
      * Фабрика сессий
      */
@@ -63,7 +63,7 @@ public class SingleBudgetTests {
      */
     private User user;
 
-    public SingleBudgetTests() {
+    public SingleBudgetTest() {
         this.sessionFactory = new HibernateConfiguration().getSessionFactory();
         this.transactionManager = new TransactionManager(this.sessionFactory);
     }
@@ -80,9 +80,7 @@ public class SingleBudgetTests {
                 new EmptyUserRepository(),
                 this.operationRepository,
                 new EmptyCategoryRepository(),
-                this.budgetRepository,
-                sessionFactory
-        );
+                this.budgetRepository);
         this.user = new User(1, 100);
     }
 

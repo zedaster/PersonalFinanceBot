@@ -9,8 +9,10 @@ import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
-import ru.naumen.personalfinancebot.service.ArgumentParseService;
-import ru.naumen.personalfinancebot.service.OutputFormatService;
+import ru.naumen.personalfinancebot.service.DateParseService;
+import ru.naumen.personalfinancebot.service.NumberParseService;
+import ru.naumen.personalfinancebot.service.OutputMonthFormatService;
+import ru.naumen.personalfinancebot.service.OutputNumberFormatService;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
@@ -19,6 +21,30 @@ import java.time.format.DateTimeParseException;
  * Обработчик команды "/budget_create".
  */
 public class CreateBudgetHandler implements CommandHandler {
+    /**
+     * Сообщение о неверно введенной команде /budget_create
+     */
+    private static final String INCORRECT_CREATE_BUDGET_ENTIRE_ARGS = "Неверно введена команда! Введите " +
+            "/budget_create [mm.yyyy - месяц.год] [ожидаемый доход] [ожидаемый расходы]";
+
+    /**
+     * Сообщение об ошибке в случае если пользователь планирует бюджет на прошлое.
+     */
+    private static final String CANT_CREATE_OLD_BUDGET = "Вы не можете создавать бюджеты за прошедшие месяцы!";
+
+    /**
+     * Шаблон сообщения для вывода сообщения о созданном бюджете
+     */
+    private static final String BUDGET_CREATED = """
+            Бюджет на %s %s создан.
+            Ожидаемые доходы: %s
+            Ожидаемые расходы: %s
+            Текущие доходы: %s
+            Текущие расходы: %s
+            Текущий баланс: %s
+            Нужно еще заработать: %s
+            Еще осталось на траты: %s""";
+
     /**
      * Репозиторий для работы с бюджетом
      */
@@ -30,57 +56,70 @@ public class CreateBudgetHandler implements CommandHandler {
     private final OperationRepository operationRepository;
 
     /**
-     * Сервис, который парсит аргументы
+     * Сервис, который парсит дату
      */
-    private final ArgumentParseService argumentParseService;
+    private final DateParseService dateParseService;
 
     /**
-     * Сервис, который приводит данные для вывода к нужному формату
+     * Сервис, который парсит числа
      */
-    private final OutputFormatService outputFormatter;
+    private final NumberParseService numberParseService;
 
     /**
-     * @param budgetRepository     Репозиторий для работы с бюджетом
-     * @param operationRepository  Репозиторий для работы с операциями
-     * @param argumentParseService Сервис, который парсит аргументы
-     * @param outputFormatter      Сервис, который приводит данные для вывода к нужному формату
+     * Сервис, который форматирует числа
+     */
+    private final OutputNumberFormatService numberFormatService;
+
+    /**
+     * Сервис, который форматирует месяц к русскому названию
+     */
+    private final OutputMonthFormatService monthFormatService;
+
+
+    /**
+     * @param budgetRepository    Репозиторий для работы с бюджетом
+     * @param operationRepository Репозиторий для работы с операциями
+     * @param dateParseService    Сервис, который парсит дату
+     * @param numberParseService  Сервис, который парсит числа
+     * @param numberFormatService Сервис, который форматирует числа
+     * @param monthFormatService  Сервис, который форматирует месяц к русскому названию
      */
     public CreateBudgetHandler(BudgetRepository budgetRepository, OperationRepository operationRepository,
-                               ArgumentParseService argumentParseService, OutputFormatService outputFormatter) {
+                               DateParseService dateParseService, NumberParseService numberParseService,
+                               OutputNumberFormatService numberFormatService, OutputMonthFormatService monthFormatService) {
         this.budgetRepository = budgetRepository;
         this.operationRepository = operationRepository;
-        this.argumentParseService = argumentParseService;
-        this.outputFormatter = outputFormatter;
+        this.dateParseService = dateParseService;
+        this.numberParseService = numberParseService;
+        this.numberFormatService = numberFormatService;
+        this.monthFormatService = monthFormatService;
     }
 
-    /**
-     * Метод, вызываемый при получении команды
-     */
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         if (commandData.getArgs().size() != 3) {
-            commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_CREATE_BUDGET_ENTIRE_ARGS);
+            commandData.getBot().sendMessage(commandData.getUser(), INCORRECT_CREATE_BUDGET_ENTIRE_ARGS);
             return;
         }
 
         YearMonth yearMonth;
         try {
-            yearMonth = this.argumentParseService.parseYearMonth(commandData.getArgs().get(0));
+            yearMonth = this.dateParseService.parseYearMonth(commandData.getArgs().get(0));
         } catch (DateTimeParseException e) {
             commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_BUDGET_YEAR_MONTH);
             return;
         }
 
         if (yearMonth.isBefore(YearMonth.now())) {
-            commandData.getBot().sendMessage(commandData.getUser(), Message.CANT_CREATE_OLD_BUDGET);
+            commandData.getBot().sendMessage(commandData.getUser(), CANT_CREATE_OLD_BUDGET);
             return;
         }
 
         double expectedIncome;
         double expectedExpenses;
         try {
-            expectedIncome = this.argumentParseService.parsePositiveDouble(commandData.getArgs().get(1));
-            expectedExpenses = this.argumentParseService.parsePositiveDouble(commandData.getArgs().get(2));
+            expectedIncome = this.numberParseService.parsePositiveDouble(commandData.getArgs().get(1));
+            expectedExpenses = this.numberParseService.parsePositiveDouble(commandData.getArgs().get(2));
         } catch (NumberFormatException e) {
             commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_BUDGET_NUMBER_ARG);
             return;
@@ -94,22 +133,24 @@ public class CreateBudgetHandler implements CommandHandler {
         double expensesLeft = expectedExpenses - currentExpenses;
 
         Budget budget = new Budget();
-        budget.setExpectedSummary(CategoryType.INCOME, expectedIncome);
-        budget.setExpectedSummary(CategoryType.EXPENSE, expectedExpenses);
+        budget.setIncome(expectedIncome);
+        budget.setExpense(expectedExpenses);
         budget.setTargetDate(yearMonth);
         budget.setUser(user);
         budgetRepository.saveBudget(session, budget);
 
-        commandData.getBot().sendMessage(user, Message.BUDGET_CREATED
-                .replace("{month}", outputFormatter.formatRuMonthName(yearMonth.getMonth()))
-                .replace("{year}", String.valueOf(yearMonth.getYear()))
-                .replace("{expect_income}", outputFormatter.formatDouble(expectedIncome))
-                .replace("{expect_expenses}", outputFormatter.formatDouble(expectedExpenses))
-                .replace("{current_income}", outputFormatter.formatDouble(currentIncome))
-                .replace("{current_expenses}", outputFormatter.formatDouble(currentExpenses))
-                .replace("{balance}", outputFormatter.formatDouble(balance))
-                .replace("{income_left}", outputFormatter.formatDouble(incomeLeft))
-                .replace("{expenses_left}", outputFormatter.formatDouble(expensesLeft))
+        commandData.getBot().sendMessage(user,
+                BUDGET_CREATED.formatted(
+                        monthFormatService.formatRuMonthName(yearMonth.getMonth()),
+                        String.valueOf(yearMonth.getYear()),
+                        numberFormatService.formatDouble(expectedIncome),
+                        numberFormatService.formatDouble(expectedExpenses),
+                        numberFormatService.formatDouble(currentIncome),
+                        numberFormatService.formatDouble(currentExpenses),
+                        numberFormatService.formatDouble(balance),
+                        numberFormatService.formatDouble(incomeLeft),
+                        numberFormatService.formatDouble(expensesLeft)
+                )
         );
     }
 }

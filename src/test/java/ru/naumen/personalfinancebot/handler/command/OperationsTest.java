@@ -55,7 +55,7 @@ public class OperationsTest {
         CategoryRepository categoryRepository = new HibernateCategoryRepository();
         OperationRepository operationRepository = new HibernateOperationRepository();
         BudgetRepository budgetRepository = new HibernateBudgetRepository();
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, budgetRepository, sessionFactory);
+        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, budgetRepository);
     }
 
     /**
