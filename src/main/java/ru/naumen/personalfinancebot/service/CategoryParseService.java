@@ -9,6 +9,12 @@ import java.util.List;
  */
 public class CategoryParseService {
     /**
+     * Сообщение о неверно переданном количестве аргументов для команды /add_[income|expense]_category
+     */
+    private static final String INCORRECT_CATEGORY_ARGUMENT_COUNT =
+            "Данная команда принимает [название категории] в одно или несколько слов.";
+
+    /**
      * Парсит категорию, введенную в аргументах
      *
      * @throws IllegalArgumentException если аргументы введены неверно
@@ -16,7 +22,7 @@ public class CategoryParseService {
     public String parseCategory(List<String> args) throws IllegalArgumentException {
         String joinedString;
         if (args.isEmpty() || (joinedString = String.join(" ", args).trim()).isEmpty()) {
-            throw new IllegalArgumentException(Message.INCORRECT_CATEGORY_ARGUMENT_COUNT);
+            throw new IllegalArgumentException(INCORRECT_CATEGORY_ARGUMENT_COUNT);
         }
 
         String categoryName = beautifyCategoryName(joinedString);

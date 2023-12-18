@@ -22,6 +22,62 @@ import java.util.List;
  */
 public class ListBudgetHandler implements CommandHandler {
     /**
+     * Сообщение о некорректно переданном годе для создания бюджета.
+     */
+    private static final String INCORRECT_BUDGET_YEAR_ARG = "Год введен неверно! Дальше 3000 года не стоит планировать.";
+
+    /**
+     * Сообщение о неверно введенной команде /budget_list
+     */
+    private static final String INCORRECT_LIST_BUDGET_ENTIRE_ARGS = """
+            Неверно введена команда! Введите
+            или /budget_list - вывод бюджетов за 12 месяцев (текущий + предыдущие),
+            или /budget_list [год] - вывод бюджетов за определенный год,
+            или /budget_list [mm.yyyy - месяц.год] [mm.yyyy - месяц.год] - вывод бюджетов за указанный промежуток.""";
+
+    /**
+     * Сообщение об ошибке если передана дата начала, которая позднее даты конца
+     */
+    private static final String BUDGET_LIST_FROM_IS_AFTER_TO = "Дата начала не может быть позднее даты конца периода!";
+
+    /**
+     * Префикс для списка запланированных бюджетов.
+     */
+    private static final String BUDGET_LIST_PREFIX = "Ваши запланированные доходы и расходы по месяцам:";
+
+    /**
+     * Шаблон для вывода бюджета за конкретный год и месяц
+     */
+    private static final String BUDGET_LIST_ELEMENT = """
+            %s %s:
+            Ожидание: + %s | - %s
+            Реальность: + %s | - %s""";
+
+    /**
+     * Постфикс для сообщения пользователю при выводе списка бюджетов за n-ое кол-во месяцев
+     */
+    private static final String BUDGET_LIST_RANGE_POSTFIX = "Данные показаны за %s месяц(-ев).";
+
+    /**
+     * Постфикс для сообщения пользователю при выводе списка бюджетов за конкретный год
+     */
+    private static final String BUDGET_LIST_YEAR_POSTFIX = "Данные показаны за %s год.";
+
+    /**
+     * Сообщение для вывода списка бюджетов за последние 12 месяцев.
+     */
+    private static final String BUDGET_LIST_TWELVE_MONTHS_POSTFIX = "Данные показаны за последние 12 месяцев. " +
+            "Чтобы посмотреть данные, например, за 2022, введите /budget_list 2022.\n" +
+            "Для показа данных по определенным месяцам, например, с ноября 2022 по январь 2023 введите " +
+            "/budget_list 10.2022 01.2023";
+
+    /**
+     * Сообщение об отсутствии бюджетов за указанный пользователем период
+     */
+    private static final String BUDGET_LIST_EMPTY = "У вас не было бюджетов за этот период. Для создания бюджета " +
+            "введите /budget_create [mm.yyyy - месяц.год] [ожидаемый доход] [ожидаемый расходы]";
+
+    /**
      * Репозиторий для работы с бюджетом
      */
     private final BudgetRepository budgetRepository;
@@ -69,18 +125,18 @@ public class ListBudgetHandler implements CommandHandler {
         String postfixMessage;
         if (arguments.isEmpty()) {
             from = from.minusMonths(12);
-            postfixMessage = Message.BUDGET_LIST_TWELVE_MONTHS_POSTFIX;
+            postfixMessage = BUDGET_LIST_TWELVE_MONTHS_POSTFIX;
         } else if (arguments.size() == 1) {
             int year;
             try {
                 year = dateParseService.parseYear(arguments.get(0));
             } catch (NumberFormatException e) {
-                commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_BUDGET_YEAR_ARG);
+                commandData.getBot().sendMessage(commandData.getUser(), INCORRECT_BUDGET_YEAR_ARG);
                 return;
             }
             from = YearMonth.of(year, 1);
             to = YearMonth.of(year, 12);
-            postfixMessage = Message.BUDGET_LIST_YEAR_POSTFIX.formatted(String.valueOf(year));
+            postfixMessage = BUDGET_LIST_YEAR_POSTFIX.formatted(String.valueOf(year));
         } else if (arguments.size() == 2) {
             try {
                 from = dateParseService.parseYearMonth(arguments.get(0));
@@ -91,26 +147,26 @@ public class ListBudgetHandler implements CommandHandler {
             }
 
             long monthsBetween = from.until(to, ChronoUnit.MONTHS) + 1;
-            postfixMessage = Message.BUDGET_LIST_RANGE_POSTFIX.formatted(String.valueOf(monthsBetween));
+            postfixMessage = BUDGET_LIST_RANGE_POSTFIX.formatted(String.valueOf(monthsBetween));
         } else {
-            commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_LIST_BUDGET_ENTIRE_ARGS);
+            commandData.getBot().sendMessage(commandData.getUser(), INCORRECT_LIST_BUDGET_ENTIRE_ARGS);
             return;
         }
 
         if (from.isAfter(to)) {
-            commandData.getBot().sendMessage(commandData.getUser(), Message.BUDGET_LIST_FROM_IS_AFTER_TO);
+            commandData.getBot().sendMessage(commandData.getUser(), BUDGET_LIST_FROM_IS_AFTER_TO);
             return;
         }
 
         // Список бюджетов за указанный период;
         List<Budget> budgets = this.budgetRepository.selectBudgetRange(session, commandData.getUser(), from, to);
         if (budgets.isEmpty()) {
-            commandData.getBot().sendMessage(commandData.getUser(), Message.BUDGET_LIST_EMPTY);
+            commandData.getBot().sendMessage(commandData.getUser(), BUDGET_LIST_EMPTY);
             return;
         }
 
         StringBuilder resultReplyMessage = new StringBuilder();
-        resultReplyMessage.append(Message.BUDGET_LIST_PREFIX);
+        resultReplyMessage.append(BUDGET_LIST_PREFIX);
         resultReplyMessage.append("\n");
         for (Budget budget : budgets) {
             YearMonth targetYearMonth = budget.getTargetDate();
@@ -121,7 +177,7 @@ public class ListBudgetHandler implements CommandHandler {
             double realExpenses = this.operationRepository
                     .getCurrentUserPaymentSummary(session, commandData.getUser(), CategoryType.EXPENSE, targetYearMonth);
 
-            resultReplyMessage.append(Message.BUDGET_LIST_ELEMENT.formatted(
+            resultReplyMessage.append(BUDGET_LIST_ELEMENT.formatted(
                     monthFormatService.formatRuMonthName(targetYearMonth.getMonth()),
                     String.valueOf(targetYearMonth.getYear()),
                     numberFormatService.formatDouble(expectIncome),

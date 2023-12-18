@@ -21,6 +21,31 @@ import java.util.Optional;
  */
 public class EditBudgetHandler implements CommandHandler {
     /**
+     * Сообщение о неверно введенной команде при редактировании бюджета
+     */
+    private static final String INCORRECT_EDIT_BUDGET_ENTIRE_ARGS = "Неверно введена команда! Введите " +
+            "/budget_set_[income/expenses] [mm.yyyy - месяц.год] [ожидаемый доход/расход]";
+
+    /**
+     * Сообщение об отсутствии бюджета на указанную пользователем дату
+     */
+    private static final String BUDGET_NOT_FOUND = "Бюджет на этот период не найден! Создайте его командой " +
+            "/budget_create [mm.yyyy - месяц.год] [ожидаемый доход] [ожидаемый расходы]";
+
+    /**
+     * Сообщение об ошибке при редактировании бюджета за прошедшие месяцы
+     */
+    private static final String CANT_EDIT_OLD_BUDGET = "Вы не можете изменять бюджеты за прошедшие месяцы!";
+
+    /**
+     * Шаблон сообщения при успешном редактировании бюджета
+     */
+    private static final String BUDGET_EDITED = """
+            Бюджет на %s %s изменен:
+            Ожидаемые доходы: %s
+            Ожидаемые расходы: %s""";
+
+    /**
      * Репозиторий для работы с бюджетом
      */
     private final BudgetRepository budgetRepository;
@@ -82,8 +107,7 @@ public class EditBudgetHandler implements CommandHandler {
                 yearMonth = this.dateParseService.parseYearMonth(commandData.getArgs().get(0));
                 amount = this.numberParseService.parsePositiveDouble(commandData.getArgs().get(1));
             } else {
-                commandData.getBot().sendMessage(commandData.getUser(),
-                        Message.INCORRECT_EDIT_BUDGET_ENTIRE_ARGS);
+                commandData.getBot().sendMessage(commandData.getUser(), INCORRECT_EDIT_BUDGET_ENTIRE_ARGS);
                 return;
             }
         } catch (NumberFormatException e) {
@@ -95,13 +119,13 @@ public class EditBudgetHandler implements CommandHandler {
         }
 
         if (yearMonth.isBefore(YearMonth.now())) {
-            commandData.getBot().sendMessage(commandData.getUser(), Message.CANT_EDIT_OLD_BUDGET);
+            commandData.getBot().sendMessage(commandData.getUser(), CANT_EDIT_OLD_BUDGET);
             return;
         }
 
         Optional<Budget> budget = this.budgetRepository.getBudget(session, commandData.getUser(), yearMonth);
         if (budget.isEmpty()) {
-            commandData.getBot().sendMessage(commandData.getUser(), Message.BUDGET_NOT_FOUND);
+            commandData.getBot().sendMessage(commandData.getUser(), BUDGET_NOT_FOUND);
             return;
         }
 
@@ -116,7 +140,7 @@ public class EditBudgetHandler implements CommandHandler {
         double expectExpenses = budget.get().getExpense();
         commandData.getBot().sendMessage(
                 commandData.getUser(),
-                Message.BUDGET_EDITED.formatted(
+                BUDGET_EDITED.formatted(
                         monthFormatService.formatRuMonthName(yearMonth.getMonth()),
                         String.valueOf(yearMonth.getYear()),
                         numberFormatService.formatDouble(expectIncome),

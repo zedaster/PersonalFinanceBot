@@ -2,7 +2,6 @@ package ru.naumen.personalfinancebot.handler.command;
 
 import org.hibernate.Session;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
-import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.repository.user.UserRepository;
 import ru.naumen.personalfinancebot.service.NumberParseService;
 import ru.naumen.personalfinancebot.service.OutputNumberFormatService;
@@ -13,6 +12,11 @@ import ru.naumen.personalfinancebot.service.OutputNumberFormatService;
  * @author Sergey Kazantsev
  */
 public class SetBalanceHandler implements CommandHandler {
+    /**
+     * Сообщение для команды /set_balance
+     */
+    private static final String SET_BALANCE_SUCCESSFULLY = "Ваш баланс изменен. Теперь он составляет %s";
+
     /**
      * Сервис, который парсит числа
      */
@@ -50,7 +54,7 @@ public class SetBalanceHandler implements CommandHandler {
         userRepository.saveUser(session, commandData.getUser());
         commandData.getBot().sendMessage(
                 commandData.getUser(),
-                Message.SET_BALANCE_SUCCESSFULLY.formatted(this.numberFormatService.formatDouble(amount))
+                SET_BALANCE_SUCCESSFULLY.formatted(this.numberFormatService.formatDouble(amount))
         );
     }
 }

@@ -2,7 +2,6 @@ package ru.naumen.personalfinancebot.handler.command;
 
 import org.hibernate.Session;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
-import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repository.category.exception.ExistingStandardCategoryException;
@@ -15,6 +14,22 @@ import ru.naumen.personalfinancebot.service.CategoryParseService;
  * @author Sergey Kazantsev
  */
 public class AddCategoryHandler implements CommandHandler {
+    /**
+     * Сообщение о существовании персональной (пользовательской) категории
+     */
+    private static final String USER_CATEGORY_ALREADY_EXISTS = "Персональная категория %s '%s' уже существует.";
+
+    /**
+     * Сообщение о существовании стандартной категории
+     */
+    private static final String STANDARD_CATEGORY_ALREADY_EXISTS = "Стандартная категория %s '%s' уже " +
+            "существует.";
+
+    /**
+     * Сообщение об успешно созданной пользовательской категории
+     */
+    private static final String USER_CATEGORY_ADDED = "Категория %s '%s' успешно добавлена";
+
     /**
      * Тип категории, с которым будет работать обработчик
      */
@@ -50,16 +65,16 @@ public class AddCategoryHandler implements CommandHandler {
         try {
             categoryRepository.createUserCategory(session, commandData.getUser(), type, categoryName);
         } catch (ExistingUserCategoryException e) {
-            String responseText = Message.USER_CATEGORY_ALREADY_EXISTS.formatted(typeLabel, categoryName);
+            String responseText = USER_CATEGORY_ALREADY_EXISTS.formatted(typeLabel, categoryName);
             commandData.getBot().sendMessage(commandData.getUser(), responseText);
             return;
         } catch (ExistingStandardCategoryException e) {
-            String responseText = Message.STANDARD_CATEGORY_ALREADY_EXISTS.formatted(typeLabel, categoryName);
+            String responseText = STANDARD_CATEGORY_ALREADY_EXISTS.formatted(typeLabel, categoryName);
             commandData.getBot().sendMessage(commandData.getUser(), responseText);
             return;
         }
 
-        String responseText = Message.USER_CATEGORY_ADDED.formatted(typeLabel, categoryName);
+        String responseText = USER_CATEGORY_ADDED.formatted(typeLabel, categoryName);
         commandData.getBot().sendMessage(commandData.getUser(), responseText);
     }
 }

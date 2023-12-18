@@ -3,7 +3,6 @@ package ru.naumen.personalfinancebot.handler.command.budget;
 import org.hibernate.Session;
 import ru.naumen.personalfinancebot.handler.command.CommandHandler;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
-import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.Budget;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
@@ -18,6 +17,24 @@ import java.util.Optional;
  * Класс для обработки команды "/budget"
  */
 public class SingleBudgetHandler implements CommandHandler {
+    /**
+     * Сообщение об отсутствии бюджета за конкретную дату
+     */
+    private static final String CURRENT_BUDGET_NOT_EXISTS = "Бюджет на %s %s отсутствует";
+
+    /**
+     * Шаблон сообщения для вывода текущего бюджета
+     */
+    private final String CURRENT_BUDGET = """
+            Бюджет на %s %s:
+            Ожидаемые доходы: %s
+            Ожидаемые расходы: %s
+            Текущие доходы: %s
+            Текущие расходы: %s
+            Текущий баланс: %s
+            Нужно еще заработать: %s
+            Еще осталось на траты: %s""";
+
     /**
      * Репозиторий для работы с бюджетом
      */
@@ -58,7 +75,7 @@ public class SingleBudgetHandler implements CommandHandler {
         if (budget.isEmpty()) {
             commandData.getBot().sendMessage(
                     commandData.getUser(),
-                    Message.CURRENT_BUDGET_NOT_EXISTS.formatted(
+                    CURRENT_BUDGET_NOT_EXISTS.formatted(
                             monthFormatService.formatRuMonthName(currentMonthYear.getMonth()),
                             String.valueOf(currentMonthYear.getYear()))
             );
@@ -81,7 +98,7 @@ public class SingleBudgetHandler implements CommandHandler {
 
         commandData.getBot().sendMessage(
                 commandData.getUser(),
-                Message.CURRENT_BUDGET.formatted(
+                CURRENT_BUDGET.formatted(
                         monthFormatService.formatRuMonthName(currentMonthYear.getMonth()),
                         String.valueOf(currentMonthYear.getYear()),
                         numberFormatService.formatDouble(expectIncome),

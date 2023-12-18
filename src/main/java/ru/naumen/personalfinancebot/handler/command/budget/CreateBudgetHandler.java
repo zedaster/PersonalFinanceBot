@@ -22,6 +22,30 @@ import java.time.format.DateTimeParseException;
  */
 public class CreateBudgetHandler implements CommandHandler {
     /**
+     * Сообщение о неверно введенной команде /budget_create
+     */
+    private static final String INCORRECT_CREATE_BUDGET_ENTIRE_ARGS = "Неверно введена команда! Введите " +
+            "/budget_create [mm.yyyy - месяц.год] [ожидаемый доход] [ожидаемый расходы]";
+
+    /**
+     * Сообщение об ошибке в случае если пользователь планирует бюджет на прошлое.
+     */
+    private static final String CANT_CREATE_OLD_BUDGET = "Вы не можете создавать бюджеты за прошедшие месяцы!";
+
+    /**
+     * Шаблон сообщения для вывода сообщения о созданном бюджете
+     */
+    private static final String BUDGET_CREATED = """
+            Бюджет на %s %s создан.
+            Ожидаемые доходы: %s
+            Ожидаемые расходы: %s
+            Текущие доходы: %s
+            Текущие расходы: %s
+            Текущий баланс: %s
+            Нужно еще заработать: %s
+            Еще осталось на траты: %s""";
+
+    /**
      * Репозиторий для работы с бюджетом
      */
     private final BudgetRepository budgetRepository;
@@ -74,7 +98,7 @@ public class CreateBudgetHandler implements CommandHandler {
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         if (commandData.getArgs().size() != 3) {
-            commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_CREATE_BUDGET_ENTIRE_ARGS);
+            commandData.getBot().sendMessage(commandData.getUser(), INCORRECT_CREATE_BUDGET_ENTIRE_ARGS);
             return;
         }
 
@@ -87,7 +111,7 @@ public class CreateBudgetHandler implements CommandHandler {
         }
 
         if (yearMonth.isBefore(YearMonth.now())) {
-            commandData.getBot().sendMessage(commandData.getUser(), Message.CANT_CREATE_OLD_BUDGET);
+            commandData.getBot().sendMessage(commandData.getUser(), CANT_CREATE_OLD_BUDGET);
             return;
         }
 
@@ -115,9 +139,8 @@ public class CreateBudgetHandler implements CommandHandler {
         budget.setUser(user);
         budgetRepository.saveBudget(session, budget);
 
-        commandData.getBot().sendMessage(
-                user,
-                Message.BUDGET_CREATED.formatted(
+        commandData.getBot().sendMessage(user,
+                BUDGET_CREATED.formatted(
                         monthFormatService.formatRuMonthName(yearMonth.getMonth()),
                         String.valueOf(yearMonth.getYear()),
                         numberFormatService.formatDouble(expectedIncome),

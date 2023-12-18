@@ -1,7 +1,6 @@
 package ru.naumen.personalfinancebot.service;
 
 import org.hibernate.Session;
-import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
@@ -15,6 +14,21 @@ import java.util.List;
  * @author Sergey Kazantsev
  */
 public class CategoryListService {
+    /**
+     * Шаблон для вывода сообщения о доступных пользователю категориях
+     */
+    private static final String LIST_TYPED_CATEGORIES = """
+            Все доступные вам категории %s:
+            Стандартные:
+            %s
+            Персональные:
+            %s""";
+
+    /**
+     * Часть шаблона списка категорий на случай, если категории отсутствуют
+     */
+    private static final String EMPTY_LIST_CONTENT = "<отсутствуют>";
+
     /**
      * Хранилище категорий
      */
@@ -31,7 +45,7 @@ public class CategoryListService {
         List<Category> typedStandardCategories = categoryRepository.getStandardCategoriesByType(session, categoryType);
         List<Category> personalCategories = categoryRepository.getUserCategoriesByType(session, user, categoryType);
 
-        return Message.LIST_TYPED_CATEGORIES.formatted(
+        return LIST_TYPED_CATEGORIES.formatted(
                 categoryType.getPluralShowLabel(),
                 formatCategoryList(typedStandardCategories),
                 formatCategoryList(personalCategories)
@@ -40,11 +54,11 @@ public class CategoryListService {
 
     /**
      * Форматирует список категорий в строку, содержащую нумерованный список из названия этих категорий или
-     * {@link Message#EMPTY_LIST_CONTENT}, если список пуст.
+     * {@link #EMPTY_LIST_CONTENT}, если список пуст.
      */
     private String formatCategoryList(List<Category> categories) {
         if (categories.isEmpty()) {
-            return Message.EMPTY_LIST_CONTENT + "\n";
+            return EMPTY_LIST_CONTENT + "\n";
         }
 
         StringBuilder stringBuilder = new StringBuilder();

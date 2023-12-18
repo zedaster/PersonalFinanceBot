@@ -14,7 +14,9 @@ public class SingleListCategoriesHandler implements CommandHandler {
     /**
      * Сервис, который работает со списками категорий
      */
+
     private final CategoryListService categoryListService;
+
     /**
      * Тип категории, с которым будет работать обработчик
      */

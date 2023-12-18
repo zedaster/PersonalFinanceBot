@@ -20,6 +20,8 @@ import java.util.Optional;
  * Телеграм бот
  */
 public class TelegramBot extends TelegramLongPollingBot implements Bot {
+    private static final String POLLING_EXCEPTION = "При запуске Телеграм Бота произошла ошибка. ";
+
     /**
      * Настройки для телеграм бота
      */
@@ -98,13 +100,13 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
      * Запуск бота
      */
     @Override
-    public void startPooling() throws PoolingException {
+    public void startPooling() throws PollingException {
         try {
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
             botsApi.registerBot(this);
             System.out.println("Telegram bot is pooling now...");
         } catch (TelegramApiException exception) {
-            throw new PoolingException("При запуске Телеграм Бота произошла ошибка.", exception);
+            throw new PollingException(POLLING_EXCEPTION, exception);
         }
     }
 

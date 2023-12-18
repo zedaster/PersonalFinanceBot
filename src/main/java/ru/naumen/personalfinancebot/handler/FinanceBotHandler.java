@@ -5,7 +5,6 @@ import org.hibernate.SessionFactory;
 import ru.naumen.personalfinancebot.handler.command.*;
 import ru.naumen.personalfinancebot.handler.command.budget.*;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
-import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
@@ -20,6 +19,11 @@ import java.util.Map;
  * Обработчик операций для бота "Персональный финансовый трекер"
  */
 public class FinanceBotHandler {
+    /**
+     * Сообщение, если пользователь передал неверную команду
+     */
+    private static final String COMMAND_NOT_FOUND = "Команда не распознана...";
+
     /**
      * Коллекция, которая хранит обработчики для команд
      */
@@ -90,7 +94,7 @@ public class FinanceBotHandler {
         if (handler != null) {
             handler.handleCommand(commandData, session);
         } else {
-            commandData.getBot().sendMessage(commandData.getUser(), Message.COMMAND_NOT_FOUND);
+            commandData.getBot().sendMessage(commandData.getUser(), COMMAND_NOT_FOUND);
         }
     }
 }

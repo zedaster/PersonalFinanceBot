@@ -2,7 +2,6 @@ package ru.naumen.personalfinancebot.handler.command;
 
 import org.hibernate.Session;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
-import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repository.category.exception.NotExistingCategoryException;
@@ -14,6 +13,17 @@ import ru.naumen.personalfinancebot.service.CategoryParseService;
  * @author Sergey Kazantsev
  */
 public class RemoveCategoryHandler implements CommandHandler {
+    /**
+     * Сообщение об отсутствии пользовательской категории
+     */
+    private static final String USER_CATEGORY_ALREADY_NOT_EXISTS = "Пользовательской категории %s '%s' не " +
+            "существует!";
+
+    /**
+     * Сообщение об успешном удалении пользовательской категориии
+     */
+    private static final String USER_CATEGORY_REMOVED = "Категория %s '%s' успешно удалена";
+
     /**
      * Хранилище категорий
      */
@@ -49,12 +59,12 @@ public class RemoveCategoryHandler implements CommandHandler {
         try {
             categoryRepository.removeUserCategoryByName(session, commandData.getUser(), categoryType, categoryName);
         } catch (NotExistingCategoryException e) {
-            String responseText = Message.USER_CATEGORY_ALREADY_NOT_EXISTS.formatted(typeLabel, categoryName);
+            String responseText = USER_CATEGORY_ALREADY_NOT_EXISTS.formatted(typeLabel, categoryName);
             commandData.getBot().sendMessage(commandData.getUser(), responseText);
             return;
         }
 
-        String responseText = Message.USER_CATEGORY_REMOVED.formatted(typeLabel, categoryName);
+        String responseText = USER_CATEGORY_REMOVED.formatted(typeLabel, categoryName);
         commandData.getBot().sendMessage(commandData.getUser(), responseText);
     }
 }
