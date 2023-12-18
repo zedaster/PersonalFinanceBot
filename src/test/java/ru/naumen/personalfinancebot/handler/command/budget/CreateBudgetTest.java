@@ -10,16 +10,15 @@ import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
-import ru.naumen.personalfinancebot.model.Category;
-import ru.naumen.personalfinancebot.model.CategoryType;
-import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.model.*;
+import ru.naumen.personalfinancebot.repository.ClearQueryManager;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
+import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
+import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.category.exception.ExistingStandardCategoryException;
 import ru.naumen.personalfinancebot.repository.category.exception.ExistingUserCategoryException;
-import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateBudgetRepository;
-import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateCategoryRepository;
-import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateOperationRepository;
-import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateUserRepository;
+import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
+import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
 
 import java.util.List;
 
@@ -40,22 +39,22 @@ public class CreateBudgetTest {
     /**
      * Хранилище пользователей
      */
-    private final TestHibernateUserRepository userRepository;
+    private final HibernateUserRepository userRepository;
 
     /**
      * Хранилище категорий
      */
-    private final TestHibernateCategoryRepository categoryRepository;
+    private final HibernateCategoryRepository categoryRepository;
 
     /**
      * Хранилище бюджетов
      */
-    private final TestHibernateBudgetRepository budgetRepository;
+    private final HibernateBudgetRepository budgetRepository;
 
     /**
      * Хранилище опреаций
      */
-    private final TestHibernateOperationRepository operationRepository;
+    private final HibernateOperationRepository operationRepository;
 
     /**
      * Экземпляр класс фейковой реализации бота
@@ -70,10 +69,10 @@ public class CreateBudgetTest {
     public CreateBudgetTest() {
         SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
         this.transactionManager = new TransactionManager(sessionFactory);
-        this.userRepository = new TestHibernateUserRepository();
-        this.categoryRepository = new TestHibernateCategoryRepository();
-        this.operationRepository = new TestHibernateOperationRepository();
-        this.budgetRepository = new TestHibernateBudgetRepository();
+        this.userRepository = new HibernateUserRepository();
+        this.categoryRepository = new HibernateCategoryRepository();
+        this.operationRepository = new HibernateOperationRepository();
+        this.budgetRepository = new HibernateBudgetRepository();
         this.botHandler = new FinanceBotHandler(
                 this.userRepository,
                 this.operationRepository,
@@ -99,10 +98,7 @@ public class CreateBudgetTest {
     @After
     public void clearRepositories() {
         this.transactionManager.produceTransaction(session -> {
-            this.budgetRepository.removeAll(session);
-            this.operationRepository.removeAll(session);
-            this.categoryRepository.removeAll(session);
-            this.userRepository.removeAll(session);
+            new ClearQueryManager().clear(session, Budget.class, Operation.class, Category.class, User.class);
         });
     }
 

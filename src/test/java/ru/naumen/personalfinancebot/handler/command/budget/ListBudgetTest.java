@@ -15,10 +15,11 @@ import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.Budget;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.repository.ClearQueryManager;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
-import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateBudgetRepository;
-import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateUserRepository;
+import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
+import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
 
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -41,12 +42,12 @@ public class ListBudgetTest {
     /**
      * Хранилище пользователей
      */
-    private final TestHibernateUserRepository userRepository;
+    private final HibernateUserRepository userRepository;
 
     /**
      * Хранилище бюджетов
      */
-    private final TestHibernateBudgetRepository budgetRepository;
+    private final HibernateBudgetRepository budgetRepository;
 
     /**
      * Моковое хранилище опреаций
@@ -66,8 +67,8 @@ public class ListBudgetTest {
     public ListBudgetTest() {
         SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
         this.transactionManager = new TransactionManager(sessionFactory);
-        this.userRepository = new TestHibernateUserRepository();
-        this.budgetRepository = new TestHibernateBudgetRepository();
+        this.userRepository = new HibernateUserRepository();
+        this.budgetRepository = new HibernateBudgetRepository();
         this.operationRepository = Mockito.mock(OperationRepository.class);
         this.botHandler = new FinanceBotHandler(
                 this.userRepository,
@@ -95,8 +96,7 @@ public class ListBudgetTest {
     @After
     public void clearRepositories() {
         this.transactionManager.produceTransaction(session -> {
-            this.budgetRepository.removeAll(session);
-            this.userRepository.removeAll(session);
+            new ClearQueryManager().clear(session, Budget.class, User.class);
         });
     }
 
