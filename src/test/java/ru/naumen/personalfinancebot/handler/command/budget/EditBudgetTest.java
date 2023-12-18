@@ -70,9 +70,7 @@ public class EditBudgetTest {
                 new EmptyUserRepository(),
                 new EmptyOperationRepository(),
                 new EmptyCategoryRepository(),
-                this.budgetRepository,
-                this.sessionFactory
-        );
+                this.budgetRepository);
         this.user = new User(1, 100);
     }
 

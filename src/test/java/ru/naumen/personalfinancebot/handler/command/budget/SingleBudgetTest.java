@@ -80,9 +80,7 @@ public class SingleBudgetTest {
                 new EmptyUserRepository(),
                 this.operationRepository,
                 new EmptyCategoryRepository(),
-                this.budgetRepository,
-                sessionFactory
-        );
+                this.budgetRepository);
         this.user = new User(1, 100);
     }
 

@@ -29,9 +29,7 @@ public class HelpBudgetTest {
                 new EmptyUserRepository(),
                 new EmptyOperationRepository(),
                 new EmptyCategoryRepository(),
-                new EmptyBudgetRepository(),
-                new HibernateConfiguration().getSessionFactory()
-        );
+                new EmptyBudgetRepository());
         User user = new User(1L, 100);
         CommandData command = new CommandData(mockBot, user, "budget_help", List.of());
         handler.handleCommand(command, null);

@@ -33,8 +33,7 @@ public class Main {
                 userRepository,
                 operationRepository,
                 categoryRepository,
-                budgetRepository,
-                hibernateConfiguration.getSessionFactory()
+                budgetRepository
         );
         TelegramBotConfiguration configuration = new TelegramBotConfiguration();
         TransactionManager transactionManager = new TransactionManager(hibernateConfiguration.getSessionFactory());

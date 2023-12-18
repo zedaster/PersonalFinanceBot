@@ -30,18 +30,11 @@ public class FinanceBotHandler {
     private final Map<String, CommandHandler> commandHandlers;
 
     /**
-     * Фабрика сессий к БД
-     */
-    private final SessionFactory sessionFactory;
-
-    /**
      * @param userRepository      Репозиторий для работы с пользователем
      * @param operationRepository Репозиторий для работы с операциями
      * @param categoryRepository  Репозиторий для работы с категориями
-     * @param sessionFactory      Фабрика сессий
      */
-    public FinanceBotHandler(UserRepository userRepository, OperationRepository operationRepository, CategoryRepository categoryRepository, BudgetRepository budgetRepository, SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
+    public FinanceBotHandler(UserRepository userRepository, OperationRepository operationRepository, CategoryRepository categoryRepository, BudgetRepository budgetRepository) {
         CategoryParseService categoryParseService = new CategoryParseService();
         DateParseService dateParseService = new DateParseService();
         NumberParseService numberParseService = new NumberParseService();

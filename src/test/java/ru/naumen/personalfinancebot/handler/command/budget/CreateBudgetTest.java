@@ -78,9 +78,7 @@ public class CreateBudgetTest {
                 new EmptyUserRepository(),
                 this.operationRepository,
                 new EmptyCategoryRepository(),
-                this.budgetRepository,
-                this.sessionFactory
-        );
+                this.budgetRepository);
         this.user = new User(1, 100);
     }
 

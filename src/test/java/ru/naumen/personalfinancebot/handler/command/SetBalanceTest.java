@@ -52,9 +52,7 @@ public class SetBalanceTest {
                 userRepository,
                 operationRepository,
                 categoryRepository,
-                budgetRepository,
-                hibernateConfiguration.getSessionFactory()
-        );
+                budgetRepository);
     }
 
     /**
