@@ -29,11 +29,6 @@ import java.util.List;
  */
 public class SingleBudgetTest {
     /**
-     * Фабрика сессий
-     */
-    private final SessionFactory sessionFactory;
-
-    /**
      * Менеджер транзакций
      */
     private final TransactionManager transactionManager;
@@ -64,8 +59,8 @@ public class SingleBudgetTest {
     private User user;
 
     public SingleBudgetTest() {
-        this.sessionFactory = new HibernateConfiguration().getSessionFactory();
-        this.transactionManager = new TransactionManager(this.sessionFactory);
+        SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
+        this.transactionManager = new TransactionManager(sessionFactory);
     }
 
     /**

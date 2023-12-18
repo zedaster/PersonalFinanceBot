@@ -29,11 +29,6 @@ import java.util.List;
  */
 public class ListBudgetTest {
     /**
-     * Фабрика сессий
-     */
-    private final SessionFactory sessionFactory;
-
-    /**
      * Менеджер транзакций
      */
     private final TransactionManager transactionManager;
@@ -64,8 +59,8 @@ public class ListBudgetTest {
     private User user;
 
     public ListBudgetTest() {
-        this.sessionFactory = new HibernateConfiguration().getSessionFactory();
-        this.transactionManager = new TransactionManager(this.sessionFactory);
+        SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
+        this.transactionManager = new TransactionManager(sessionFactory);
     }
 
     /**
