@@ -56,9 +56,6 @@ public class AddOperationHandler implements CommandHandler {
         this.argumentParser = argumentParser;
     }
 
-    /**
-     * Метод, вызываемый при получении команды
-     */
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         if (commandData.getArgs().size() < 2) {

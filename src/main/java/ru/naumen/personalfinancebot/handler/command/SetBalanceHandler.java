@@ -35,9 +35,6 @@ public class SetBalanceHandler implements CommandHandler {
         this.userRepository = userRepository;
     }
 
-    /**
-     * Метод, вызываемый при получении команды
-     */
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         double amount;
@@ -51,8 +48,9 @@ public class SetBalanceHandler implements CommandHandler {
 
         commandData.getUser().setBalance(amount);
         userRepository.saveUser(session, commandData.getUser());
-        commandData.getBot().sendMessage(commandData.getUser(), Message.SET_BALANCE_SUCCESSFULLY
-                .replace("{balance}", this.outputFormatter.formatDouble(amount)));
-
+        commandData.getBot().sendMessage(
+                commandData.getUser(),
+                Message.SET_BALANCE_SUCCESSFULLY.formatted(this.outputFormatter.formatDouble(amount))
+        );
     }
 }

@@ -53,9 +53,6 @@ public class ListBudgetHandler implements CommandHandler {
         this.outputFormatter = outputFormatter;
     }
 
-    /**
-     * Метод, вызываемый при получении команды
-     */
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         List<String> arguments = commandData.getArgs();
@@ -75,7 +72,7 @@ public class ListBudgetHandler implements CommandHandler {
             }
             from = YearMonth.of(year, 1);
             to = YearMonth.of(year, 12);
-            postfixMessage = Message.BUDGET_LIST_YEAR_POSTFIX.replace("{year}", String.valueOf(year));
+            postfixMessage = Message.BUDGET_LIST_YEAR_POSTFIX.formatted(String.valueOf(year));
         } else if (arguments.size() == 2) {
             try {
                 from = argumentParser.parseYearMonth(arguments.get(0));
@@ -86,8 +83,7 @@ public class ListBudgetHandler implements CommandHandler {
             }
 
             long monthsBetween = from.until(to, ChronoUnit.MONTHS) + 1;
-            postfixMessage = Message.BUDGET_LIST_RANGE_POSTFIX.replace("{count}",
-                    String.valueOf(monthsBetween));
+            postfixMessage = Message.BUDGET_LIST_RANGE_POSTFIX.formatted(String.valueOf(monthsBetween));
         } else {
             commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_LIST_BUDGET_ENTIRE_ARGS);
             return;
@@ -117,14 +113,13 @@ public class ListBudgetHandler implements CommandHandler {
             double realExpenses = this.operationRepository
                     .getCurrentUserPaymentSummary(session, commandData.getUser(), CategoryType.EXPENSE, targetYearMonth);
 
-            resultReplyMessage.append(Message.BUDGET_LIST_ELEMENT
-                    .replace("{month}", outputFormatter.formatRuMonthName(targetYearMonth.getMonth()))
-                    .replace("{year}", String.valueOf(targetYearMonth.getYear()))
-                    .replace("{expect_income}", outputFormatter.formatDouble(expectIncome))
-                    .replace("{expect_expenses}", outputFormatter.formatDouble(expectExpenses))
-                    .replace("{real_income}", outputFormatter.formatDouble(realIncome))
-                    .replace("{real_expenses}", outputFormatter.formatDouble(realExpenses))
-
+            resultReplyMessage.append(Message.BUDGET_LIST_ELEMENT.formatted(
+                            outputFormatter.formatRuMonthName(targetYearMonth.getMonth()),
+                            String.valueOf(targetYearMonth.getYear()),
+                            outputFormatter.formatDouble(expectIncome),
+                            outputFormatter.formatDouble(expectExpenses),
+                            outputFormatter.formatDouble(realIncome),
+                            outputFormatter.formatDouble(realExpenses))
             );
             resultReplyMessage.append("\n\n");
         }

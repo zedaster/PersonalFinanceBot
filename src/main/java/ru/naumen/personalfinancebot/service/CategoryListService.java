@@ -31,10 +31,11 @@ public class CategoryListService {
         List<Category> typedStandardCategories = categoryRepository.getStandardCategoriesByType(session, categoryType);
         List<Category> personalCategories = categoryRepository.getUserCategoriesByType(session, user, categoryType);
 
-        return Message.LIST_TYPED_CATEGORIES
-                .replace("{type}", categoryType.getPluralShowLabel())
-                .replace("{standard_list}", formatCategoryList(typedStandardCategories))
-                .replace("{personal_list}", formatCategoryList(personalCategories));
+        return Message.LIST_TYPED_CATEGORIES.formatted(
+                categoryType.getPluralShowLabel(),
+                formatCategoryList(typedStandardCategories),
+                formatCategoryList(personalCategories)
+        );
     }
 
     /**

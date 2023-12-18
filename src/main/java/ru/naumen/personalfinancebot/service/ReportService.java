@@ -48,10 +48,7 @@ public class ReportService {
         report.append(Message.SELF_REPORT_MESSAGE);
 
         for (Map.Entry<String, Double> entry : categoryPaymentMap.entrySet()) {
-             report.append(Message.EXPENSE_REPORT_PATTERN
-                     .replace("{category}", entry.getKey())
-                     .replace("{payment}", entry.getValue().toString())
-             );
+            report.append(Message.EXPENSE_REPORT_PATTERN.formatted(entry.getKey(), entry.getValue().toString()));
         }
         return report.toString();
     }

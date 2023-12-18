@@ -53,9 +53,6 @@ public class EditBudgetHandler implements CommandHandler {
         this.type = type;
     }
 
-    /**
-     * Метод, вызываемый при получении команды
-     */
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         int argsCount = commandData.getArgs().size();
@@ -96,11 +93,14 @@ public class EditBudgetHandler implements CommandHandler {
 
         double expectIncome = budget.get().getExpectedSummary(CategoryType.INCOME);
         double expectExpenses = budget.get().getExpectedSummary(CategoryType.EXPENSE);
-        commandData.getBot().sendMessage(commandData.getUser(), Message.BUDGET_EDITED
-                .replace("{month}", outputFormatter.formatRuMonthName(yearMonth.getMonth()))
-                .replace("{year}", String.valueOf(yearMonth.getYear()))
-                .replace("{expect_income}", outputFormatter.formatDouble(expectIncome))
-                .replace("{expect_expenses}", outputFormatter.formatDouble(expectExpenses))
+        commandData.getBot().sendMessage(
+                commandData.getUser(),
+                Message.BUDGET_EDITED.formatted(
+                        outputFormatter.formatRuMonthName(yearMonth.getMonth()),
+                        String.valueOf(yearMonth.getYear()),
+                        outputFormatter.formatDouble(expectIncome),
+                        outputFormatter.formatDouble(expectExpenses)
+                )
         );
     }
 }

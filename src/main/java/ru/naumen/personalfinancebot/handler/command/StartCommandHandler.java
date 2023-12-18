@@ -10,9 +10,6 @@ import ru.naumen.personalfinancebot.message.Message;
  * @author Sergey Kazantsev
  */
 public class StartCommandHandler implements CommandHandler {
-    /**
-     * Метод, вызываемый при получении команды
-     */
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         commandData.getBot().sendMessage(commandData.getUser(), Message.WELCOME_MESSAGE);

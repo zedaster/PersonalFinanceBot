@@ -35,9 +35,6 @@ public class RemoveCategoryHandler implements CommandHandler {
         this.argumentParser = argumentParser;
     }
 
-    /**
-     * Метод, вызываемый при получении команды
-     */
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         String typeLabel = categoryType.getPluralShowLabel();
@@ -52,16 +49,12 @@ public class RemoveCategoryHandler implements CommandHandler {
         try {
             categoryRepository.removeUserCategoryByName(session, commandData.getUser(), categoryType, categoryName);
         } catch (NotExistingCategoryException e) {
-            String responseText = Message.USER_CATEGORY_ALREADY_NOT_EXISTS
-                    .replace("{type}", typeLabel)
-                    .replace("{name}", categoryName);
+            String responseText = Message.USER_CATEGORY_ALREADY_NOT_EXISTS.formatted(typeLabel, categoryName);
             commandData.getBot().sendMessage(commandData.getUser(), responseText);
             return;
         }
 
-        String responseText = Message.USER_CATEGORY_REMOVED
-                .replace("{type}", typeLabel)
-                .replace("{name}", categoryName);
+        String responseText = Message.USER_CATEGORY_REMOVED.formatted(typeLabel, categoryName);
         commandData.getBot().sendMessage(commandData.getUser(), responseText);
     }
 }

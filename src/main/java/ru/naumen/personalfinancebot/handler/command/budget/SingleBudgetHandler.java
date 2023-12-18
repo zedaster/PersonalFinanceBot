@@ -43,17 +43,16 @@ public class SingleBudgetHandler implements CommandHandler {
         this.outputFormatter = outputFormatter;
     }
 
-    /**
-     * Метод, вызываемый при получении команды
-     */
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         YearMonth currentMonthYear = YearMonth.now();
         Optional<Budget> budget = this.budgetRepository.getBudget(session, commandData.getUser(), YearMonth.now());
         if (budget.isEmpty()) {
-            commandData.getBot().sendMessage(commandData.getUser(), Message.CURRENT_BUDGET_NOT_EXISTS
-                    .replace("{month}", outputFormatter.formatRuMonthName(currentMonthYear.getMonth()))
-                    .replace("{year}", String.valueOf(currentMonthYear.getYear()))
+            commandData.getBot().sendMessage(
+                    commandData.getUser(),
+                    Message.CURRENT_BUDGET_NOT_EXISTS.formatted(
+                            outputFormatter.formatRuMonthName(currentMonthYear.getMonth()),
+                            String.valueOf(currentMonthYear.getYear()))
             );
             return;
         }
@@ -72,16 +71,17 @@ public class SingleBudgetHandler implements CommandHandler {
         double expensesLeft = Math.max(0, expectExpenses - realExpenses);
         double balance = commandData.getUser().getBalance();
 
-        commandData.getBot().sendMessage(commandData.getUser(), Message.CURRENT_BUDGET
-                .replace("{month}", outputFormatter.formatRuMonthName(currentMonthYear.getMonth()))
-                .replace("{year}", String.valueOf(currentMonthYear.getYear()))
-                .replace("{expect_income}", outputFormatter.formatDouble(expectIncome))
-                .replace("{expect_expenses}", outputFormatter.formatDouble(expectExpenses))
-                .replace("{real_income}", outputFormatter.formatDouble(realIncome))
-                .replace("{real_expenses}", outputFormatter.formatDouble(realExpenses))
-                .replace("{balance}", outputFormatter.formatDouble(balance))
-                .replace("{income_left}", outputFormatter.formatDouble(incomeLeft))
-                .replace("{expenses_left}", outputFormatter.formatDouble(expensesLeft))
-        );
+        commandData.getBot().sendMessage(
+                commandData.getUser(),
+                Message.CURRENT_BUDGET.formatted(
+                        outputFormatter.formatRuMonthName(currentMonthYear.getMonth()),
+                        String.valueOf(currentMonthYear.getYear()),
+                        outputFormatter.formatDouble(expectIncome),
+                        outputFormatter.formatDouble(expectExpenses),
+                        outputFormatter.formatDouble(realIncome),
+                        outputFormatter.formatDouble(realExpenses),
+                        outputFormatter.formatDouble(balance),
+                        outputFormatter.formatDouble(incomeLeft),
+                        outputFormatter.formatDouble(expensesLeft)));
     }
 }

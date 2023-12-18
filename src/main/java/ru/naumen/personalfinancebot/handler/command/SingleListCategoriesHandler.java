@@ -25,9 +25,6 @@ public class SingleListCategoriesHandler implements CommandHandler {
         this.categoryType = categoryType;
     }
 
-    /**
-     * Метод, вызываемый при получении команды
-     */
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         String content = categoryListService.getListContent(session, commandData.getUser(), categoryType);

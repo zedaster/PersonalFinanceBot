@@ -53,9 +53,6 @@ public class CreateBudgetHandler implements CommandHandler {
         this.outputFormatter = outputFormatter;
     }
 
-    /**
-     * Метод, вызываемый при получении команды
-     */
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         if (commandData.getArgs().size() != 3) {
@@ -100,16 +97,19 @@ public class CreateBudgetHandler implements CommandHandler {
         budget.setUser(user);
         budgetRepository.saveBudget(session, budget);
 
-        commandData.getBot().sendMessage(user, Message.BUDGET_CREATED
-                .replace("{month}", outputFormatter.formatRuMonthName(yearMonth.getMonth()))
-                .replace("{year}", String.valueOf(yearMonth.getYear()))
-                .replace("{expect_income}", outputFormatter.formatDouble(expectedIncome))
-                .replace("{expect_expenses}", outputFormatter.formatDouble(expectedExpenses))
-                .replace("{current_income}", outputFormatter.formatDouble(currentIncome))
-                .replace("{current_expenses}", outputFormatter.formatDouble(currentExpenses))
-                .replace("{balance}", outputFormatter.formatDouble(balance))
-                .replace("{income_left}", outputFormatter.formatDouble(incomeLeft))
-                .replace("{expenses_left}", outputFormatter.formatDouble(expensesLeft))
+        commandData.getBot().sendMessage(
+                user,
+                Message.BUDGET_CREATED.formatted(
+                        outputFormatter.formatRuMonthName(yearMonth.getMonth()),
+                        String.valueOf(yearMonth.getYear()),
+                        outputFormatter.formatDouble(expectedIncome),
+                        outputFormatter.formatDouble(expectedExpenses),
+                        outputFormatter.formatDouble(currentIncome),
+                        outputFormatter.formatDouble(currentExpenses),
+                        outputFormatter.formatDouble(balance),
+                        outputFormatter.formatDouble(incomeLeft),
+                        outputFormatter.formatDouble(expensesLeft)
+                )
         );
     }
 }

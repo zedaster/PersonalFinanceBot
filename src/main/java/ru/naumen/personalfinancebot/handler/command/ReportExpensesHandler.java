@@ -17,9 +17,6 @@ public class ReportExpensesHandler implements CommandHandler {
         this.reportService = reportService;
     }
 
-    /**
-     * Метод, вызываемый при получении команды "/report_expense"
-     */
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         if (commandData.getArgs().size() != 1) {

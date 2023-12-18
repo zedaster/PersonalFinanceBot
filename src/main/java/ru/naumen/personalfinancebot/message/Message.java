@@ -17,7 +17,7 @@ public class Message {
     /**
      * Сообщение для команды /set_balance
      */
-    public static final String SET_BALANCE_SUCCESSFULLY = "Ваш баланс изменен. Теперь он составляет {balance}";
+    public static final String SET_BALANCE_SUCCESSFULLY = "Ваш баланс изменен. Теперь он составляет %s";
 
     /**
      * Сообщение об успешном добавлении дохода для пользователя
@@ -42,38 +42,38 @@ public class Message {
     /**
      * Сообщение о существовании персональной (пользовательской) категории
      */
-    public static final String USER_CATEGORY_ALREADY_EXISTS = "Персональная категория {type} '{name}' уже существует.";
+    public static final String USER_CATEGORY_ALREADY_EXISTS = "Персональная категория %s '%s' уже существует.";
 
     /**
      * Сообщение о существовании стандартной категории
      */
-    public static final String STANDARD_CATEGORY_ALREADY_EXISTS = "Стандартная категория {type} '{name}' уже " +
+    public static final String STANDARD_CATEGORY_ALREADY_EXISTS = "Стандартная категория %s '%s' уже " +
             "существует.";
     /**
      * Сообщение об успешно созданной пользовательской категории
      */
-    public static final String USER_CATEGORY_ADDED = "Категория {type} '{name}' успешно добавлена";
+    public static final String USER_CATEGORY_ADDED = "Категория %s '%s' успешно добавлена";
 
     /**
      * Сообщение об отсутствии пользовательской категории
      */
-    public static final String USER_CATEGORY_ALREADY_NOT_EXISTS = "Пользовательской категории {type} '{name}' не " +
+    public static final String USER_CATEGORY_ALREADY_NOT_EXISTS = "Пользовательской категории %s '%s' не " +
             "существует!";
 
     /**
      * Сообщение об успешном удалении пользовательской категориии
      */
-    public static final String USER_CATEGORY_REMOVED = "Категория {type} '{name}' успешно удалена";
+    public static final String USER_CATEGORY_REMOVED = "Категория %s '%s' успешно удалена";
 
     /**
      * Шаблон для вывода сообщения о доступных пользователю категориях
      */
     public static final String LIST_TYPED_CATEGORIES = """
-            Все доступные вам категории {type}:
+            Все доступные вам категории %s:
             Стандартные:
-            {standard_list}
+            %s
             Персональные:
-            {personal_list}""";
+            %s""";
 
     /**
      * Часть шаблона списка категорий на случай, если категории отсутствуют
@@ -123,7 +123,7 @@ public class Message {
     /**
      * Шаблон строки отчета для команды /report_expense
      */
-    public static final String EXPENSE_REPORT_PATTERN = "{category}: {payment} руб.\n";
+    public static final String EXPENSE_REPORT_PATTERN = "%s: %s руб.\n";
 
     /**
      * Сообщение о неверно введённой дате (месяц и год)
@@ -167,14 +167,14 @@ public class Message {
      * Шаблон сообщения для вывода сообщения о созданном бюджете
      */
     public static final String BUDGET_CREATED = """
-            Бюджет на {month} {year} создан.
-            Ожидаемые доходы: {expect_income}
-            Ожидаемые расходы: {expect_expenses}
-            Текущие доходы: {current_income}
-            Текущие расходы: {current_expenses}
-            Текущий баланс: {balance}
-            Нужно еще заработать: {income_left}
-            Еще осталось на траты: {expenses_left}""";
+            Бюджет на %s %s создан.
+            Ожидаемые доходы: %s
+            Ожидаемые расходы: %s
+            Текущие доходы: %s
+            Текущие расходы: %s
+            Текущий баланс: %s
+            Нужно еще заработать: %s
+            Еще осталось на траты: %s""";
 
     /**
      * Сообщение о неверно введенной команде при редактировании бюджета
@@ -197,9 +197,9 @@ public class Message {
      * Шаблон сообщения при успешном редактировании бюджета
      */
     public static final String BUDGET_EDITED = """
-            Бюджет на {month} {year} изменен:
-            Ожидаемые доходы: {expect_income}
-            Ожидаемые расходы: {expect_expenses}""";
+            Бюджет на %s %s изменен:
+            Ожидаемые доходы: %s
+            Ожидаемые расходы: %s""";
 
     /**
      * Сообщение о неверно введенной команде /budget_list
@@ -224,19 +224,19 @@ public class Message {
      * Шаблон для вывода бюджета за конкретный год и месяц
      */
     public static final String BUDGET_LIST_ELEMENT = """
-            {month} {year}:
-            Ожидание: + {expect_income} | - {expect_expenses}
-            Реальность: + {real_income} | - {real_expenses}""";
+            %s %s:
+            Ожидание: + %s | - %s
+            Реальность: + %s | - %s""";
 
     /**
      * Постфикс для сообщения пользователю при выводе списка бюджетов за n-ое кол-во месяцев
      */
-    public static final String BUDGET_LIST_RANGE_POSTFIX = "Данные показаны за {count} месяц(-ев).";
+    public static final String BUDGET_LIST_RANGE_POSTFIX = "Данные показаны за %s месяц(-ев).";
 
     /**
      * Постфикс для сообщения пользователю при выводе списка бюджетов за конкретный год
      */
-    public static final String BUDGET_LIST_YEAR_POSTFIX = "Данные показаны за {year} год.";
+    public static final String BUDGET_LIST_YEAR_POSTFIX = "Данные показаны за %s год.";
 
     /**
      * Сообщение для вывода списка бюджетов за последние 12 месяцев.
@@ -255,18 +255,18 @@ public class Message {
     /**
      * Сообщение об отсутствии бюджета за конкретную дату
      */
-    public static final String CURRENT_BUDGET_NOT_EXISTS = "Бюджет на {month} {year} отсутствует";
+    public static final String CURRENT_BUDGET_NOT_EXISTS = "Бюджет на %s %s отсутствует";
 
     /**
      * Шаблон сообщения для вывода текущего бюджета
      */
     public static final String CURRENT_BUDGET = """
-            Бюджет на {month} {year}:
-            Ожидаемые доходы: {expect_income}
-            Ожидаемые расходы: {expect_expenses}
-            Текущие доходы: {real_income}
-            Текущие расходы: {real_expenses}
-            Текущий баланс: {balance}
-            Нужно еще заработать: {income_left}
-            Еще осталось на траты: {expenses_left}""";
+            Бюджет на %s %s:
+            Ожидаемые доходы: %s
+            Ожидаемые расходы: %s
+            Текущие доходы: %s
+            Текущие расходы: %s
+            Текущий баланс: %s
+            Нужно еще заработать: %s
+            Еще осталось на траты: %s""";
 }
