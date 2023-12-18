@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * Тесты для команды "/budget_create".
  */
-public class CreateBudgetTests {
+public class CreateBudgetTest {
     /**
      * Фабрика сессий
      */
@@ -61,7 +61,7 @@ public class CreateBudgetTests {
      */
     private User user;
 
-    public CreateBudgetTests() {
+    public CreateBudgetTest() {
         this.sessionFactory = new HibernateConfiguration().getSessionFactory();
         this.transactionManager = new TransactionManager(this.sessionFactory);
     }

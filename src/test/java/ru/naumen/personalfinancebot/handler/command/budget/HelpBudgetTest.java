@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Тесты для команды "/budget_help"
  */
-public class HelpBudgetTests {
+public class HelpBudgetTest {
     /**
      * Тест на вывод сообщения командой "/budget_help"
      */
