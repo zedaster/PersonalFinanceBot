@@ -62,6 +62,11 @@ public class AddCategoryTest {
     private final TransactionManager transactionManager;
 
     /**
+     * Менеджер запросов для очистки таблиц
+     */
+    private final ClearQueryManager clearQueryManager;
+
+    /**
      * Моковый бот
      */
     private MockBot mockBot;
@@ -83,6 +88,7 @@ public class AddCategoryTest {
                 categoryRepository,
                 budgetRepository);
         this.transactionManager = new TransactionManager(sessionFactory);
+        this.clearQueryManager = new ClearQueryManager();
     }
 
     /**
@@ -100,7 +106,7 @@ public class AddCategoryTest {
     @After
     public void afterEachTest() {
         transactionManager.produceTransaction(session -> {
-            new ClearQueryManager().clear(session, Category.class, User.class);
+            this.clearQueryManager.clear(session, Category.class, User.class);
         });
     }
 
@@ -120,7 +126,7 @@ public class AddCategoryTest {
             Optional<Category> addedCategory = categoryRepository.getCategoryByName(session, this.testUser, CategoryType.EXPENSE,
                     categoryName);
             Assert.assertTrue(addedCategory.isPresent());
-            new ClearQueryManager().clear(session, Category.class);
+            this.clearQueryManager.clear(session, Category.class);
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
             Assert.assertEquals(expectMessage, this.mockBot.poolMessageQueue().text());
         });
@@ -142,7 +148,7 @@ public class AddCategoryTest {
                     CommandData commandData = new CommandData(
                             this.mockBot, this.testUser, commands.get(i), List.of(testCase));
                     this.botHandler.handleCommand(commandData, session);
-                    new ClearQueryManager().clear(session, Category.class);
+                    this.clearQueryManager.clear(session, Category.class);
                 }
             }
         });
@@ -170,7 +176,7 @@ public class AddCategoryTest {
                     this.mockBot, this.testUser, ADD_INCOME_COMMAND, List.of(some65chars));
             this.botHandler.handleCommand(commandData, session);
             Assert.assertTrue(categoryRepository.getCategoryByName(session, this.testUser, CategoryType.INCOME, some65chars).isEmpty());
-            new ClearQueryManager().clear(session, Category.class);
+            this.clearQueryManager.clear(session, Category.class);
             Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
             Assert.assertEquals(expectMessage, this.mockBot.poolMessageQueue().text());
         });
@@ -190,7 +196,7 @@ public class AddCategoryTest {
                 CommandData commandData = new CommandData(
                         this.mockBot, this.testUser, ADD_INCOME_COMMAND, List.of(testCase));
                 this.botHandler.handleCommand(commandData, session);
-                new ClearQueryManager().clear(session, Category.class);
+                this.clearQueryManager.clear(session, Category.class);
             }
             Assert.assertEquals(5, this.mockBot.getMessageQueueSize());
             for (int i = 0; i < 5; i++) {
