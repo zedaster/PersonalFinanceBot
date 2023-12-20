@@ -3,6 +3,8 @@ package ru.naumen.personalfinancebot.handler;
 import org.hibernate.Session;
 import ru.naumen.personalfinancebot.handler.command.*;
 import ru.naumen.personalfinancebot.handler.command.budget.*;
+import ru.naumen.personalfinancebot.handler.command.report.EstimateReportHandler;
+import ru.naumen.personalfinancebot.handler.command.report.ReportExpensesHandler;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
@@ -33,14 +35,15 @@ public class FinanceBotHandler {
      * @param operationRepository Репозиторий для работы с операциями
      * @param categoryRepository  Репозиторий для работы с категориями
      */
-    public FinanceBotHandler(UserRepository userRepository, OperationRepository operationRepository, CategoryRepository categoryRepository, BudgetRepository budgetRepository) {
+    public FinanceBotHandler(UserRepository userRepository, OperationRepository operationRepository,
+                             CategoryRepository categoryRepository, BudgetRepository budgetRepository) {
         CategoryParseService categoryParseService = new CategoryParseService();
         DateParseService dateParseService = new DateParseService();
         NumberParseService numberParseService = new NumberParseService();
         OutputNumberFormatService numberFormatService = new OutputNumberFormatService();
         OutputMonthFormatService monthFormatService = new OutputMonthFormatService();
         CategoryListService categoryListService = new CategoryListService(categoryRepository);
-        ReportService reportService = new ReportService(operationRepository);
+        ReportService reportService = new ReportService(operationRepository, monthFormatService, numberFormatService);
 
         commandHandlers = new HashMap<>();
         commandHandlers.put("start", new StartCommandHandler());
@@ -76,6 +79,8 @@ public class FinanceBotHandler {
                 dateParseService, numberFormatService, monthFormatService, CategoryType.EXPENSE));
         commandHandlers.put("budget_list", new ListBudgetHandler(budgetRepository, operationRepository,
                 dateParseService, numberFormatService, monthFormatService));
+
+        commandHandlers.put("estimate_report", new EstimateReportHandler(dateParseService, reportService));
     }
 
     /**

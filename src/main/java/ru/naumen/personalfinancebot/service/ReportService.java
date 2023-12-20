@@ -1,6 +1,7 @@
 package ru.naumen.personalfinancebot.service;
 
 import org.hibernate.Session;
+import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
@@ -35,13 +36,35 @@ public class ReportService {
      */
     private static final String EXPENSE_REPORT_PATTERN = "%s: %s руб.\n";
 
+    private static final String ESTIMATE_REPORT_CURRENT = """
+            Подготовил отчет по средним доходам и расходам пользователей за текущий месяц:
+            Расходы: %s
+            Доходы: %s""";
+
+    private static final String ESTIMATE_REPORT_DATED = """
+            Подготовил отчет по средним доходам и расходам пользователей за %s %o:
+            Расходы: %s
+            Доходы: %s""";
+
     /**
-     * Репозиторий дл работы с операциями.
+     * Репозиторий для работы с операциями
      */
     private final OperationRepository operationRepository;
 
-    public ReportService(OperationRepository operationRepository) {
+    /**
+     * Сервис для форматирования названия месяца
+     */
+    private final OutputMonthFormatService monthFormatService;
+
+    /**
+     * Сервис для форматирования чисел для вывода
+     */
+    private final OutputNumberFormatService numberFormatService;
+
+    public ReportService(OperationRepository operationRepository, OutputMonthFormatService monthFormatService, OutputNumberFormatService numberFormatService) {
         this.operationRepository = operationRepository;
+        this.monthFormatService = monthFormatService;
+        this.numberFormatService = numberFormatService;
     }
 
     /**
@@ -74,5 +97,30 @@ public class ReportService {
             report.append(EXPENSE_REPORT_PATTERN.formatted(entry.getKey(), entry.getValue().toString()));
         }
         return report.toString();
+    }
+
+    /**
+     * Подготавливает отчёт по средним стандартным категориям за указанный период.
+     * Вернет null, если нет данных
+     *
+     * @param yearMonth Период [MM.YYYY]
+     * @return Отчёт в виде строки
+     */
+    public String getEstimateReport(Session session, YearMonth yearMonth) {
+        Map<CategoryType, Double> data = this.operationRepository.getEstimateSummary(session, yearMonth);
+        if (data == null) {
+            return null;
+        }
+
+        String emptyContent = Message.EMPTY_LIST_CONTENT;
+        String formatExpenses = this.numberFormatService.formatDouble(data.get(CategoryType.EXPENSE), emptyContent);
+        String formatIncome = this.numberFormatService.formatDouble(data.get(CategoryType.INCOME), emptyContent);
+
+        if (yearMonth.equals(YearMonth.now())) {
+            return ESTIMATE_REPORT_CURRENT.formatted(formatExpenses, formatIncome);
+        }
+
+        String monthTitle = this.monthFormatService.formatRuMonthName(yearMonth.getMonth());
+        return ESTIMATE_REPORT_DATED.formatted(monthTitle, yearMonth.getYear(), formatExpenses, formatIncome);
     }
 }

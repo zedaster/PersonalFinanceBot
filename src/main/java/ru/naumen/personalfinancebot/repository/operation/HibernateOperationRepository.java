@@ -8,6 +8,7 @@ import ru.naumen.personalfinancebot.model.User;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,5 +78,62 @@ public class HibernateOperationRepository implements OperationRepository {
             return 0.0;
         }
         return (double) paymentSummary;
+    }
+
+    @Override
+    public Map<CategoryType, Double> getEstimateSummary(Session session, YearMonth yearMonth) {
+        // HQL не поддерживает вложенный запрос в FROM
+
+//            String hql = "SELECT paymentSums.type, avg(paymentSums.payments) FROM "
+//                    + "(SELECT categories.type AS type, sum(operations.payment) AS payments "
+//                    + "FROM Operation operations "
+//                    + "JOIN operations.category categories "
+//                    + "WHERE year(operations.createdAt) = :year "
+//                    + "AND month(operations.createdAt) = :month "
+//                    + "GROUP BY operations.user, categories.type) AS paymentSums "
+//                    + "GROUP BY paymentSums.type";
+
+        // Поэтому берем суммы и считаем среднее в Java
+
+        String hql = "SELECT categories.type, sum(operations.payment) AS payments "
+                     + "FROM Operation operations "
+                     + "JOIN operations.category categories "
+                     + "WHERE year(operations.createdAt) = :year "
+                     + "AND month(operations.createdAt) = :month "
+                     + "GROUP BY operations.user, categories.type";
+
+        List<?> sumRows = session.createQuery(hql)
+                .setParameter("year", yearMonth.getYear())
+                .setParameter("month", yearMonth.getMonth().getValue())
+                .getResultList();
+
+        if (sumRows.isEmpty()) {
+            return null;
+        }
+
+        return calculateAverageForEachCategory(sumRows);
+    }
+
+    /**
+     * Высчитывает среднюю величину значений для каждой категории
+     *
+     * @param sumRows Список строк из БД, полученый из hibernate. В нем должны быть CategoryType, затем сумма
+     * @return Словарь<Тип категории, Среднее>
+     */
+    private Map<CategoryType, Double> calculateAverageForEachCategory(List<?> sumRows) {
+        Map<CategoryType, Double> result = new HashMap<>();
+        Map<CategoryType, Integer> count = new HashMap<>();
+
+        for (Object rawRow : sumRows) {
+            Object[] row = (Object[]) rawRow;
+            CategoryType type = (CategoryType) row[0];
+            double sum = (double) row[1];
+
+            result.put(type, result.getOrDefault(type, 0.0) + sum);
+            count.put(type, count.getOrDefault(type, 0) + 1);
+        }
+
+        result.replaceAll((type, value) -> result.get(type) / count.get(type));
+        return result;
     }
 }

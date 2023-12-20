@@ -22,4 +22,20 @@ public class Message {
      */
     public static final String INCORRECT_BUDGET_NUMBER_ARG = "Все суммы должны быть больше нуля!";
 
+    /**
+     * Часть шаблона списка категорий на случай, если категории отсутствуют
+     */
+    public static final String EMPTY_LIST_CONTENT = "<отсутствуют>";
+
+    /**
+     * Сообщение об отсутствии данных на заданный промежуток
+     */
+    // TODO: Использовать в команде /avg_report
+    public static final String DATA_NOT_EXISTS = "На заданный промежуток данные отсутствуют.";
+
+    /**
+     * Сообщение об отсутствии данных на текущий промежуток
+     */
+    // TODO: Использовать в команде /avg_report
+    public static final String CURRENT_DATA_NOT_EXISTS = "На этот месяц данные отсутствуют.";
 }
