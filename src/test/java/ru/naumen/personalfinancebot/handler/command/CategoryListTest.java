@@ -11,17 +11,19 @@ import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
+import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.repository.ClearQueryManager;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
 import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
+import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.category.exception.ExistingStandardCategoryException;
 import ru.naumen.personalfinancebot.repository.category.exception.ExistingUserCategoryException;
-import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateCategoryRepository;
-import ru.naumen.personalfinancebot.repository.hibernate.TestHibernateUserRepository;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
+import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
 
 import java.util.List;
 
@@ -32,13 +34,13 @@ public class CategoryListTest {
     /**
      * Хранилище пользователей
      */
-    private final TestHibernateUserRepository userRepository;
+    private final HibernateUserRepository userRepository;
 
     /**
      * Хранилище категорий
      * Данная реализация позволяет сделать полную очистку категорий после тестов
      */
-    private final TestHibernateCategoryRepository categoryRepository;
+    private final HibernateCategoryRepository categoryRepository;
 
     /**
      * Обработчик команд для бота
@@ -62,8 +64,8 @@ public class CategoryListTest {
 
     public CategoryListTest() {
         SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
-        this.userRepository = new TestHibernateUserRepository();
-        this.categoryRepository = new TestHibernateCategoryRepository();
+        this.userRepository = new HibernateUserRepository();
+        this.categoryRepository = new HibernateCategoryRepository();
         OperationRepository operationRepository = new HibernateOperationRepository();
         BudgetRepository budgetRepository = new HibernateBudgetRepository();
         this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, budgetRepository);
@@ -100,8 +102,7 @@ public class CategoryListTest {
     @After
     public void afterEachTest() {
         transactionManager.produceTransaction(session -> {
-            categoryRepository.removeAll(session);
-            userRepository.removeAll(session);
+            new ClearQueryManager().clear(session, Category.class, User.class);
         });
     }
 

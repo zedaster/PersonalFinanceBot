@@ -29,17 +29,9 @@ import java.util.List;
  */
 public class ReportExpensesHandlerTest {
     /**
-     * Фабрика сессии к БД
-     */
-    private final SessionFactory sessionFactory;
-    /**
      * Репозиторий для работы с операциями
      */
     private final OperationRepository operationRepository;
-    /**
-     * Сервис для подготовки отчётов
-     */
-    private final ReportService reportService;
     /**
      * Обработчик команды "/report_expense"
      */
@@ -59,13 +51,13 @@ public class ReportExpensesHandlerTest {
     private final TransactionManager transactionManager;
 
     public ReportExpensesHandlerTest() {
-        this.sessionFactory = new HibernateConfiguration().getSessionFactory();
+        SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
         this.operationRepository = new HibernateOperationRepository();
         this.userRepository = new HibernateUserRepository();
         this.categoryRepository = new HibernateCategoryRepository();
-        this.reportService = new ReportService(this.operationRepository);
-        this.reportExpenseHandler = new ReportExpensesHandler(this.reportService);
-        this.transactionManager = new TransactionManager(this.sessionFactory);
+        ReportService reportService = new ReportService(this.operationRepository);
+        this.reportExpenseHandler = new ReportExpensesHandler(reportService);
+        this.transactionManager = new TransactionManager(sessionFactory);
     }
 
 
