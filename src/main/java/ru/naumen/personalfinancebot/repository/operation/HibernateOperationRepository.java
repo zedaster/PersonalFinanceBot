@@ -96,11 +96,11 @@ public class HibernateOperationRepository implements OperationRepository {
         // Поэтому берем суммы и считаем среднее в Java
 
         String hql = "SELECT categories.type, sum(operations.payment) AS payments "
-                     + "FROM Operation operations "
-                     + "JOIN operations.category categories "
-                     + "WHERE year(operations.createdAt) = :year "
-                     + "AND month(operations.createdAt) = :month "
-                     + "GROUP BY operations.user, categories.type";
+                + "FROM Operation operations "
+                + "JOIN operations.category categories "
+                + "WHERE year(operations.createdAt) = :year "
+                + "AND month(operations.createdAt) = :month "
+                + "GROUP BY operations.user, categories.type";
 
         List<?> sumRows = session.createQuery(hql)
                 .setParameter("year", yearMonth.getYear())
@@ -112,6 +112,34 @@ public class HibernateOperationRepository implements OperationRepository {
         }
 
         return calculateAverageForEachCategory(sumRows);
+    }
+
+    @Override
+    public Map<String, Double> getAverageSummaryByStandardCategory(Session session, YearMonth yearMonth) {
+        String defaultCategoriesHQL = """
+                select categories from Category categories where categories.user is null""";
+        List<Category> defaultCategories = session.createQuery(defaultCategoriesHQL, Category.class).getResultList();
+
+        String averagePaymentHQL = """
+                select sum(operations.payment) from Operation operations
+                where year(operations.createdAt) = :year
+                and month(operations.createdAt) = :month
+                and operations.category.categoryName = :categoryName
+                group by operations.user, operations.category.categoryName
+                order by operations.category.categoryName desc
+                """;
+        Map<String, Double> result = new LinkedHashMap<>();
+
+        for (Category category : defaultCategories) {
+            List<?> objects = session.createQuery(averagePaymentHQL)
+                    .setParameter("year", yearMonth.getYear())
+                    .setParameter("month", yearMonth.getMonth().getValue())
+                    .setParameter("categoryName", category.getCategoryName())
+                    .getResultList();
+            double average = getAverageFromObjectsList(objects);
+            result.put(category.getCategoryName(), average);
+        }
+        return result;
     }
 
     /**
@@ -135,5 +163,27 @@ public class HibernateOperationRepository implements OperationRepository {
 
         result.replaceAll((type, value) -> result.get(type) / count.get(type));
         return result;
+    }
+
+    /**
+     * Возвращает среднее значение из списка объектов
+     *
+     * @param objects Список объектов
+     * @return Среднее значение
+     */
+    private double getAverageFromObjectsList(List<?> objects) {
+        if (objects.isEmpty()) {
+            return 0.0;
+        }
+        double sum = 0.0;
+        for (Object object : objects) {
+            try {
+                Double doubleObject = (Double) object;
+                sum += doubleObject.isNaN() ? 0.0 : doubleObject;
+            } catch (NumberFormatException exception) {
+                sum += 0.0;
+            }
+        }
+        return sum / objects.size();
     }
 }
