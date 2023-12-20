@@ -40,18 +40,12 @@ public class AverageReportHandler implements CommandHandler {
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         YearMonth yearMonth;
-        boolean isCurrentMonth = false;
-        if (commandData.getArgs().isEmpty()) {
-            yearMonth = YearMonth.now();
-            isCurrentMonth = true;
-        } else if (commandData.getArgs().size() == 1) {
-            try {
-                yearMonth = this.dateParseService.parseYearMonth(commandData.getArgs().get(0));
-            } catch (DateTimeParseException e) {
-                commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_YEAR_MONTH_FORMAT);
-                return;
-            }
-        } else {
+        try {
+            yearMonth = this.dateParseService.parseYearMonthArgs(commandData.getArgs());
+        } catch (DateTimeParseException exception) {
+            commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_YEAR_MONTH_FORMAT);
+            return;
+        } catch (IllegalArgumentException exception) {
             commandData.getBot().sendMessage(commandData.getUser(), INCORRECT_ARGUMENT_COUNT);
             return;
         }
@@ -60,7 +54,9 @@ public class AverageReportHandler implements CommandHandler {
         if (report == null) {
             commandData.getBot().sendMessage(
                     commandData.getUser(),
-                    isCurrentMonth ? Message.CURRENT_DATA_NOT_EXISTS : Message.DATA_NOT_EXISTS
+                    commandData.getArgs().isEmpty()
+                            ? Message.CURRENT_DATA_NOT_EXISTS
+                            : Message.DATA_NOT_EXISTS
             );
             return;
         }
