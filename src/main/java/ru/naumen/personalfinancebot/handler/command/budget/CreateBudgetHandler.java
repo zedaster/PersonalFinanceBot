@@ -106,7 +106,7 @@ public class CreateBudgetHandler implements CommandHandler {
         try {
             yearMonth = this.dateParseService.parseYearMonth(commandData.getArgs().get(0));
         } catch (DateTimeParseException e) {
-            commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_BUDGET_YEAR_MONTH);
+            commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_YEAR_MONTH_FORMAT);
             return;
         }
 

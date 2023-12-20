@@ -3,6 +3,7 @@ package ru.naumen.personalfinancebot.handler;
 import org.hibernate.Session;
 import ru.naumen.personalfinancebot.handler.command.*;
 import ru.naumen.personalfinancebot.handler.command.budget.*;
+import ru.naumen.personalfinancebot.handler.command.report.AverageReportHandler;
 import ru.naumen.personalfinancebot.handler.command.report.EstimateReportHandler;
 import ru.naumen.personalfinancebot.handler.command.report.ReportExpensesHandler;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
@@ -85,6 +86,7 @@ public class FinanceBotHandler {
                 dateParseService, numberFormatService, monthFormatService));
 
         commandHandlers.put("estimate_report", new EstimateReportHandler(dateParseService, reportService));
+        commandHandlers.put("avg_report", new AverageReportHandler(dateParseService, reportService));
     }
 
     /**

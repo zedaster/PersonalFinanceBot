@@ -14,7 +14,7 @@ public class Message {
     /**
      * Сообщение о неверно введённой дате (месяц и год)
      */
-    public static final String INCORRECT_BUDGET_YEAR_MONTH = "Дата введена неверно! Введите ее в формате " +
+    public static final String INCORRECT_YEAR_MONTH_FORMAT = "Дата введена неверно! Введите ее в формате " +
             "[mm.yyyy - месяц.год]";
 
     /**

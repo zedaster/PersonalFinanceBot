@@ -15,6 +15,11 @@ import java.util.Map;
  */
 public class ReportService {
     /**
+     * Заголовок отчёта по средним расходам/доходам пользователей по стандартным категориям
+     */
+    private static final String AVG_REPORT_HEADER = "Подготовил отчет по стандартным категориям со всех пользователей за %s %s:\n";
+
+    /**
      * Сообщение о неверно переданной дате (месяц и год) для команды /report_expense
      */
     private static final String INCORRECT_SELF_REPORT_VALUES = """
@@ -122,5 +127,40 @@ public class ReportService {
 
         String monthTitle = this.monthFormatService.formatRuMonthName(yearMonth.getMonth());
         return ESTIMATE_REPORT_DATED.formatted(monthTitle, yearMonth.getYear(), formatExpenses, formatIncome);
+    }
+
+    /**
+     * Подготавливает отчёт по средним стандартным категория за указанный период
+     *
+     * @param session   Сессия
+     * @param yearMonth Период
+     * @return Отчёт в строковом виде
+     */
+    public String getAverageReport(Session session, YearMonth yearMonth) {
+        Map<String, Double> data = this.operationRepository.getAverageSummaryByStandardCategory(session, yearMonth);
+        if (!isAverageReportDataExists(data)) {
+            return null;
+        }
+        StringBuilder report = new StringBuilder();
+        report.append(AVG_REPORT_HEADER.formatted(
+                this.monthFormatService.formatRuMonthName(yearMonth.getMonth()),
+                String.valueOf(yearMonth.getYear())));
+
+        for (Map.Entry<String, Double> entry : data.entrySet()) {
+            String categoryPayment = EXPENSE_REPORT_PATTERN.formatted(
+                    entry.getKey(), this.numberFormatService.formatDouble(entry.getValue()));
+            report.append(categoryPayment);
+        }
+        return report.toString();
+    }
+
+    /**
+     * Проверяет, что данные в полученном словаре существуют
+     *
+     * @param map Словарь<Название стандартной категории, Сумма>
+     * @return False, если все данные в значении равно 0, иначе True
+     */
+    private boolean isAverageReportDataExists(Map<String, Double> map) {
+        return map.values().stream().anyMatch((value) -> value != 0.0);
     }
 }
