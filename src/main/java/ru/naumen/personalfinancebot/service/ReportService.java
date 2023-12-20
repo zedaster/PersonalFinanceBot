@@ -47,12 +47,18 @@ public class ReportService {
             Доходы: %s""";
 
     /**
-     * Репозиторий для работы с операциями.
+     * Репозиторий для работы с операциями
      */
     private final OperationRepository operationRepository;
 
+    /**
+     * Сервис для форматирования названия месяца
+     */
     private final OutputMonthFormatService monthFormatService;
 
+    /**
+     * Сервис для форматирования чисел для вывода
+     */
     private final OutputNumberFormatService numberFormatService;
 
     public ReportService(OperationRepository operationRepository, OutputMonthFormatService monthFormatService, OutputNumberFormatService numberFormatService) {
