@@ -36,6 +36,16 @@ public class ReportService {
      */
     private static final String EXPENSE_REPORT_PATTERN = "%s: %s руб.\n";
 
+    private static final String ESTIMATE_REPORT_CURRENT = """
+            Подготовил отчет по средним доходам и расходам пользователей за текущий месяц:
+            Расходы: %s
+            Доходы: %s""";
+
+    private static final String ESTIMATE_REPORT_DATED = """
+            Подготовил отчет по средним доходам и расходам пользователей за %s %o:
+            Расходы: %s
+            Доходы: %s""";
+
     /**
      * Репозиторий для работы с операциями.
      */
@@ -96,21 +106,15 @@ public class ReportService {
             return null;
         }
 
-        String template;
+        String emptyContent = Message.EMPTY_LIST_CONTENT;
+        String formatExpenses = this.numberFormatService.formatDouble(data.get(CategoryType.EXPENSE), emptyContent);
+        String formatIncome = this.numberFormatService.formatDouble(data.get(CategoryType.INCOME), emptyContent);
+
         if (yearMonth.equals(YearMonth.now())) {
-            template = Message.ESTIMATE_REPORT_CURRENT;
-        } else {
-            template = Message.ESTIMATE_REPORT_DATED
-                    .replace("{month}", this.monthFormatService.formatRuMonthName(yearMonth.getMonth()))
-                    .replace("{year}", String.valueOf(yearMonth.getYear()));
+            return ESTIMATE_REPORT_CURRENT.formatted(formatExpenses, formatIncome);
         }
 
-        String emptyContent = Message.EMPTY_LIST_CONTENT;
-        String formatIncome = this.numberFormatService.formatDouble(data.get(CategoryType.INCOME), emptyContent);
-        String formatExpenses = this.numberFormatService.formatDouble(data.get(CategoryType.EXPENSE), emptyContent);
-
-        return template
-                .replace("{income}", formatIncome)
-                .replace("{expenses}", formatExpenses);
+        String monthTitle = this.monthFormatService.formatRuMonthName(yearMonth.getMonth());
+        return ESTIMATE_REPORT_DATED.formatted(monthTitle, yearMonth.getYear(), formatExpenses, formatIncome);
     }
 }
