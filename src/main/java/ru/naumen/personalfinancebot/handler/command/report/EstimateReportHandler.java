@@ -15,7 +15,7 @@ import java.time.format.DateTimeParseException;
  */
 public class EstimateReportHandler implements CommandHandler {
     /**
-     * Сервис для парсина аргументов
+     * Сервис для парсинга даты из аргументов
      */
     private final DateParseService dateParseService;
 
@@ -23,6 +23,13 @@ public class EstimateReportHandler implements CommandHandler {
      * Сервис для подготовки отчетов
      */
     private final ReportService reportService;
+
+    /**
+     * Сообщение, выводимое при недопустимом количестве аргументов
+     */
+    private static final String INCORRECT_ARGUMENT_COUNT = """
+            Команда "/estimate_report" не принимает аргументов, либо принимает Месяц и Год в формате "MM.YYYY".
+            Например, "/estimate_report" или "/estimate_report 12.2023".""";
 
     public EstimateReportHandler(DateParseService dateParseService, ReportService reportService) {
         this.dateParseService = dateParseService;
@@ -44,7 +51,7 @@ public class EstimateReportHandler implements CommandHandler {
                 return;
             }
         } else {
-            data.getBot().sendMessage(data.getUser(), Message.ESTIMATE_REPORT_INCORRECT_ARGUMENT_COUNT);
+            data.getBot().sendMessage(data.getUser(), INCORRECT_ARGUMENT_COUNT);
             return;
         }
 
