@@ -7,6 +7,11 @@ import java.text.DecimalFormatSymbols;
  * Сервис для форматирования чисел
  */
 public class OutputNumberFormatService {
+    /**
+     * Форматировщик для double
+     * Он убирает дробную часть при ее отсутствии
+     * И разделяет пробелами разряды числа
+     */
     private final DecimalFormat doubleFormatter;
 
     public OutputNumberFormatService() {
