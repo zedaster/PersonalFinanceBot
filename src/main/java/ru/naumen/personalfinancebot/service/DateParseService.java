@@ -14,6 +14,7 @@ public class DateParseService {
      *
      * @param argument
      * @return YearMonth
+     * @throws DateTimeParseException если аргумент не может быть спарсен
      */
     public YearMonth parseYearMonth(String argument) throws DateTimeParseException {
         return YearMonth.parse(argument, DateTimeFormatter.ofPattern("MM.yyyy"));
@@ -34,6 +35,14 @@ public class DateParseService {
         return year;
     }
 
+    /**
+     * Парсит из аргументов месяц-год формата или возвращает текущий, если аргументы отсутствуют
+     *
+     * @param args Список аргументов
+     * @return спарсенный месяц-год или текущий, если не указан
+     * @throws IllegalArgumentException если аргументов больше, чем один
+     * @throws DateTimeParseException   если месяц-го не может быть спарсен
+     */
     public YearMonth parseYearMonthArgs(List<String> args) {
         if (args.isEmpty()) {
             return YearMonth.now();

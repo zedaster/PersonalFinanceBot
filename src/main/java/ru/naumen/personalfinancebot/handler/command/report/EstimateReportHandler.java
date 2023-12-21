@@ -37,33 +37,27 @@ public class EstimateReportHandler implements CommandHandler {
     }
 
     @Override
-    public void handleCommand(CommandData data, Session session) {
+    public void handleCommand(CommandData commandData, Session session) {
         YearMonth yearMonth;
-        boolean isCurrentMonth = false;
-        if (data.getArgs().isEmpty()) {
-            yearMonth = YearMonth.now();
-            isCurrentMonth = true;
-        } else if (data.getArgs().size() == 1) {
-            try {
-                yearMonth = this.dateParseService.parseYearMonth(data.getArgs().get(0));
-            } catch (DateTimeParseException e) {
-                data.getBot().sendMessage(data.getUser(), Message.INCORRECT_YEAR_MONTH_FORMAT);
-                return;
-            }
-        } else {
-            data.getBot().sendMessage(data.getUser(), INCORRECT_ARGUMENT_COUNT);
+        try {
+            yearMonth = this.dateParseService.parseYearMonthArgs(commandData.getArgs());
+        } catch (DateTimeParseException exception) {
+            commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_YEAR_MONTH_FORMAT);
+            return;
+        } catch (IllegalArgumentException exception) {
+            commandData.getBot().sendMessage(commandData.getUser(), INCORRECT_ARGUMENT_COUNT);
             return;
         }
 
         String report = this.reportService.getEstimateReport(session, yearMonth);
         if (report == null) {
-            if (isCurrentMonth) {
-                data.getBot().sendMessage(data.getUser(), Message.CURRENT_DATA_NOT_EXISTS);
+            if (commandData.getArgs().isEmpty()) {
+                commandData.getBot().sendMessage(commandData.getUser(), Message.CURRENT_DATA_NOT_EXISTS);
                 return;
             }
-            data.getBot().sendMessage(data.getUser(), Message.DATA_NOT_EXISTS);
+            commandData.getBot().sendMessage(commandData.getUser(), Message.DATA_NOT_EXISTS);
             return;
         }
-        data.getBot().sendMessage(data.getUser(), report);
+        commandData.getBot().sendMessage(commandData.getUser(), report);
     }
 }
