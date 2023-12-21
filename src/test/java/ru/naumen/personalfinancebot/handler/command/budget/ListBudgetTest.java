@@ -1,24 +1,22 @@
 package ru.naumen.personalfinancebot.handler.command.budget;
 
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
 import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
-import ru.naumen.personalfinancebot.model.Budget;
-import ru.naumen.personalfinancebot.model.CategoryType;
-import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.model.*;
 import ru.naumen.personalfinancebot.repository.ClearQueryManager;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
-import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
+import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
+import ru.naumen.personalfinancebot.repository.category.exception.ExistingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.operation.FakeDatedOperationRepository;
 import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
 import ru.naumen.personalfinancebot.service.InputDateFormatService;
 import ru.naumen.personalfinancebot.service.OutputMonthFormatService;
@@ -40,7 +38,7 @@ public class ListBudgetTest {
      * Сервис для форматирования названия месяца, которое ожидается на выходе
      */
     private final OutputMonthFormatService monthFormatter = new OutputMonthFormatService();
-    
+
     /**
      * Менеджер транзакций
      */
@@ -57,14 +55,29 @@ public class ListBudgetTest {
     private final HibernateUserRepository userRepository;
 
     /**
+     * Хранилище категорий
+     */
+    private final HibernateCategoryRepository categoryRepository;
+
+    /**
      * Хранилище бюджетов
      */
     private final HibernateBudgetRepository budgetRepository;
 
     /**
-     * Моковое хранилище опреаций
+     * Хранилище операций
      */
-    private final OperationRepository operationRepository;
+    private final FakeDatedOperationRepository operationRepository;
+
+    /**
+     * Фейковая категория для доходов
+     */
+    private Category fakeIncomeCategory;
+
+    /**
+     * Фейковая категория для расходов
+     */
+    private Category fakeExpenseCategory;
 
     /**
      * Экземпляр класс фейковой реализации бота
@@ -80,14 +93,14 @@ public class ListBudgetTest {
         SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
         this.transactionManager = new TransactionManager(sessionFactory);
         this.userRepository = new HibernateUserRepository();
+        this.categoryRepository = new HibernateCategoryRepository();
         this.budgetRepository = new HibernateBudgetRepository();
-        this.operationRepository = Mockito.mock(OperationRepository.class);
+        this.operationRepository = new FakeDatedOperationRepository();
         this.botHandler = new FinanceBotHandler(
                 this.userRepository,
                 this.operationRepository,
-                null,
-                this.budgetRepository
-        );
+                this.categoryRepository,
+                this.budgetRepository);
     }
 
     /**
@@ -99,6 +112,18 @@ public class ListBudgetTest {
         this.user = new User(1, 100);
         this.transactionManager.produceTransaction(session -> {
             this.userRepository.saveUser(session, this.user);
+            try {
+                this.fakeIncomeCategory = this.categoryRepository.createStandardCategory(
+                        session,
+                        CategoryType.INCOME,
+                        "Fake Income");
+                this.fakeExpenseCategory = this.categoryRepository.createStandardCategory(
+                        session,
+                        CategoryType.EXPENSE,
+                        "Fake Expense");
+            } catch (ExistingStandardCategoryException e) {
+                throw new RuntimeException(e);
+            }
         });
     }
 
@@ -108,7 +133,7 @@ public class ListBudgetTest {
     @After
     public void clearRepositories() {
         this.transactionManager.produceTransaction(session -> {
-            new ClearQueryManager().clear(session, Budget.class, User.class);
+            new ClearQueryManager().clear(session, Budget.class, Operation.class, Category.class, User.class);
         });
     }
 
@@ -136,35 +161,18 @@ public class ListBudgetTest {
         YearMonth currentYM = YearMonth.now();
         YearMonth minusOneMonthYM = currentYM.minusMonths(1);
 
-        Mockito.doReturn(9000d).when(this.operationRepository).getCurrentUserPaymentSummary(
-                Mockito.any(Session.class),
-                Mockito.any(User.class),
-                Mockito.eq(CategoryType.INCOME),
-                Mockito.eq(minusOneMonthYM)
-        );
-        Mockito.doReturn(8000d).when(this.operationRepository).getCurrentUserPaymentSummary(
-                Mockito.any(Session.class),
-                Mockito.any(User.class),
-                Mockito.eq(CategoryType.EXPENSE),
-                Mockito.eq(minusOneMonthYM)
-        );
-
-        Mockito.doReturn(7000d).when(this.operationRepository).getCurrentUserPaymentSummary(
-                Mockito.any(Session.class),
-                Mockito.any(User.class),
-                Mockito.eq(CategoryType.INCOME),
-                Mockito.eq(currentYM)
-        );
-        Mockito.doReturn(6000d).when(this.operationRepository).getCurrentUserPaymentSummary(
-                Mockito.any(Session.class),
-                Mockito.any(User.class),
-                Mockito.eq(CategoryType.EXPENSE),
-                Mockito.eq(currentYM)
-        );
-
         transactionManager.produceTransaction(session -> {
             this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, minusOneMonthYM));
             this.budgetRepository.saveBudget(session, new Budget(user, 80_000, 70_000, currentYM));
+
+            this.operationRepository.addOperation(session, user, fakeIncomeCategory, 9000,
+                    minusOneMonthYM.atDay(1));
+            this.operationRepository.addOperation(session, user, fakeExpenseCategory, 8000,
+                    minusOneMonthYM.atDay(1));
+            this.operationRepository.addOperation(session, user, fakeIncomeCategory, 7000,
+                    currentYM.atDay(1));
+            this.operationRepository.addOperation(session, user, fakeExpenseCategory, 6000,
+                    currentYM.atDay(1));
 
             CommandData command = new CommandData(this.mockBot, this.user, "budget_list", List.of());
             this.botHandler.handleCommand(command, session);
@@ -182,7 +190,10 @@ public class ListBudgetTest {
                                             
                             Данные показаны за последние 12 месяцев. Чтобы посмотреть данные, например, за 2022, введите /budget_list 2022.
                             Для показа данных по определенным месяцам, например, с ноября 2022 по январь 2023 введите /budget_list 10.2022 01.2023"""
-                            .formatted(monthFormatter.formatRuMonthName(minusOneMonthYM.getMonth()), minusOneMonthYM.getYear(), monthFormatter.formatRuMonthName(currentYM.getMonth()),
+                            .formatted(
+                                    monthFormatter.formatRuMonthName(minusOneMonthYM.getMonth()),
+                                    minusOneMonthYM.getYear(),
+                                    monthFormatter.formatRuMonthName(currentYM.getMonth()),
                                     currentYM.getYear()),
                     message.text());
             Assert.assertEquals(this.user, message.receiver());
@@ -257,18 +268,10 @@ public class ListBudgetTest {
             for (int i = 13; i >= 0; i--) {
                 YearMonth testYM = YearMonth.now().minusMonths(i);
                 this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, testYM));
-                Mockito.doReturn(9000d).when(this.operationRepository).getCurrentUserPaymentSummary(
-                        Mockito.eq(session),
-                        Mockito.eq(user),
-                        Mockito.eq(CategoryType.INCOME),
-                        Mockito.eq(testYM)
-                );
-                Mockito.doReturn(8000d).when(this.operationRepository).getCurrentUserPaymentSummary(
-                        Mockito.eq(session),
-                        Mockito.eq(user),
-                        Mockito.eq(CategoryType.EXPENSE),
-                        Mockito.eq(testYM)
-                );
+                this.operationRepository.addOperation(session, user, fakeIncomeCategory, 9000,
+                        testYM.atDay(1));
+                this.operationRepository.addOperation(session, user, fakeExpenseCategory, 8000,
+                        testYM.atDay(1));
                 if (i != 13) {
                     argsToReplace.add(monthFormatter.formatRuMonthName(testYM.getMonth()));
                     argsToReplace.add(String.valueOf(testYM.getYear()));
@@ -296,30 +299,14 @@ public class ListBudgetTest {
             this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, ymJan2022));
             this.budgetRepository.saveBudget(session, new Budget(user, 80_000, 70_000, ymFeb2022));
 
-            Mockito.doReturn(9000d).when(this.operationRepository).getCurrentUserPaymentSummary(
-                    Mockito.eq(session),
-                    Mockito.eq(user),
-                    Mockito.eq(CategoryType.INCOME),
-                    Mockito.eq(ymJan2022)
-            );
-            Mockito.doReturn(8000d).when(this.operationRepository).getCurrentUserPaymentSummary(
-                    Mockito.eq(session),
-                    Mockito.eq(user),
-                    Mockito.eq(CategoryType.EXPENSE),
-                    Mockito.eq(ymJan2022)
-            );
-            Mockito.doReturn(7000d).when(this.operationRepository).getCurrentUserPaymentSummary(
-                    Mockito.eq(session),
-                    Mockito.eq(user),
-                    Mockito.eq(CategoryType.INCOME),
-                    Mockito.eq(ymFeb2022)
-            );
-            Mockito.doReturn(6000d).when(this.operationRepository).getCurrentUserPaymentSummary(
-                    Mockito.eq(session),
-                    Mockito.eq(user),
-                    Mockito.eq(CategoryType.EXPENSE),
-                    Mockito.eq(ymFeb2022)
-            );
+            this.operationRepository.addOperation(session, user, fakeIncomeCategory, 9000,
+                    ymJan2022.atDay(1));
+            this.operationRepository.addOperation(session, user, fakeExpenseCategory, 8000,
+                    ymJan2022.atDay(1));
+            this.operationRepository.addOperation(session, user, fakeIncomeCategory, 7000,
+                    ymFeb2022.atDay(1));
+            this.operationRepository.addOperation(session, user, fakeExpenseCategory, 6000,
+                    ymFeb2022.atDay(1));
 
             CommandData command = new CommandData(this.mockBot, this.user, "budget_list", List.of("2022"));
             this.botHandler.handleCommand(command, session);
@@ -369,18 +356,10 @@ public class ListBudgetTest {
             for (int i = 0; i < 4; i++) {
                 YearMonth testYM = nov22ym.plusMonths(i);
                 this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, testYM));
-                Mockito.doReturn(9000d).when(this.operationRepository).getCurrentUserPaymentSummary(
-                        Mockito.eq(session),
-                        Mockito.eq(user),
-                        Mockito.eq(CategoryType.INCOME),
-                        Mockito.eq(testYM)
-                );
-                Mockito.doReturn(8000d).when(this.operationRepository).getCurrentUserPaymentSummary(
-                        Mockito.eq(session),
-                        Mockito.eq(user),
-                        Mockito.eq(CategoryType.EXPENSE),
-                        Mockito.eq(testYM)
-                );
+                this.operationRepository.addOperation(session, user, fakeIncomeCategory, 9000,
+                        testYM.atDay(1));
+                this.operationRepository.addOperation(session, user, fakeExpenseCategory, 8000,
+                        testYM.atDay(1));
             }
 
             CommandData command = new CommandData(this.mockBot, this.user, "budget_list",
@@ -458,19 +437,10 @@ public class ListBudgetTest {
         transactionManager.produceTransaction(session -> {
             YearMonth testYM = YearMonth.of(2022, 12);
             this.budgetRepository.saveBudget(session, new Budget(user, 100_000, 90_000, testYM));
-
-            Mockito.doReturn(101_000d).when(this.operationRepository).getCurrentUserPaymentSummary(
-                    Mockito.eq(session),
-                    Mockito.eq(user),
-                    Mockito.eq(CategoryType.INCOME),
-                    Mockito.eq(testYM)
-            );
-            Mockito.doReturn(91_000d).when(this.operationRepository).getCurrentUserPaymentSummary(
-                    Mockito.eq(session),
-                    Mockito.eq(user),
-                    Mockito.eq(CategoryType.EXPENSE),
-                    Mockito.eq(testYM)
-            );
+            this.operationRepository.addOperation(session, user, fakeIncomeCategory, 101_000,
+                    testYM.atDay(1));
+            this.operationRepository.addOperation(session, user, fakeExpenseCategory, 91_000,
+                    testYM.atDay(1));
 
             CommandData command = new CommandData(this.mockBot, this.user, "budget_list",
                     List.of("12.2022", "12.2022"));
