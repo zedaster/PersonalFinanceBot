@@ -31,6 +31,10 @@ public class OutputNumberFormatService {
     private DecimalFormat createDoubleFormatter() {
         DecimalFormatSymbols symbols = new DecimalFormatSymbols();
         symbols.setGroupingSeparator(' ');
-        return new DecimalFormat("###,###.#", symbols);
+        symbols.setDecimalSeparator('.');
+        DecimalFormat format = new DecimalFormat();
+        format.setDecimalFormatSymbols(symbols);
+        format.setGroupingSize(3);
+        return format;
     }
 }

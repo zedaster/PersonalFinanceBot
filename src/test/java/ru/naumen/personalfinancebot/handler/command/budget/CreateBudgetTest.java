@@ -257,25 +257,36 @@ public class CreateBudgetTest {
         String[] wrongAmountArgs = new String[]{"0", "-100", "NaN"};
         YearMonth currentYM = YearMonth.now();
         transactionManager.produceTransaction(session -> {
-            for (CategoryType type : CategoryType.values()) {
-                for (String wrongAmount : wrongAmountArgs) {
-                    String incomeAmount = (type == CategoryType.INCOME) ? wrongAmount : "100000";
-                    String expenseAmount = (type == CategoryType.EXPENSE) ? wrongAmount : "90000";
-                    CommandData command = new CommandData(this.mockBot, this.user,
-                            "budget_create", List.of(inputFormatter.formatYearMonth(currentYM), incomeAmount, expenseAmount));
-                    this.botHandler.handleCommand(command, session);
+            for (String wrongAmount : wrongAmountArgs) {
+                final String incomeAmount = "100000";
+                CommandData commandWrongExpenses = new CommandData(
+                        this.mockBot,
+                        this.user,
+                        "budget_create",
+                        List.of(inputFormatter.formatYearMonth(currentYM), incomeAmount, wrongAmount));
+                this.botHandler.handleCommand(commandWrongExpenses, session);
 
-                    Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
-                    MockMessage message = this.mockBot.poolMessageQueue();
-                    Assert.assertEquals("Все суммы должны быть больше нуля!", message.text());
-                    Assert.assertEquals(this.user, message.receiver());
-                }
+                final String expenseAmount = "90000";
+                CommandData commandWrongIncome = new CommandData(
+                        this.mockBot,
+                        this.user,
+                        "budget_create",
+                        List.of(inputFormatter.formatYearMonth(currentYM), wrongAmount, expenseAmount));
+                this.botHandler.handleCommand(commandWrongIncome, session);
             }
+
+            Assert.assertEquals(6, this.mockBot.getMessageQueueSize());
+            for (int i = 0; i < 6; i++) {
+                MockMessage message = this.mockBot.poolMessageQueue();
+                Assert.assertEquals("Все суммы должны быть больше нуля!", message.text());
+                Assert.assertEquals(this.user, message.receiver());
+            }
+
         });
     }
 
     /**
-     * Тест на вывоз команды с полностью неправильными аргументами
+     * Тест на вызов команды с полностью неправильными аргументами
      */
     @Test
     public void wrongEntireArgs() {
@@ -284,8 +295,7 @@ public class CreateBudgetTest {
                 List.of(),
                 List.of(currentDateArg),
                 List.of(currentDateArg, "1"),
-                List.of(currentDateArg, "1", "1", "1")
-        );
+                List.of(currentDateArg, "1", "1", "1"));
 
         transactionManager.produceTransaction(session -> {
             for (List<String> wrongArgs : wrongArgsCases) {
@@ -296,7 +306,8 @@ public class CreateBudgetTest {
                 Assert.assertEquals(1, this.mockBot.getMessageQueueSize());
                 MockMessage message = this.mockBot.poolMessageQueue();
                 Assert.assertEquals("Неверно введена команда! Введите " +
-                                    "/budget_create [mm.yyyy - месяц.год] [ожидаемый доход] [ожидаемый расходы]", message.text());
+                                    "/budget_create [mm.yyyy - месяц.год] [ожидаемый доход] [ожидаемый расходы]",
+                        message.text());
                 Assert.assertEquals(this.user, message.receiver());
             }
         });
