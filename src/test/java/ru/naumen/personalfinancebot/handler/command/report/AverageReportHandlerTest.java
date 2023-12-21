@@ -99,6 +99,14 @@ public class AverageReportHandlerTest {
         this.financeBotHandler = new FinanceBotHandler(
                 this.userRepository, this.operationRepository, this.categoryRepository, new HibernateBudgetRepository()
         );
+    }
+
+    /**
+     * Инициализирует бота перед каждым тестом и создает стандартные категории перед каждый тестом
+     */
+    @Before
+    public void init() {
+        this.bot = new MockBot();
         transactionManager.produceTransaction(session -> {
             try {
                 this.salaryCategory = this.categoryRepository.createStandardCategory(
@@ -114,20 +122,12 @@ public class AverageReportHandlerTest {
     }
 
     /**
-     * Инициализирует бота перед каждым тестом
-     */
-    @Before
-    public void init() {
-        this.bot = new MockBot();
-    }
-
-    /**
-     * Очищает операции после каждого теста
+     * Очищает таблицами с операциями, категориями и пользователями после каждого теста
      */
     @After
     public void clean() {
         transactionManager.produceTransaction(session -> this.clearQueryManager.clear(
-                session, Operation.class, User.class));
+                session, Operation.class, User.class, Category.class));
     }
 
     /**
