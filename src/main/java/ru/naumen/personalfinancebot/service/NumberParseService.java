@@ -12,17 +12,17 @@ public class NumberParseService {
      * Парсит баланс, введенный пользователем.
      * Вернет null если баланс не является числом с плавающей точкой или меньше нуля
      *
-     * @throws IllegalArgumentException если аргументы введены неверно
+     * @throws IllegalArgumentException если аргументов более одного
+     * @throws NumberFormatException если аргумент с числом введен неверно
      */
     @Nullable
     public Double parseBalance(List<String> args) throws IllegalArgumentException {
         if (args.size() != 1) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Должен быть только 1 аргумент!");
         }
-        String parsedString = args.get(0);
-        double amount = Double.parseDouble(parsedString.replace(",", "."));
+        double amount = parseCorrectDouble(args.get(0));
         if (amount < 0) {
-            throw new IllegalArgumentException("Баланс не может быть отрицательным.");
+            throw new NumberFormatException("Баланс не может быть отрицательным.");
         }
         return amount;
     }
@@ -34,13 +34,30 @@ public class NumberParseService {
      * @return Положительное число
      */
     public double parsePositiveDouble(String argument) throws NumberFormatException {
-        // To prevent NaN and 10e-7
-        if (!argument.matches("^[0-9.]+$")) {
-            throw new NumberFormatException("The argument to parse double may contain only dot and digits");
-        }
-        double parsedDouble = Double.parseDouble(argument);
+        double parsedDouble = parseCorrectDouble(argument);
         if (parsedDouble <= 0) {
-            throw new NumberFormatException("The parsed double must be bigger than zero!");
+            throw new NumberFormatException("Число должно быть положительным!");
+        }
+        return parsedDouble;
+    }
+
+    /**
+     * Парсит double число с 2-мя знаками после запятой или точки
+     *
+     * @param argument строка для парсинга
+     * @return double число
+     * @throws NumberFormatException если введены некорректные символы или больше 2-х знаков после запятой/точки
+     */
+    private double parseCorrectDouble(String argument) throws NumberFormatException {
+        // To prevent NaN and 10e-7
+        if (!argument.matches("^[0-9,.]+$")) {
+            throw new NumberFormatException("Введены неверные символы!");
+        }
+        double parsedDouble = Double.parseDouble(argument.replace(",", "."));
+
+        if (Math.round(parsedDouble * 100) != parsedDouble * 100) {
+            throw new NumberFormatException("Разрешено вводить только целые числа или дробные до 2-х знаков после" +
+                                            " запятой.");
         }
         return parsedDouble;
     }
