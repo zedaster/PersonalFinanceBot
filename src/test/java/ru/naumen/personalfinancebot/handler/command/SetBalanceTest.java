@@ -124,7 +124,8 @@ public class SetBalanceTest {
                 "0,0",
                 String.valueOf(Integer.MAX_VALUE),
                 "100.50",
-                "100.99"
+                "100.99",
+                "5000.99"
         );
         List<Double> balances = List.of(
                 100d,
@@ -134,7 +135,8 @@ public class SetBalanceTest {
                 0d,
                 (double) Integer.MAX_VALUE,
                 100.5,
-                100.99
+                100.99,
+                5000.99
         );
         List<String> expects = List.of(
                 "Ваш баланс изменен. Теперь он составляет 100",
@@ -144,7 +146,8 @@ public class SetBalanceTest {
                 "Ваш баланс изменен. Теперь он составляет 0",
                 "Ваш баланс изменен. Теперь он составляет 2 147 483 647",
                 "Ваш баланс изменен. Теперь он составляет 100.5",
-                "Ваш баланс изменен. Теперь он составляет 100.99"
+                "Ваш баланс изменен. Теперь он составляет 100.99",
+                "Ваш баланс изменен. Теперь он составляет 5 000.99"
         );
         for (int i = 0; i < args.size(); i++) {
             String arg = args.get(i);
