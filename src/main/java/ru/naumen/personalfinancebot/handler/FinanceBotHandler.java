@@ -32,8 +32,13 @@ public class FinanceBotHandler {
      * @param userRepository      Репозиторий для работы с пользователем
      * @param operationRepository Репозиторий для работы с операциями
      * @param categoryRepository  Репозиторий для работы с категориями
+     * @param budgetRepository    Репозиторий для работы с бюджетами
      */
-    public FinanceBotHandler(UserRepository userRepository, OperationRepository operationRepository, CategoryRepository categoryRepository, BudgetRepository budgetRepository) {
+    public FinanceBotHandler(UserRepository userRepository,
+                             OperationRepository operationRepository,
+                             CategoryRepository categoryRepository,
+                             BudgetRepository budgetRepository) {
+
         CategoryParseService categoryParseService = new CategoryParseService();
         DateParseService dateParseService = new DateParseService();
         NumberParseService numberParseService = new NumberParseService();
