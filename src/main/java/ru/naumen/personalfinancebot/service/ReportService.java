@@ -17,7 +17,7 @@ public class ReportService {
     /**
      * Заголовок отчёта по средним расходам/доходам пользователей по стандартным категориям
      */
-    private static final String AVG_REPORT_HEADER = "Подготовил отчет по стандартным категориям со всех пользователей за %s %s:\n";
+    private static final String AVG_REPORT_HEADER = "Подготовил отчет по стандартным категориям со всех пользователей за %s %d:\n";
 
     /**
      * Сообщение о неверно переданной дате (месяц и год) для команды /report_expense
@@ -144,7 +144,7 @@ public class ReportService {
         StringBuilder report = new StringBuilder();
         report.append(AVG_REPORT_HEADER.formatted(
                 this.monthFormatService.formatRuMonthName(yearMonth.getMonth()),
-                String.valueOf(yearMonth.getYear())));
+                yearMonth.getYear()));
 
         for (Map.Entry<String, Double> entry : data.entrySet()) {
             String categoryPayment = EXPENSE_REPORT_PATTERN.formatted(
