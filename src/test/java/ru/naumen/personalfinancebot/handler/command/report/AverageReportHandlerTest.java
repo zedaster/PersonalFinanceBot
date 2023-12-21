@@ -1,47 +1,75 @@
 package ru.naumen.personalfinancebot.handler.command.report;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 import ru.naumen.personalfinancebot.bot.MockBot;
-import ru.naumen.personalfinancebot.bot.MockMessage;
-import ru.naumen.personalfinancebot.handler.command.CommandHandler;
+import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
+import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
+import ru.naumen.personalfinancebot.model.Category;
+import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.Operation;
 import ru.naumen.personalfinancebot.model.User;
-import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
-import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
-import ru.naumen.personalfinancebot.service.DateParseService;
-import ru.naumen.personalfinancebot.service.OutputMonthFormatService;
-import ru.naumen.personalfinancebot.service.OutputNumberFormatService;
-import ru.naumen.personalfinancebot.service.ReportService;
+import ru.naumen.personalfinancebot.repository.ClearQueryManager;
+import ru.naumen.personalfinancebot.repository.TransactionManager;
+import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
+import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
+import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
+import ru.naumen.personalfinancebot.repository.category.exception.ExistingStandardCategoryException;
+import ru.naumen.personalfinancebot.repository.operation.FakeDatedOperationRepository;
+import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
+import ru.naumen.personalfinancebot.repository.user.UserRepository;
 
-import java.time.YearMonth;
-import java.util.LinkedHashMap;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Класс для тестирования обработчика {@link AverageReportHandler}
+ * Интеграционный тест для команды /avg_report
+ * Случаи, когда пользователь период неверно кол-во аргументов
+ * и дату, которую невозможно спаристь, протестированы в классе {@link MockitoAverageReportHandlerTest}
  */
 public class AverageReportHandlerTest {
-    private final String COMMAND_NAME = "avg_report";
+    /**
+     * Команда
+     */
+    private final static String COMMAND = "avg_report";
+
+    /**
+     * Дата для операций
+     */
+    private final LocalDate date = LocalDate.of(2023, 12, 1);
+
+    /**
+     * Репозиторий для работы с {@link Category}
+     */
+    private final CategoryRepository categoryRepository;
 
     /**
      * Репозиторий для работы с {@link Operation}
      */
-    private final OperationRepository operationRepository;
+    private final FakeDatedOperationRepository operationRepository;
 
     /**
-     * Обработчик
+     * Менеджер транзакций
      */
-    private final CommandHandler handler;
+    private final TransactionManager transactionManager;
 
     /**
-     * Пользователь
+     * Класс, позволяющий совершать Hibernate транзакции для очищения хранилищ
      */
-    private final User user = new User(1L, 100_000);
+    private final ClearQueryManager clearQueryManager;
+
+    /**
+     * Обработчик команд телеграм бота
+     */
+    private final FinanceBotHandler financeBotHandler;
+
+    /**
+     * Репозиторий для работы с {@link User}
+     */
+    private final UserRepository userRepository;
 
     /**
      * Моковый бот
@@ -49,152 +77,151 @@ public class AverageReportHandlerTest {
     private MockBot bot;
 
     public AverageReportHandlerTest() {
-        DateParseService dateParseService = new DateParseService();
-        this.operationRepository = Mockito.mock(HibernateOperationRepository.class);
-        OutputMonthFormatService monthFormatService = new OutputMonthFormatService();
-        OutputNumberFormatService numberFormatService = new OutputNumberFormatService();
-        ReportService reportService = new ReportService(operationRepository, monthFormatService, numberFormatService);
-        this.handler = new AverageReportHandler(dateParseService, reportService);
+        this.transactionManager = new TransactionManager(new HibernateConfiguration().getSessionFactory());
+        this.clearQueryManager = new ClearQueryManager();
+        this.operationRepository = new FakeDatedOperationRepository();
+        this.categoryRepository = new HibernateCategoryRepository();
+        this.userRepository = new HibernateUserRepository();
+        this.financeBotHandler = new FinanceBotHandler(
+                this.userRepository, this.operationRepository, this.categoryRepository, new HibernateBudgetRepository()
+        );
+        createDefaultCategories();
     }
 
+    /**
+     * Метод создаёт стандартные категории
+     */
+    public void createDefaultCategories() {
+        transactionManager.produceTransaction(session -> {
+            try {
+                this.categoryRepository.createStandardCategory(session, CategoryType.INCOME, "Зарплата");
+                this.categoryRepository.createStandardCategory(session, CategoryType.EXPENSE, "Супермаркеты");
+                this.categoryRepository.createStandardCategory(session, CategoryType.EXPENSE, "Рестораны и кафе");
+            } catch (ExistingStandardCategoryException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    /**
+     * Инициализирует бота перед каждым тестом
+     */
     @Before
-    public void initMockBot() {
+    public void init() {
         this.bot = new MockBot();
     }
 
     /**
-     * Проверяет, что обработчик вернет сообщение с об отсутствии данных,
-     * при условии что операций не существует и <b>пользователь передал дату</b>.
+     * Очищает операции после каждого теста
      */
-    @Test
-    public void handleCommandIfNoDataSpecificDate() {
-        YearMonth yearMonth = YearMonth.of(2023, 12);
-        Map<String, Double> map = new LinkedHashMap<>() {{
-            put("Супермаркеты", 0.0);
-            put("Зарплата", 0.0);
-            put("Рестораны и кафе", 0.0);
-        }};
-        String expected = "На заданный промежуток данные отсутствуют.";
-        Mockito.when(this.operationRepository.getAverageSummaryByStandardCategory(null, yearMonth))
-                .thenReturn(map);
-        CommandData commandData = new CommandData(this.bot, this.user, COMMAND_NAME, List.of("12.2023"));
-        this.handler.handleCommand(commandData, null);
-
-        MockMessage message = this.bot.poolMessageQueue();
-        Assert.assertEquals(expected, message.text());
+    @After
+    public void clean() {
+        transactionManager.produceTransaction(session -> this.clearQueryManager.clear(session, Operation.class, User.class));
     }
 
     /**
-     * Проверяет, что обработчик вернет сообщение с об отсутствии данных,
-     * при условии что операций не существует и <b>пользователь не передал дату</b>.
+     * Тестирует обработчик на наличие операций от одного пользователя
      */
     @Test
-    public void handleCommandIfNoDataCurrentDate() {
-        YearMonth yearMonth = YearMonth.now();
-        Map<String, Double> map = new LinkedHashMap<>() {{
-            put("Супермаркеты", 0.0);
-            put("Зарплата", 0.0);
-            put("Рестораны и кафе", 0.0);
-        }};
-        String expected = "На этот месяц данные отсутствуют.";
-        Mockito.when(this.operationRepository.getAverageSummaryByStandardCategory(null, yearMonth))
-                .thenReturn(map);
-        CommandData commandData = new CommandData(this.bot, this.user, COMMAND_NAME, List.of());
-        this.handler.handleCommand(commandData, null);
+    public void handleCommandWithOneUser() {
+        transactionManager.produceTransaction(session -> {
+            Category shops = this.categoryRepository.getStandardCategoryByName(session, CategoryType.EXPENSE, "Супермаркеты").get();
+            Category restaurant = this.categoryRepository.getStandardCategoryByName(session, CategoryType.EXPENSE, "Рестораны и кафе").get();
+            Category salary = this.categoryRepository.getStandardCategoryByName(session, CategoryType.INCOME, "Зарплата").get();
+            User user1 = new User(1L, 100000);
+            this.userRepository.saveUser(session, user1);
 
-        MockMessage message = this.bot.poolMessageQueue();
-        Assert.assertEquals(expected, message.text());
+            this.operationRepository.addOperation(session, user1, shops, 200, date);
+            this.operationRepository.addOperation(session, user1, shops, 500, date);
+            this.operationRepository.addOperation(session, user1, restaurant, 1000, date);
+            this.operationRepository.addOperation(session, user1, restaurant, 2000, date);
+            this.operationRepository.addOperation(session, user1, salary, 60_000, date);
+            this.operationRepository.addOperation(session, user1, salary, 20_000, date);
+            CommandData data = new CommandData(this.bot, user1, COMMAND, List.of("12.2023"));
+
+            this.financeBotHandler.handleCommand(data, session);
+
+            String expected = """
+                    Подготовил отчет по стандартным категориям со всех пользователей за Декабрь 2023:
+                    Зарплата: 80 000 руб.
+                    Рестораны и кафе: 3 000 руб.
+                    Супермаркеты: 700 руб.
+                    """;
+
+            Assert.assertEquals(expected, bot.poolMessageQueue().text());
+        });
     }
 
     /**
-     * Метод проверяет, что отчет выведется, если есть данные по операция хотя бы по одной стандартной категории
+     * Тестирует обработчик при условии что операции есть от нескольких пользователей
      */
     @Test
-    public void handleCommandIfSomeDataExists() {
-        YearMonth yearMonth = YearMonth.of(2023, 12);
-        Map<String, Double> map = new LinkedHashMap<>() {{
-            put("Супермаркеты", 1.0);
-            put("Зарплата", 0.0);
-            put("Рестораны и кафе", 0.0);
-        }};
-        String expected = """
-                Подготовил отчет по стандартным категориям со всех пользователей за Декабрь 2023:
-                Супермаркеты: 1 руб.
-                Зарплата: 0 руб.
-                Рестораны и кафе: 0 руб.
-                """;
-        Mockito.when(this.operationRepository.getAverageSummaryByStandardCategory(null, yearMonth))
-                .thenReturn(map);
-        CommandData commandData = new CommandData(this.bot, this.user, COMMAND_NAME, List.of());
-        this.handler.handleCommand(commandData, null);
+    public void handleCommandWithAnyUsers() {
+        transactionManager.produceTransaction(session -> {
+            Category shops = this.categoryRepository.getStandardCategoryByName(session, CategoryType.EXPENSE, "Супермаркеты").get();
+            Category restaurant = this.categoryRepository.getStandardCategoryByName(session, CategoryType.EXPENSE, "Рестораны и кафе").get();
+            Category salary = this.categoryRepository.getStandardCategoryByName(session, CategoryType.INCOME, "Зарплата").get();
+            User user1 = new User(1L, 100000);
+            User user2 = new User(2L, 100000);
+            this.userRepository.saveUser(session, user1);
+            this.userRepository.saveUser(session, user2);
 
-        MockMessage message = this.bot.poolMessageQueue();
-        Assert.assertEquals(expected, message.text());
+            this.operationRepository.addOperation(session, user1, shops, 200);
+            this.operationRepository.addOperation(session, user1, shops, 500);
+            this.operationRepository.addOperation(session, user1, restaurant, 1000);
+            this.operationRepository.addOperation(session, user1, restaurant, 2000);
+            this.operationRepository.addOperation(session, user1, salary, 60_000);
+            this.operationRepository.addOperation(session, user1, salary, 20_000);
+
+            this.operationRepository.addOperation(session, user2, shops, 500);
+            this.operationRepository.addOperation(session, user2, shops, 700);
+            this.operationRepository.addOperation(session, user2, restaurant, 400);
+            this.operationRepository.addOperation(session, user2, restaurant, 700);
+            this.operationRepository.addOperation(session, user2, salary, 40_000);
+            this.operationRepository.addOperation(session, user2, salary, 15_000);
+
+            CommandData data = new CommandData(this.bot, user1, COMMAND, List.of("12.2023"));
+
+            this.financeBotHandler.handleCommand(data, session);
+
+            String expected = """
+                    Подготовил отчет по стандартным категориям со всех пользователей за Декабрь 2023:
+                    Зарплата: 67 500 руб.
+                    Рестораны и кафе: 2 050 руб.
+                    Супермаркеты: 950 руб.
+                    """;
+
+            Assert.assertEquals(expected, bot.poolMessageQueue().text());
+        });
     }
 
     /**
-     * Тест на то, что числа будет форматированы при условии что данные существуют
+     * Тест без операций на указзанный пользователем период
      */
     @Test
-    public void handleCommandCheckFormattedData() {
-        YearMonth yearMonth = YearMonth.of(2023, 12);
-        Map<String, Double> map = new LinkedHashMap<>() {{
-            put("Супермаркеты", 1234.1);
-            put("Зарплата", 100_000.99);
-            put("Рестораны и кафе", 99_999.90);
-        }};
-
-        String expected = """
-                Подготовил отчет по стандартным категориям со всех пользователей за Декабрь 2023:
-                Супермаркеты: 1 234,1 руб.
-                Зарплата: 100 001 руб.
-                Рестораны и кафе: 99 999,9 руб.
-                """;
-
-        Mockito.when(this.operationRepository.getAverageSummaryByStandardCategory(null, yearMonth))
-                .thenReturn(map);
-        CommandData data = new CommandData(this.bot, this.user, COMMAND_NAME, List.of("12.2023"));
-        this.handler.handleCommand(data, null);
-
-        MockMessage message = this.bot.poolMessageQueue();
-        Assert.assertEquals(expected, message.text());
+    public void handleCommandIfNoOperationsSpecificDate() {
+        transactionManager.produceTransaction(session -> {
+            User user = new User(1L, 1);
+            this.userRepository.saveUser(session, user);
+            CommandData data = new CommandData(this.bot, user, COMMAND, List.of("12.2023"));
+            this.financeBotHandler.handleCommand(data, session);
+            String expected = "На заданный промежуток данные отсутствуют.";
+            Assert.assertEquals(expected, bot.poolMessageQueue().text());
+        });
     }
 
     /**
-     * Тестирует, что при неверно переданной дате обработчик выведет сообщение об ошибке
+     * Тест без операций на текущий месяц и год
      */
     @Test
-    public void handleCommandWithIncorrectDateFormat() {
-        CommandData data = new CommandData(this.bot, this.user, COMMAND_NAME, List.of("pp.pppp"));
-        this.handler.handleCommand(data, null);
-
-        MockMessage message = this.bot.poolMessageQueue();
-        Assert.assertEquals(
-                "Дата введена неверно! Введите ее в формате [mm.yyyy - месяц.год]", message.text()
-        );
-    }
-
-    /**
-     * Тестирует на неверно переданное кол-во аргументов
-     */
-    @Test
-    public void handleCommandWithIncorrectArgsCount() {
-        String expected = """
-                Команда "/avg_report" не принимает аргументы, либо принимает Месяц и Год в формате "MM.YYYY"
-                Например, "/avg_report" или "/avg_report 12.2023".""";
-
-        List<List<String>> argsList = List.of(
-                List.of("12.2023", "12.2023"),
-                List.of("12", "2023"),
-                List.of("p", "pppp", "12.2023"),
-                List.of("", "", "")
-        );
-        for (List<String> args : argsList) {
-            CommandData data = new CommandData(this.bot, this.user, COMMAND_NAME, args);
-            this.handler.handleCommand(data, null);
-
-            MockMessage message = this.bot.poolMessageQueue();
-            Assert.assertEquals(expected, message.text());
-        }
+    public void handleCommandIfNoOperationsCurrentDate() {
+        transactionManager.produceTransaction(session -> {
+            User user = new User(1L, 1);
+            this.userRepository.saveUser(session, user);
+            CommandData data = new CommandData(this.bot, user, COMMAND, List.of());
+            this.financeBotHandler.handleCommand(data, session);
+            String expected = "На этот месяц данные отсутствуют.";
+            Assert.assertEquals(expected, bot.poolMessageQueue().text());
+        });
     }
 }
