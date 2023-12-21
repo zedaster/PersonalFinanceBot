@@ -47,7 +47,7 @@ public class ReportService {
             Доходы: %s""";
 
     private static final String ESTIMATE_REPORT_DATED = """
-            Подготовил отчет по средним доходам и расходам пользователей за %s %o:
+            Подготовил отчет по средним доходам и расходам пользователей за %s %d:
             Расходы: %s
             Доходы: %s""";
 
@@ -66,7 +66,9 @@ public class ReportService {
      */
     private final OutputNumberFormatService numberFormatService;
 
-    public ReportService(OperationRepository operationRepository, OutputMonthFormatService monthFormatService, OutputNumberFormatService numberFormatService) {
+    public ReportService(OperationRepository operationRepository,
+                         OutputMonthFormatService monthFormatService,
+                         OutputNumberFormatService numberFormatService) {
         this.operationRepository = operationRepository;
         this.monthFormatService = monthFormatService;
         this.numberFormatService = numberFormatService;
@@ -77,7 +79,7 @@ public class ReportService {
      *
      * @param user Пользователь, для которого надо вернуть отчёт
      * @param args Аргументы, переданные вместе с командой
-     * @return "Словарь" с категориями и затратоми
+     * @return "Словарь" с категориями и затратами
      */
     public String getExpenseReport(Session session, User user, String args) {
         YearMonth yearMonth;
@@ -130,7 +132,7 @@ public class ReportService {
     }
 
     /**
-     * Подготавливает отчёт по средним стандартным категория за указанный период
+     * Подготавливает отчёт по средним стандартным категориям за указанный период
      *
      * @param session   Сессия
      * @param yearMonth Период

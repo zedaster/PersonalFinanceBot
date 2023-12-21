@@ -30,12 +30,10 @@ public class Message {
     /**
      * Сообщение об отсутствии данных на заданный промежуток
      */
-    // TODO: Использовать в команде /avg_report
     public static final String DATA_NOT_EXISTS = "На заданный промежуток данные отсутствуют.";
 
     /**
      * Сообщение об отсутствии данных на текущий промежуток
      */
-    // TODO: Использовать в команде /avg_report
     public static final String CURRENT_DATA_NOT_EXISTS = "На этот месяц данные отсутствуют.";
 }
