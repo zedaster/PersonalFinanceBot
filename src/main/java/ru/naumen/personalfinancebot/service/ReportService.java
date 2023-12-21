@@ -138,7 +138,7 @@ public class ReportService {
      */
     public String getAverageReport(Session session, YearMonth yearMonth) {
         Map<String, Double> data = this.operationRepository.getAverageSummaryByStandardCategory(session, yearMonth);
-        if (!isAverageReportDataExists(data)) {
+        if (data == null) {
             return null;
         }
         StringBuilder report = new StringBuilder();
@@ -152,15 +152,5 @@ public class ReportService {
             report.append(categoryPayment);
         }
         return report.toString();
-    }
-
-    /**
-     * Проверяет, что данные в полученном словаре существуют
-     *
-     * @param map Словарь<Название стандартной категории, Сумма>
-     * @return False, если все данные в значении равно 0, иначе True
-     */
-    private boolean isAverageReportDataExists(Map<String, Double> map) {
-        return map.values().stream().anyMatch((value) -> value != 0.0);
     }
 }

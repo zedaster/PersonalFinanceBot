@@ -116,30 +116,25 @@ public class HibernateOperationRepository implements OperationRepository {
 
     @Override
     public Map<String, Double> getAverageSummaryByStandardCategory(Session session, YearMonth yearMonth) {
-        String defaultCategoriesHQL = """
-                select categories from Category categories where categories.user is null""";
-        List<Category> defaultCategories = session.createQuery(defaultCategoriesHQL, Category.class).getResultList();
-
         String averagePaymentHQL = """
-                select sum(operations.payment) from Operation operations
+                select categories.categoryName, sum(operations.payment) from Operation operations
+                join operations.category categories
                 where year(operations.createdAt) = :year
                 and month(operations.createdAt) = :month
-                and operations.category.categoryName = :categoryName
+                and categories.user is null
                 group by operations.user, operations.category.categoryName
-                order by operations.category.categoryName desc
+                order by operations.category.categoryName asc
                 """;
-        Map<String, Double> result = new LinkedHashMap<>();
+        List<?> result = session.createQuery(averagePaymentHQL)
+                .setParameter("month", yearMonth.getMonth().getValue())
+                .setParameter("year", yearMonth.getYear())
+                .getResultList();
 
-        for (Category category : defaultCategories) {
-            List<?> objects = session.createQuery(averagePaymentHQL)
-                    .setParameter("year", yearMonth.getYear())
-                    .setParameter("month", yearMonth.getMonth().getValue())
-                    .setParameter("categoryName", category.getCategoryName())
-                    .getResultList();
-            double average = getAverageFromObjectsList(objects);
-            result.put(category.getCategoryName(), average);
+        if (result.isEmpty()) {
+            return null;
         }
-        return result;
+
+        return getAverageForCategoryPaymentList(result);
     }
 
     /**
@@ -171,19 +166,20 @@ public class HibernateOperationRepository implements OperationRepository {
      * @param objects Список объектов
      * @return Среднее значение
      */
-    private double getAverageFromObjectsList(List<?> objects) {
-        if (objects.isEmpty()) {
-            return 0.0;
+    private Map<String, Double> getAverageForCategoryPaymentList(List<?> objects) {
+        Map<String, Double> summaries = new LinkedHashMap<>();
+        Map<String, Integer> counts = new LinkedHashMap<>();
+
+        for (Object rawRow : objects) {
+            Object[] row = (Object[]) rawRow;
+            String type = (String) row[0];
+            double sum = (double) row[1];
+
+            summaries.put(type, summaries.getOrDefault(type, 0.0) + sum);
+            counts.put(type, counts.getOrDefault(type, 0) + 1);
         }
-        double sum = 0.0;
-        for (Object object : objects) {
-            try {
-                Double doubleObject = (Double) object;
-                sum += doubleObject.isNaN() ? 0.0 : doubleObject;
-            } catch (NumberFormatException exception) {
-                sum += 0.0;
-            }
-        }
-        return sum / objects.size();
+
+        summaries.replaceAll((type, value) -> summaries.get(type) / counts.get(type));
+        return summaries;
     }
 }
