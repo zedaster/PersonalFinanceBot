@@ -1,6 +1,7 @@
 package ru.naumen.personalfinancebot.service;
 
 import org.hibernate.Session;
+import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
@@ -13,6 +14,11 @@ import java.util.Map;
  * Класс для подготовки отчётов в текстовом виде
  */
 public class ReportService {
+    /**
+     * Заголовок отчёта по средним расходам/доходам пользователей по стандартным категориям
+     */
+    private static final String AVG_REPORT_HEADER = "Подготовил отчет по стандартным категориям со всех пользователей за %s %d:\n";
+
     /**
      * Сообщение о неверно переданной дате (месяц и год) для команды /report_expense
      */
@@ -35,13 +41,35 @@ public class ReportService {
      */
     private static final String EXPENSE_REPORT_PATTERN = "%s: %s руб.\n";
 
+    private static final String ESTIMATE_REPORT_CURRENT = """
+            Подготовил отчет по средним доходам и расходам пользователей за текущий месяц:
+            Расходы: %s
+            Доходы: %s""";
+
+    private static final String ESTIMATE_REPORT_DATED = """
+            Подготовил отчет по средним доходам и расходам пользователей за %s %o:
+            Расходы: %s
+            Доходы: %s""";
+
     /**
-     * Репозиторий дл работы с операциями.
+     * Репозиторий для работы с операциями
      */
     private final OperationRepository operationRepository;
 
-    public ReportService(OperationRepository operationRepository) {
+    /**
+     * Сервис для форматирования названия месяца
+     */
+    private final OutputMonthFormatService monthFormatService;
+
+    /**
+     * Сервис для форматирования чисел для вывода
+     */
+    private final OutputNumberFormatService numberFormatService;
+
+    public ReportService(OperationRepository operationRepository, OutputMonthFormatService monthFormatService, OutputNumberFormatService numberFormatService) {
         this.operationRepository = operationRepository;
+        this.monthFormatService = monthFormatService;
+        this.numberFormatService = numberFormatService;
     }
 
     /**
@@ -72,6 +100,56 @@ public class ReportService {
 
         for (Map.Entry<String, Double> entry : categoryPaymentMap.entrySet()) {
             report.append(EXPENSE_REPORT_PATTERN.formatted(entry.getKey(), entry.getValue().toString()));
+        }
+        return report.toString();
+    }
+
+    /**
+     * Подготавливает отчёт по средним стандартным категориям за указанный период.
+     * Вернет null, если нет данных
+     *
+     * @param yearMonth Период [MM.YYYY]
+     * @return Отчёт в виде строки
+     */
+    public String getEstimateReport(Session session, YearMonth yearMonth) {
+        Map<CategoryType, Double> data = this.operationRepository.getEstimateSummary(session, yearMonth);
+        if (data == null) {
+            return null;
+        }
+
+        String emptyContent = Message.EMPTY_LIST_CONTENT;
+        String formatExpenses = this.numberFormatService.formatDouble(data.get(CategoryType.EXPENSE), emptyContent);
+        String formatIncome = this.numberFormatService.formatDouble(data.get(CategoryType.INCOME), emptyContent);
+
+        if (yearMonth.equals(YearMonth.now())) {
+            return ESTIMATE_REPORT_CURRENT.formatted(formatExpenses, formatIncome);
+        }
+
+        String monthTitle = this.monthFormatService.formatRuMonthName(yearMonth.getMonth());
+        return ESTIMATE_REPORT_DATED.formatted(monthTitle, yearMonth.getYear(), formatExpenses, formatIncome);
+    }
+
+    /**
+     * Подготавливает отчёт по средним стандартным категория за указанный период
+     *
+     * @param session   Сессия
+     * @param yearMonth Период
+     * @return Отчёт в строковом виде
+     */
+    public String getAverageReport(Session session, YearMonth yearMonth) {
+        Map<String, Double> data = this.operationRepository.getAverageSummaryByStandardCategory(session, yearMonth);
+        if (data == null) {
+            return null;
+        }
+        StringBuilder report = new StringBuilder();
+        report.append(AVG_REPORT_HEADER.formatted(
+                this.monthFormatService.formatRuMonthName(yearMonth.getMonth()),
+                yearMonth.getYear()));
+
+        for (Map.Entry<String, Double> entry : data.entrySet()) {
+            String categoryPayment = EXPENSE_REPORT_PATTERN.formatted(
+                    entry.getKey(), this.numberFormatService.formatDouble(entry.getValue()));
+            report.append(categoryPayment);
         }
         return report.toString();
     }

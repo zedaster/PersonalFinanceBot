@@ -7,6 +7,7 @@ import org.hibernate.query.Query;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
+import ru.naumen.personalfinancebot.repository.TransactionManager;
 import ru.naumen.personalfinancebot.repository.category.exception.ExistingStandardCategoryException;
 import ru.naumen.personalfinancebot.repository.category.exception.ExistingUserCategoryException;
 import ru.naumen.personalfinancebot.repository.category.exception.NotExistingCategoryException;
@@ -23,6 +24,31 @@ import java.util.Optional;
  * Хранилище категорий с использованием Hibernate
  */
 public class HibernateCategoryRepository implements CategoryRepository {
+
+    /**
+     * Создает репозиторий для категорий.
+     */
+    public HibernateCategoryRepository() {
+        // empty
+    }
+
+    /**
+     * Создает репозиторий для категорий и добавляет стандартные категории, если их не существует.
+     *
+     * @param transactionManager Нужен для открытия транзакции на добавление категорий
+     * @param categories         Список стандартных категорий.
+     */
+    public HibernateCategoryRepository(TransactionManager transactionManager, List<Category> categories) {
+        transactionManager.produceTransaction(session -> {
+            for (Category category : categories) {
+                try {
+                    this.createStandardCategory(session, category.getType(), category.getCategoryName());
+                } catch (ExistingStandardCategoryException ignored) {
+                    // Игнорировано, потому что все хорошо, когда категории уже добавлены
+                }
+            }
+        });
+    }
 
     @Override
     public List<Category> getUserCategoriesByType(Session session, @NotNull User user, CategoryType type) {

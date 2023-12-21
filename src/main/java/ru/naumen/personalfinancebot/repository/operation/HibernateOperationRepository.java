@@ -8,6 +8,7 @@ import ru.naumen.personalfinancebot.model.User;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,5 +78,108 @@ public class HibernateOperationRepository implements OperationRepository {
             return 0.0;
         }
         return (double) paymentSummary;
+    }
+
+    @Override
+    public Map<CategoryType, Double> getEstimateSummary(Session session, YearMonth yearMonth) {
+        // HQL не поддерживает вложенный запрос в FROM
+
+//            String hql = "SELECT paymentSums.type, avg(paymentSums.payments) FROM "
+//                    + "(SELECT categories.type AS type, sum(operations.payment) AS payments "
+//                    + "FROM Operation operations "
+//                    + "JOIN operations.category categories "
+//                    + "WHERE year(operations.createdAt) = :year "
+//                    + "AND month(operations.createdAt) = :month "
+//                    + "GROUP BY operations.user, categories.type) AS paymentSums "
+//                    + "GROUP BY paymentSums.type";
+
+        // Поэтому берем суммы и считаем среднее в Java
+
+        String hql = "SELECT categories.type, sum(operations.payment) AS payments "
+                + "FROM Operation operations "
+                + "JOIN operations.category categories "
+                + "WHERE year(operations.createdAt) = :year "
+                + "AND month(operations.createdAt) = :month "
+                + "GROUP BY operations.user, categories.type";
+
+        List<?> sumRows = session.createQuery(hql)
+                .setParameter("year", yearMonth.getYear())
+                .setParameter("month", yearMonth.getMonth().getValue())
+                .getResultList();
+
+        if (sumRows.isEmpty()) {
+            return null;
+        }
+
+        return calculateAverageForEachCategory(sumRows);
+    }
+
+    @Override
+    public Map<String, Double> getAverageSummaryByStandardCategory(Session session, YearMonth yearMonth) {
+        String averagePaymentHQL = """
+                select categories.categoryName, sum(operations.payment) from Operation operations
+                join operations.category categories
+                where year(operations.createdAt) = :year
+                and month(operations.createdAt) = :month
+                and categories.user is null
+                group by operations.user, operations.category.categoryName
+                order by operations.category.categoryName asc
+                """;
+        List<?> result = session.createQuery(averagePaymentHQL)
+                .setParameter("month", yearMonth.getMonth().getValue())
+                .setParameter("year", yearMonth.getYear())
+                .getResultList();
+
+        if (result.isEmpty()) {
+            return null;
+        }
+
+        return getAverageForCategoryPaymentList(result);
+    }
+
+    /**
+     * Высчитывает среднюю величину значений для каждой категории
+     *
+     * @param sumRows Список строк из БД, полученый из hibernate. В нем должны быть CategoryType, затем сумма
+     * @return Словарь<Тип категории, Среднее>
+     */
+    private Map<CategoryType, Double> calculateAverageForEachCategory(List<?> sumRows) {
+        Map<CategoryType, Double> result = new HashMap<>();
+        Map<CategoryType, Integer> count = new HashMap<>();
+
+        for (Object rawRow : sumRows) {
+            Object[] row = (Object[]) rawRow;
+            CategoryType type = (CategoryType) row[0];
+            double sum = (double) row[1];
+
+            result.put(type, result.getOrDefault(type, 0.0) + sum);
+            count.put(type, count.getOrDefault(type, 0) + 1);
+        }
+
+        result.replaceAll((type, value) -> result.get(type) / count.get(type));
+        return result;
+    }
+
+    /**
+     * Возвращает среднее значение из списка объектов
+     *
+     * @param objects Список объектов
+     * @return Среднее значение
+     */
+    private Map<String, Double> getAverageForCategoryPaymentList(List<?> objects) {
+        Map<String, Double> summaries = new LinkedHashMap<>();
+        Map<String, Integer> counts = new LinkedHashMap<>();
+
+        for (Object rawRow : objects) {
+            Object[] row = (Object[]) rawRow;
+            String type = (String) row[0];
+            double sum = (double) row[1];
+
+            summaries.put(type, summaries.getOrDefault(type, 0.0) + sum);
+            counts.put(type, counts.getOrDefault(type, 0) + 1);
+        }
+
+        summaries.replaceAll((type, value) -> summaries.get(type) / counts.get(type));
+        return summaries;
     }
 }

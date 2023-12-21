@@ -142,7 +142,7 @@ public class ListBudgetHandler implements CommandHandler {
                 from = dateParseService.parseYearMonth(arguments.get(0));
                 to = dateParseService.parseYearMonth(arguments.get(1));
             } catch (DateTimeParseException e) {
-                commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_BUDGET_YEAR_MONTH);
+                commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_YEAR_MONTH_FORMAT);
                 return;
             }
 

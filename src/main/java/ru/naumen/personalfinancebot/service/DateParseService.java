@@ -3,6 +3,7 @@ package ru.naumen.personalfinancebot.service;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 
 /**
  * Сервис, который парсит дату (Год или Месяц-Год)
@@ -31,5 +32,15 @@ public class DateParseService {
             throw new NumberFormatException("Год не может выходить за пределы диапазона [0, 3000].");
         }
         return year;
+    }
+
+    public YearMonth parseYearMonthArgs(List<String> args) {
+        if (args.isEmpty()) {
+            return YearMonth.now();
+        } else if (args.size() == 1) {
+            return this.parseYearMonth(args.get(0));
+        } else {
+            throw new IllegalArgumentException("Передано неверное количество аргументов");
+        }
     }
 }
