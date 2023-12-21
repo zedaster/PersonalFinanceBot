@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.handler;
+package ru.naumen.personalfinancebot.handler.command;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -7,9 +7,12 @@ import org.junit.Test;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
+import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.User;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
+import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
+import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
 import ru.naumen.personalfinancebot.repository.category.CategoryRepository;
 import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
@@ -26,17 +29,12 @@ public class OperationsTest {
     /**
      * Статическое поле для начального баланса
      */
-    private final double BALANCE = 100_000;
+    private static final double BALANCE = 100_000;
 
     /**
      * Репозиторий для работы с пользователем
      */
     private final UserRepository userRepository;
-
-    /**
-     * Репозиторий для работы с категориями
-     */
-    private final CategoryRepository categoryRepository;
 
     /**
      * Обработчик операций в боте
@@ -54,10 +52,10 @@ public class OperationsTest {
         this.transactionManager = new TransactionManager(hibernateConfiguration.getSessionFactory());
         SessionFactory sessionFactory = hibernateConfiguration.getSessionFactory();
         this.userRepository = new HibernateUserRepository();
-        this.categoryRepository = new HibernateCategoryRepository();
+        CategoryRepository categoryRepository = new HibernateCategoryRepository();
         OperationRepository operationRepository = new HibernateOperationRepository();
-
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, sessionFactory);
+        BudgetRepository budgetRepository = new HibernateBudgetRepository();
+        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, budgetRepository);
     }
 
     /**

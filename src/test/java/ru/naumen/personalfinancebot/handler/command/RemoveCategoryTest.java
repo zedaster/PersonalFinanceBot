@@ -1,4 +1,4 @@
-package ru.naumen.personalfinancebot.handler;
+package ru.naumen.personalfinancebot.handler.command;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -9,15 +9,19 @@ import org.junit.Test;
 import ru.naumen.personalfinancebot.bot.MockBot;
 import ru.naumen.personalfinancebot.bot.MockMessage;
 import ru.naumen.personalfinancebot.configuration.HibernateConfiguration;
+import ru.naumen.personalfinancebot.handler.FinanceBotHandler;
 import ru.naumen.personalfinancebot.handler.commandData.CommandData;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
-import ru.naumen.personalfinancebot.repository.TestHibernateCategoryRepository;
-import ru.naumen.personalfinancebot.repository.TestHibernateUserRepository;
+import ru.naumen.personalfinancebot.repository.ClearQueryManager;
 import ru.naumen.personalfinancebot.repository.TransactionManager;
+import ru.naumen.personalfinancebot.repository.budget.BudgetRepository;
+import ru.naumen.personalfinancebot.repository.budget.HibernateBudgetRepository;
+import ru.naumen.personalfinancebot.repository.category.HibernateCategoryRepository;
 import ru.naumen.personalfinancebot.repository.operation.HibernateOperationRepository;
 import ru.naumen.personalfinancebot.repository.operation.OperationRepository;
+import ru.naumen.personalfinancebot.repository.user.HibernateUserRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +30,6 @@ import java.util.Optional;
  * Класс для тестирования удаления пользовательских категорий
  */
 public class RemoveCategoryTest {
-
     /**
      * Команда для удаления категории дохода
      */
@@ -40,18 +43,13 @@ public class RemoveCategoryTest {
     /**
      * Хранилище пользователей
      */
-    private final TestHibernateUserRepository userRepository;
+    private final HibernateUserRepository userRepository;
 
     /**
      * Хранилище категорий
      * Данная реализация позволяет сделать полную очистку категорий после тестов
      */
-    private final TestHibernateCategoryRepository categoryRepository;
-
-    /**
-     * Хранилище операций
-     */
-    private final OperationRepository operationRepository;
+    private final HibernateCategoryRepository categoryRepository;
 
     /**
      * Обработчик команд
@@ -75,11 +73,16 @@ public class RemoveCategoryTest {
 
     public RemoveCategoryTest() {
         SessionFactory sessionFactory = new HibernateConfiguration().getSessionFactory();
-        userRepository = new TestHibernateUserRepository();
-        categoryRepository = new TestHibernateCategoryRepository();
-        operationRepository = new HibernateOperationRepository();
-        this.botHandler = new FinanceBotHandler(userRepository, operationRepository, categoryRepository, sessionFactory);
+        userRepository = new HibernateUserRepository();
+        categoryRepository = new HibernateCategoryRepository();
+        OperationRepository operationRepository = new HibernateOperationRepository();
+        BudgetRepository budgetRepository = new HibernateBudgetRepository();
         transactionManager = new TransactionManager(sessionFactory);
+        this.botHandler = new FinanceBotHandler(
+                userRepository,
+                operationRepository,
+                categoryRepository,
+                budgetRepository);
     }
 
     /**
@@ -98,8 +101,7 @@ public class RemoveCategoryTest {
     @After
     public void afterEachTest() {
         transactionManager.produceTransaction(session -> {
-            categoryRepository.removeAll(session);
-            userRepository.removeAll(session);
+            new ClearQueryManager().clear(session, Category.class, User.class);
         });
     }
 

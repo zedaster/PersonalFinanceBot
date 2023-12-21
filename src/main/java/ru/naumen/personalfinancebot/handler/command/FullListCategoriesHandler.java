@@ -20,9 +20,6 @@ public class FullListCategoriesHandler implements CommandHandler {
         this.categoryListService = categoryListService;
     }
 
-    /**
-     * Метод, вызываемый при получении команды
-     */
     @Override
     public void handleCommand(CommandData commandData, Session session) {
         String incomeContent = categoryListService.getListContent(session, commandData.getUser(), CategoryType.INCOME);

@@ -1,32 +1,18 @@
 package ru.naumen.personalfinancebot.service;
 
-import com.sun.istack.Nullable;
 import ru.naumen.personalfinancebot.message.Message;
 
 import java.util.List;
 
 /**
- * Сервис, форматирующий аргументы
+ * Сервис, который парсит категорию
  */
-public class ArgumentParseService {
+public class CategoryParseService {
     /**
-     * Парсит баланс, введенный пользователем.
-     * Вернет null если баланс не является числом с плавающей точкой или меньше нуля
-     *
-     * @throws IllegalArgumentException если аргументы введены неверно
+     * Сообщение о неверно переданном количестве аргументов для команды /add_[income|expense]_category
      */
-    @Nullable
-    public Double parseBalance(List<String> args) throws IllegalArgumentException {
-        if (args.size() != 1) {
-            throw new IllegalArgumentException();
-        }
-        String parsedString = args.get(0);
-        double amount = Double.parseDouble(parsedString.replace(",", "."));
-        if (amount < 0) {
-            throw new IllegalArgumentException();
-        }
-        return amount;
-    }
+    private static final String INCORRECT_CATEGORY_ARGUMENT_COUNT =
+            "Данная команда принимает [название категории] в одно или несколько слов.";
 
     /**
      * Парсит категорию, введенную в аргументах
@@ -36,7 +22,7 @@ public class ArgumentParseService {
     public String parseCategory(List<String> args) throws IllegalArgumentException {
         String joinedString;
         if (args.isEmpty() || (joinedString = String.join(" ", args).trim()).isEmpty()) {
-            throw new IllegalArgumentException(Message.INCORRECT_CATEGORY_ARGUMENT_COUNT);
+            throw new IllegalArgumentException(INCORRECT_CATEGORY_ARGUMENT_COUNT);
         }
 
         String categoryName = beautifyCategoryName(joinedString);
