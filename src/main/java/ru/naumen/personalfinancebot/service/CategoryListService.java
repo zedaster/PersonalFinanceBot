@@ -1,6 +1,7 @@
 package ru.naumen.personalfinancebot.service;
 
 import org.hibernate.Session;
+import ru.naumen.personalfinancebot.message.Message;
 import ru.naumen.personalfinancebot.model.Category;
 import ru.naumen.personalfinancebot.model.CategoryType;
 import ru.naumen.personalfinancebot.model.User;
@@ -23,11 +24,6 @@ public class CategoryListService {
             %s
             Персональные:
             %s""";
-
-    /**
-     * Часть шаблона списка категорий на случай, если категории отсутствуют
-     */
-    private static final String EMPTY_LIST_CONTENT = "<отсутствуют>";
 
     /**
      * Хранилище категорий
@@ -54,11 +50,11 @@ public class CategoryListService {
 
     /**
      * Форматирует список категорий в строку, содержащую нумерованный список из названия этих категорий или
-     * {@link #EMPTY_LIST_CONTENT}, если список пуст.
+     * {@link Message#EMPTY_LIST_CONTENT}, если список пуст.
      */
     private String formatCategoryList(List<Category> categories) {
         if (categories.isEmpty()) {
-            return EMPTY_LIST_CONTENT + "\n";
+            return Message.EMPTY_LIST_CONTENT + "\n";
         }
 
         StringBuilder stringBuilder = new StringBuilder();

@@ -23,7 +23,7 @@ public class SetBalanceHandler implements CommandHandler {
     private final NumberParseService numberParseService;
 
     /**
-     * Сервис, который приводит данные для вывода к нужному формату
+     * Сервис, который приводит числа для вывода к нужному формату
      */
     private final OutputNumberFormatService numberFormatService;
 

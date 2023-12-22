@@ -114,7 +114,7 @@ public class EditBudgetHandler implements CommandHandler {
             commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_BUDGET_NUMBER_ARG);
             return;
         } catch (DateTimeParseException e) {
-            commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_BUDGET_YEAR_MONTH);
+            commandData.getBot().sendMessage(commandData.getUser(), Message.INCORRECT_YEAR_MONTH_FORMAT);
             return;
         }
 

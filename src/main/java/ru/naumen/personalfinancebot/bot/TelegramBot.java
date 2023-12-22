@@ -62,19 +62,25 @@ public class TelegramBot extends TelegramLongPollingBot implements Bot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText() && update.getMessage().getText().startsWith("/")) {
-            transactionManager.produceTransaction(session -> {
-                Long chatId = update.getMessage().getChatId();
-                Optional<User> user = this.userRepository.getUserByTelegramChatId(session, chatId);
-                if (user.isEmpty()) {
-                    user = Optional.of(new User(chatId, 0));
-                    this.userRepository.saveUser(session, user.get());
-                }
-                List<String> msgWords = List.of(update.getMessage().getText().split(" "));
-                String cmdName = msgWords.get(0).substring(1);
-                List<String> args = msgWords.subList(1, msgWords.size());
-                CommandData commandData = new CommandData(this, user.get(), cmdName, args);
-                this.botHandler.handleCommand(commandData, session);
-            });
+            try {
+                transactionManager.produceTransaction(session -> {
+                    Long chatId = update.getMessage().getChatId();
+                    Optional<User> user = this.userRepository.getUserByTelegramChatId(session, chatId);
+                    if (user.isEmpty()) {
+                        user = Optional.of(new User(chatId, 0));
+                        this.userRepository.saveUser(session, user.get());
+                    }
+                    List<String> msgWords = List.of(update.getMessage().getText().split(" "));
+                    String cmdName = msgWords.get(0).substring(1);
+                    List<String> args = msgWords.subList(1, msgWords.size());
+                    CommandData commandData = new CommandData(this, user.get(), cmdName, args);
+                    this.botHandler.handleCommand(commandData, session);
+                });
+            } catch (RuntimeException e) {
+                System.err.println("Произошла ошибка во время обработки команды в боте:");
+                e.printStackTrace();
+            }
+
         }
     }
 

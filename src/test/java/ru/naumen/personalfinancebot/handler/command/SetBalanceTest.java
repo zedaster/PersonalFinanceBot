@@ -37,7 +37,7 @@ public class SetBalanceTest {
     private final FinanceBotHandler botHandler;
 
     /**
-     * Менедер транзакций
+     * Менеджер транзакций
      */
     private final TransactionManager transactionManager;
 
