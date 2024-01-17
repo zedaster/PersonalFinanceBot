@@ -5,7 +5,7 @@ import java.time.format.TextStyle;
 import java.util.Locale;
 
 /**
- * Сервис для формативания названия месяца
+ * Сервис для форматирования названия месяца
  */
 public class OutputMonthFormatService {
     /**

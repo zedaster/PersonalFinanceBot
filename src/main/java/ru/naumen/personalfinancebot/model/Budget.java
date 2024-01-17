@@ -19,7 +19,7 @@ public class Budget {
      * Уникальный идентификатор
      */
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", unique = true, nullable = false)
     private long id;
 

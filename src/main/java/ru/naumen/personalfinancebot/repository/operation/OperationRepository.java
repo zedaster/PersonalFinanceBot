@@ -36,10 +36,28 @@ public interface OperationRepository {
 
     /**
      * Метод возвращает сумму операций пользователя указанного типа (расход/доход) за определённый месяц
-     * @param user Пользователь
-     * @param type Тип операции
+     *
+     * @param user      Пользователь
+     * @param type      Тип операции
      * @param yearMonth Месяц, год
      * @return Сумма операций
      */
     double getCurrentUserPaymentSummary(Session session, User user, CategoryType type, YearMonth yearMonth);
+
+    /**
+     * Возвращает средние месячные общие доходы и расходы по всем пользователям
+     *
+     * @param yearMonth Год-месяц, за который выдаются данные
+     * @return Словарь<Тип, Сумма> или null, если нет данных
+     */
+    Map<CategoryType, Double> getEstimateSummary(Session session, YearMonth yearMonth);
+
+    /**
+     * Возвращает средние суммы операций по стандартным категориям расходов и доход
+     *
+     * <p><u><b>Метод не возвращает null значение, если данные по какой-то категории отсутсвуют, то возвращается 0!</b></u></p>
+     * @param yearMonth Период, за который необходимо вывести данные
+     * @return Словарь<Имя стандартной категории, Сумма> или null, если нет данных
+     */
+    Map<String, Double> getAverageSummaryByStandardCategory(Session session, YearMonth yearMonth);
 }
